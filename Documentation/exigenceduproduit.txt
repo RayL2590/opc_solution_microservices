@@ -1,0 +1,19 @@
+Bonjour Taylor,
+Pour faire suite à notre discussion, nous nous concentrons principalement sur les soins
+préventifs. Beaucoup de nos patients souffrent de mauvais choix nutritionnels. Ils
+choisissent souvent des produits bon marché, riches en sucre et en calories, au lieu d’opter
+pour un régime alimentaire sain avec des légumes. À cause de ces choix, ils ont tendance à
+être plus exposés à certaines maladies, dont le diabète de type 2.
+Ce que nous recherchons, c'est un outil pour aider nos médecins à identifier les patients les
+plus à risque. Nous aimerions que vous commenciez par vous concentrer uniquement sur
+les données démographiques (nom, âge, etc.). Cela nous permettra d’entrer et de revoir les
+informations de base sur un patient. Le risque de contracter le diabète augmente avec l'âge,
+si les mauvaises habitudes alimentaires ne sont pas corrigées.
+Ensuite, nous aimerions que vous permettiez aux médecins d’ajouter des notes sous forme
+de compte rendu à la suite de la visite d'un patient. Cela devrait nous permettre de suivre
+les comportements potentiellement à risque.
+La dernière partie est la plus importante. Nous devons générer une sorte de rapport
+indiquant la probabilité qu'un patient développe un diabète. Nous fournirons les facteurs qui peuvent conduire à la maladie plus tard.
+Je suis impatient de voir ce que vous pouvez développer pour nous.
+Cordialement,
+Ramesh

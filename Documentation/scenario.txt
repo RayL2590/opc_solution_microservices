@@ -1,0 +1,48 @@
+Scénario
+Vous avez récemment rejoint l'équipe technique d'une société internationale qui travaille avec des cliniques de santé et des cabinets privés sur le dépistage des risques de maladies. Votre poste étant en full remote avec en plus un décalage horaire, les échanges avec le Responsable Produit, Taylor Waters, se font principalement par mail et sur un outil de chat interne.
+
+ Logo MédiLabo Solutions
+
+Vous venez de recevoir un mail de Taylor expliquant votre nouvelle mission : 
+De : Taylor Waters
+À : Moi
+
+Salut, 
+
+
+J'espère que tu vas bien ! L’un de nos clients nous demande de créer une application pour l'aider à détecter le diabète de type 2. Je t’ai transféré son mail en pièce jointe pour que tu aies toutes les exigences.
+
+
+Nous nous attendons à livrer toutes les fonctionnalités dans un repository GitHub au bout de 3 sprints. Nous avons déjà divisé les besoins en user story pour chaque sprint dans le document « Résumé des besoins fonctionnels » ci-joint.
+
+
+Dans l’idée :  
+
+L’application sera découpée en plusieurs microservices, basés sur des projets Spring Boot. 
+Ces microservices seront joignables via un microservice de type “gateway” développé avec Spring Cloud Gateway.
+Nous voulons une image Docker de chaque microservice de l’architecture.
+
+Attention, le client a mis l’accent sur trois points importants pour lui :
+
+Dans le cadre de ses certifications ISO, ses bases de données doivent toutes être normalisées (3NF) afin de garantir la qualité des données.
+Pour les mêmes raisons, l’accès aux données des patients doit être sécurisé. Pense bien à mettre en place un système d’authentification avec Spring Security.
+Il met en place une nouvelle politique de protection de l’environnement sur tous ses projets, ce qui veut dire pour nous de se mettre au Green Code.
+
+Alors, sur ce dernier point (Green Code), les normes ne sont pas encore pleinement définies, mais il faut y réfléchir.
+
+
+Il faut que tu fasses des recherches sur le sujet. Pourras-tu me briefer lors de notre réunion finale ? De plus, j’aimerais que tu renseignes dans le readme.md du projet des suggestions d’actions à mener pour appliquer le Green Code à ce projet.  
+
+
+Bon courage, je t’envoie les infos du premier sprint juste après !
+
+
+Taylor
+
+Responsable Produit
+
+Pièces jointes : 
+
+FWD: Exigences du produit
+Résumé des besoins fonctionnels
+Dans ce projet, de nombreux documents sont partagés avec vous. Vous trouverez tous les documents dans ce zip de documents clés
