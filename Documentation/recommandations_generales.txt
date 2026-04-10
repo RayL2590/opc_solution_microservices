@@ -1,0 +1,3 @@
+Ce projet reprend essentiellement des notions techniques déjà vues. Les nouveautés sont l’utilisation d’une base de données NoSQL, de Spring Cloud Gateway et Docker. En suivant le découpage des sprints, les différents sous-projets sont peu complexes.
+
+Chaque sprint amène à créer un microservice back. Le microservice du front sera commun aux trois sprints et évoluera au fur et à mesure de l’ajout des besoins. L’interface doit être la plus sobre possible. Le microservice gateway est également commun aux trois sprints. Bien qu’elles répondent au besoin, les bases de données seront simples. À noter que l’authentification se fera par Spring Security, mais qu’il n’y a pas besoin de mettre en place d’inscription ou de gestion de droits.

@@ -1,0 +1,61 @@
+Résumé des besoins fonctionnels
+Premier sprint : user stories
+Vue des infos personnelles des patients :
+En tant qu’organisateur, j’aimerais voir les informations personnelles de mes patients afin de
+vérifier leur identité lorsqu’ils arrivent en rendez-vous.
+Les informations personnelles des patients sont :
+● prénom ;
+● nom ;
+● datedenaissance ;
+● genre ;
+● adresse postale ;
+● numérodetéléphone.
+Mise à jour des informations personnelles :
+En tant qu'organisateur, j'aimerais mettre à jour les informations personnelles de mes patients
+lorsqu'ils arrivent en rendez-vous pour que nos informations soient toujours à jour.
+Ajouter des informations personnelles des patients :
+En tant qu'organisateur, j'aimerais ajouter des informations personnelles aux patients pour qu'ils
+puissent prendre des rendez-vous.
+L'adresse postale et le numéro de téléphone sont optionnels pour un dossier valide.
+Deuxième sprint : user stories
+Vue historique du patient :
+En tant que praticien, je veux voir l’historique des informations de mon patient afin d’avoir en
+tête les problèmes qu’il a eus par le passé.
+Ajouter une note à l’historique du patient :
+En tant que praticien, je veux pouvoir ajouter une note d'observation à l'historique du patient
+afin de vérifier que mes conseils sont suivis d'une séance à l'autre.
+Troisième sprint : user story et besoins restants
+Générer un rapport de diabète :
+En tant que praticien, je veux pouvoir consulter le risque de diabète pour un patient afin de le
+prévenir si sa santé est potentiellement en danger.
+Un patient pourra avoir l'un des 4 niveaux de risque suivants :
+● aucunrisque (None) ;
+● risque limité (Borderline) ;
+● danger (In Danger) ;
+● apparition précoce (Early onset).
+Les règles pour déterminer les niveaux de risque sont les suivantes :
+● aucun risque (None) : Le dossier du patient ne contient aucune note du médecin
+contenant les déclencheurs (terminologie) ;
+● risque limité (Borderline) : Le dossier du patient contient entre deux et cinq
+déclencheurs et le patient est âgé de plus de 30 ans ;
+● danger (In Danger) : Dépend de l'âge et du sexe du patient. Si le patient est un homme
+de moins de 30 ans, alors trois termes déclencheurs doivent être présents. Si le patient
+est une femme et a moins de 30 ans, il faudra quatre termes déclencheurs. Si le patient
+a plus de 30 ans, alors il en faudra six ou sept ;
+● apparition précoce (Early onset) : Encore une fois, cela dépend de l'âge et du sexe. Si
+le patient est un homme de moins de 30 ans, alors au moins cinq termes déclencheurs
+sont nécessaires. Si le patient est une femme et a moins de 30 ans, il faudra au moins
+sept termes déclencheurs. Si le patient a plus de 30 ans, alors il en faudra huit ou plus.
+Les termes déclencheurs à rechercher dans les notes du prestataire de santé sont les
+suivants :
+● Hémoglobine A1C ;
+● Microalbumine ;
+● Taille ;
+● Poids ;
+● Fumeur, Fumeuse ;
+● Anormal ;
+● Cholestérol …
+● Vertiges ;
+● Rechute ;
+● Réaction ;
+● Anticorps
