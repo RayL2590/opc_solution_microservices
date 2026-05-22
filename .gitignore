@@ -23,6 +23,12 @@
 hs_err_pid*
 replay_pid*
 
+# Environment files with real secrets — never commit them (NFR-S3).
+# The secret-free template ".env.example" stays tracked.
+.env
+*.env
+!.env.example
+
 # BMAD / Claude tooling and generated artifacts (not part of the project itself)
 .claude/
 _bmad/
