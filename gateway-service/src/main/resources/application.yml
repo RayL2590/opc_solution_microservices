@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      server:
+        webflux:
+          # Spring Cloud Gateway 2025.1.1 (server-webflux 5.0.x) route prefix.
+          # NOT the legacy `spring.cloud.gateway.routes` — see RoutesConfigTest.
+          routes:
+            - id: patients
+              uri: http://localhost:8081
+              predicates:
+                - Path=/patients/**
+            - id: notes
+              uri: http://localhost:8082
+              predicates:
+                - Path=/notes/**
+            - id: assessments
+              uri: http://localhost:8083
+              predicates:
+                - Path=/assessments/**
+            # G-1: single route forwarding both the root and the /ui/** UI tree
+            # to front-service (the `/`→/ui/patients redirect lives in front-service).
+            - id: front
+              uri: http://localhost:8084
+              predicates:
+                - Path=/,/ui/**
+
+server:
+  port: 8080
