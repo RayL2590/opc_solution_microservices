@@ -1,13 +1,13 @@
-package com.medilabo.front_service;
+package com.medilabo.notesservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class FrontServiceApplication {
+public class NotesServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(FrontServiceApplication.class, args);
+		SpringApplication.run(NotesServiceApplication.class, args);
 	}
 
 }
