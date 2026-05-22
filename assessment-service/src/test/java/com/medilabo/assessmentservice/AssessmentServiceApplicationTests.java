@@ -1,4 +1,4 @@
-package com.medilabo.assessment_service;
+package com.medilabo.assessmentservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

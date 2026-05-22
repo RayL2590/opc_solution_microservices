@@ -1,4 +1,4 @@
-package com.medilabo.notes_service;
+package com.medilabo.notesservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

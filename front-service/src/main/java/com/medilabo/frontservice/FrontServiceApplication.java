@@ -1,13 +1,13 @@
-package com.medilabo.assessment_service;
+package com.medilabo.frontservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class AssessmentServiceApplication {
+public class FrontServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(AssessmentServiceApplication.class, args);
+		SpringApplication.run(FrontServiceApplication.class, args);
 	}
 
 }
