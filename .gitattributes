@@ -1,0 +1,22 @@
+# Normalize line endings across the repo.
+# Text files are stored as LF in git and checked out as LF in the working tree
+# (overrides core.autocrlf), so Windows/macOS/Linux all see the same bytes.
+* text=auto eol=lf
+
+# Windows-only scripts must keep CRLF to run correctly.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Maven wrapper: the shell script stays LF, the Windows launcher stays CRLF.
+mvnw      text eol=lf
+mvnw.cmd  text eol=crlf
+
+# Common binary types — never normalize/diff as text.
+*.jar  binary
+*.war  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
