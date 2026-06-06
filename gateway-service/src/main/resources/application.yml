@@ -29,3 +29,14 @@ spring:
 
 server:
   port: 8080
+
+# In-memory user store credentials (Story 1.4, FR-15/FR-16).
+# Overridden at runtime by the MEDILABO_* environment variables (injected via the
+# compose env_file in Epic 6). The inline defaults below let the gateway boot and the
+# tests run with NO external env: 'medilabo' / 'medilabo123'.
+# password-bcrypt is a REAL BCrypt hash (NFR-S3: no plaintext secret in a tracked file);
+# the raw demo password 'medilabo123' is recorded in the story's Dev Agent Record.
+# Single-quoted because the hash contains '$'.
+medilabo:
+  user: ${MEDILABO_USER:medilabo}
+  password-bcrypt: '${MEDILABO_PASSWORD_BCRYPT:$2a$10$GzMGhp/NWTujVhv4VyYh9eM.aia95IXMsse7Yl6jUC3DC42/VIinq}'
