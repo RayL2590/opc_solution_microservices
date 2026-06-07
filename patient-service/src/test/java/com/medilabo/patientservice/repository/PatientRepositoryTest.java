@@ -8,6 +8,7 @@ import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabas
 import org.springframework.data.domain.Sort;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase.Replace.NONE;
@@ -41,5 +42,18 @@ class PatientRepositoryTest {
                 .containsExactly(1L, 2L, 3L, 4L);
         assertThat(patients).extracting(Patient::getLastName)
                 .containsExactly("TestNone", "TestBorderline", "TestInDanger", "TestEarlyOnset");
+    }
+
+    @Test
+    void findById_existingId_returnsThePatient() {
+        Optional<Patient> patient = patientRepository.findById(1L);
+
+        assertThat(patient).isPresent();
+        assertThat(patient.get().getLastName()).isEqualTo("TestNone");
+    }
+
+    @Test
+    void findById_unknownId_returnsEmpty() {
+        assertThat(patientRepository.findById(999L)).isEmpty();
     }
 }
