@@ -25,7 +25,7 @@ public class PatientController {
 
     // GET /patients/{id} → détail d'un patient
     @GetMapping("/{id}")
-    public ResponseEntity<PatientDTO> getPatientById(@PathVariable Integer id) {
+    public ResponseEntity<PatientDTO> getPatientById(@PathVariable Long id) {
         return ResponseEntity.ok(patientService.getPatientById(id));
     }
 
@@ -40,7 +40,7 @@ public class PatientController {
     // PUT /patients/{id} → mettre à jour un patient
     @PutMapping("/{id}")
     public ResponseEntity<PatientDTO> updatePatient(
-            @PathVariable Integer id,
+            @PathVariable Long id,
             @Valid @RequestBody PatientDTO dto) {
         return ResponseEntity.ok(patientService.updatePatient(id, dto));
     }
