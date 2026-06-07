@@ -10,7 +10,7 @@ import java.time.LocalDate;
 @Builder
 public class PatientDTO {
 
-    private Integer id;
+    private Long id;
 
     @NotBlank(message = "Le prénom est obligatoire")
     private String firstName;

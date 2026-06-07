@@ -7,7 +7,8 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "patient")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -15,7 +16,8 @@ public class Patient {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "id")
+    private Long id;
 
     @NotBlank(message = "Le prénom est obligatoire")
     @Column(name = "first_name", nullable = false, length = 100)
@@ -31,11 +33,11 @@ public class Patient {
 
     @NotBlank(message = "Le genre est obligatoire")
     @Column(name = "gender", nullable = false, length = 1)
-    private String gender; // "M" ou "F"
+    private String gender;
 
     @Column(name = "address", length = 255)
-    private String address; 
+    private String address;
 
     @Column(name = "phone", length = 20)
-    private String phone; 
+    private String phone;
 }

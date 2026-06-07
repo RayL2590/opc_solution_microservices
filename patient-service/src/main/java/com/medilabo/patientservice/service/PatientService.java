@@ -25,7 +25,7 @@ public class PatientService {
     }
 
     // Récupérer un patient par son id
-    public PatientDTO getPatientById(Integer id) {
+    public PatientDTO getPatientById(Long id) {
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Patient introuvable avec l'id : " + id));
@@ -37,7 +37,7 @@ public class PatientService {
         return toDTO(patientRepository.save(patient));
     }
 
-    public PatientDTO updatePatient(Integer id, PatientDTO dto) {
+    public PatientDTO updatePatient(Long id, PatientDTO dto) {
         Patient existing = patientRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Patient introuvable avec l'id : " + id));
