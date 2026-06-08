@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * {@code @WebMvcTest} slice for {@link PatientController} — Story 2.2 read-endpoint contract.
  *
  * <p>Imports the real {@link SecurityConfig} so the HTTP Basic + BCrypt chain is exercised:
- * no credentials → 401, valid {@code user}/{@code user123} → 200. {@link GlobalExceptionHandler}
+ * no credentials → 401, valid {@code medilabo}/{@code medilabo123} → 200. {@link GlobalExceptionHandler}
  * is imported so {@link PatientNotFoundException} maps to a 404 {@code ProblemDetail}. The
  * service is a {@link MockitoBean}, so the slice needs no DataSource and stays DB-free.
  */
@@ -66,7 +66,7 @@ class PatientControllerTest {
     void listPatients_withCredentials_returns200AndJsonArray() throws Exception {
         given(patientService.getAllPatients()).willReturn(List.of(samplePatient()));
 
-        mockMvc.perform(get("/patients").with(httpBasic("user", "user123")))
+        mockMvc.perform(get("/patients").with(httpBasic("medilabo", "medilabo123")))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$").isArray())
@@ -78,7 +78,7 @@ class PatientControllerTest {
     void getPatientById_existingId_returns200AndDto() throws Exception {
         given(patientService.getPatientById(1L)).willReturn(samplePatient());
 
-        mockMvc.perform(get("/patients/1").with(httpBasic("user", "user123")))
+        mockMvc.perform(get("/patients/1").with(httpBasic("medilabo", "medilabo123")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.lastName").value("TestNone"));
@@ -89,7 +89,7 @@ class PatientControllerTest {
         given(patientService.getPatientById(999L))
                 .willThrow(new PatientNotFoundException(999L));
 
-        mockMvc.perform(get("/patients/999").with(httpBasic("user", "user123")))
+        mockMvc.perform(get("/patients/999").with(httpBasic("medilabo", "medilabo123")))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(404))
@@ -105,6 +105,23 @@ class PatientControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void listPatients_validUserWrongPassword_returns401() throws Exception {
+        // Exercises the password-MATCH path (not just the no-creds gate): a known user with a
+        // wrong password must be rejected. This is the only slice test that proves the seeded
+        // BCrypt hash — resolved from medilabo.password-bcrypt in application.properties — is
+        // actually matched. A NoOp encoder or a broken hash bridge would make this pass with the
+        // wrong password and go red here.
+        mockMvc.perform(get("/patients").with(httpBasic("medilabo", "definitely-the-wrong-password")))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void listPatients_unknownUser_returns401() throws Exception {
+        mockMvc.perform(get("/patients").with(httpBasic("not-a-real-user", "medilabo123")))
+                .andExpect(status().isUnauthorized());
+    }
+
     // ---- Story 2.3: write paths (POST / PUT) ----
 
     private static final String VALID_BODY = """
@@ -115,7 +132,7 @@ class PatientControllerTest {
     void createPatient_validBody_returns201AndPersistedDto() throws Exception {
         given(patientService.createPatient(any(PatientDTO.class))).willReturn(samplePatient());
 
-        mockMvc.perform(post("/patients").with(httpBasic("user", "user123"))
+        mockMvc.perform(post("/patients").with(httpBasic("medilabo", "medilabo123"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_BODY))
                 .andExpect(status().isCreated())
@@ -130,7 +147,7 @@ class PatientControllerTest {
                 {"firstName":"","dateOfBirth":"1990-01-01","gender":"M"}
                 """;
 
-        mockMvc.perform(post("/patients").with(httpBasic("user", "user123"))
+        mockMvc.perform(post("/patients").with(httpBasic("medilabo", "medilabo123"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest())
@@ -144,7 +161,7 @@ class PatientControllerTest {
     @Test
     void createPatient_allRequiredFieldsInvalid_returns400WithAllKeys() throws Exception {
         // Empty body → every required field violated.
-        mockMvc.perform(post("/patients").with(httpBasic("user", "user123"))
+        mockMvc.perform(post("/patients").with(httpBasic("medilabo", "medilabo123"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest())
@@ -166,7 +183,7 @@ class PatientControllerTest {
     void updatePatient_existingId_validBody_returns200AndUpdatedDto() throws Exception {
         given(patientService.updatePatient(eq(1L), any(PatientDTO.class))).willReturn(samplePatient());
 
-        mockMvc.perform(put("/patients/1").with(httpBasic("user", "user123"))
+        mockMvc.perform(put("/patients/1").with(httpBasic("medilabo", "medilabo123"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_BODY))
                 .andExpect(status().isOk())
@@ -180,7 +197,7 @@ class PatientControllerTest {
                 {"firstName":"Jean","lastName":"Dupont","dateOfBirth":"1990-01-01","gender":""}
                 """;
 
-        mockMvc.perform(put("/patients/1").with(httpBasic("user", "user123"))
+        mockMvc.perform(put("/patients/1").with(httpBasic("medilabo", "medilabo123"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest())
@@ -193,7 +210,7 @@ class PatientControllerTest {
         given(patientService.updatePatient(eq(999L), any(PatientDTO.class)))
                 .willThrow(new PatientNotFoundException(999L));
 
-        mockMvc.perform(put("/patients/999").with(httpBasic("user", "user123"))
+        mockMvc.perform(put("/patients/999").with(httpBasic("medilabo", "medilabo123"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_BODY))
                 .andExpect(status().isNotFound())
@@ -205,7 +222,7 @@ class PatientControllerTest {
     void getPatientById_malformedId_returns400ProblemDetail() throws Exception {
         // Non-numeric {id} fails @PathVariable Long conversion BEFORE the controller —
         // MethodArgumentTypeMismatchException must stay inside the RFC 7807 envelope.
-        mockMvc.perform(get("/patients/abc").with(httpBasic("user", "user123")))
+        mockMvc.perform(get("/patients/abc").with(httpBasic("medilabo", "medilabo123")))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(400));
