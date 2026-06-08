@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -87,7 +88,11 @@ class PatientControllerTest {
         mockMvc.perform(get("/patients/999").with(httpBasic("user", "user123")))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.status").value(404));
+                .andExpect(jsonPath("$.status").value(404))
+                // The handler's ex.getMessage() must actually reach the body — assert the
+                // id propagates into $.detail (id only, never the localized text — epic-2
+                // 404 assertion discipline: status + structure, not French strings).
+                .andExpect(jsonPath("$.detail").value(containsString("999")));
     }
 
     @Test
