@@ -17,9 +17,13 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -99,5 +103,111 @@ class PatientControllerTest {
     void getPatientById_withoutCredentials_returns401() throws Exception {
         mockMvc.perform(get("/patients/1"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    // ---- Story 2.3: write paths (POST / PUT) ----
+
+    private static final String VALID_BODY = """
+            {"firstName":"Jean","lastName":"Dupont","dateOfBirth":"1990-01-01","gender":"M"}
+            """;
+
+    @Test
+    void createPatient_validBody_returns201AndPersistedDto() throws Exception {
+        given(patientService.createPatient(any(PatientDTO.class))).willReturn(samplePatient());
+
+        mockMvc.perform(post("/patients").with(httpBasic("user", "user123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.lastName").value("TestNone"));
+    }
+
+    @Test
+    void createPatient_blankRequiredField_returns400WithErrorsMapKeys() throws Exception {
+        // firstName blank + lastName missing → two field-keyed errors; dateOfBirth/gender present.
+        String body = """
+                {"firstName":"","dateOfBirth":"1990-01-01","gender":"M"}
+                """;
+
+        mockMvc.perform(post("/patients").with(httpBasic("user", "user123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(400))
+                // Assert on the errors-map KEYS + status — never the localized French text.
+                .andExpect(jsonPath("$.errors.firstName").exists())
+                .andExpect(jsonPath("$.errors.lastName").exists());
+    }
+
+    @Test
+    void createPatient_allRequiredFieldsInvalid_returns400WithAllKeys() throws Exception {
+        // Empty body → every required field violated.
+        mockMvc.perform(post("/patients").with(httpBasic("user", "user123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.firstName").exists())
+                .andExpect(jsonPath("$.errors.lastName").exists())
+                .andExpect(jsonPath("$.errors.dateOfBirth").exists())
+                .andExpect(jsonPath("$.errors.gender").exists());
+    }
+
+    @Test
+    void createPatient_withoutCredentials_returns401() throws Exception {
+        mockMvc.perform(post("/patients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updatePatient_existingId_validBody_returns200AndUpdatedDto() throws Exception {
+        given(patientService.updatePatient(eq(1L), any(PatientDTO.class))).willReturn(samplePatient());
+
+        mockMvc.perform(put("/patients/1").with(httpBasic("user", "user123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.lastName").value("TestNone"));
+    }
+
+    @Test
+    void updatePatient_blankRequiredField_returns400WithErrorsMapKey() throws Exception {
+        String body = """
+                {"firstName":"Jean","lastName":"Dupont","dateOfBirth":"1990-01-01","gender":""}
+                """;
+
+        mockMvc.perform(put("/patients/1").with(httpBasic("user", "user123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.errors.gender").exists());
+    }
+
+    @Test
+    void updatePatient_missingId_returns404ProblemDetail() throws Exception {
+        given(patientService.updatePatient(eq(999L), any(PatientDTO.class)))
+                .willThrow(new PatientNotFoundException(999L));
+
+        mockMvc.perform(put("/patients/999").with(httpBasic("user", "user123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    void getPatientById_malformedId_returns400ProblemDetail() throws Exception {
+        // Non-numeric {id} fails @PathVariable Long conversion BEFORE the controller —
+        // MethodArgumentTypeMismatchException must stay inside the RFC 7807 envelope.
+        mockMvc.perform(get("/patients/abc").with(httpBasic("user", "user123")))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(400));
     }
 }
