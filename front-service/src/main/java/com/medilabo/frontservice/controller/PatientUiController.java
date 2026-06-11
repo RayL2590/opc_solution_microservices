@@ -87,6 +87,10 @@ public class PatientUiController {
         }
 
         PatientView created = patientGatewayClient.createPatient(patientForm);
+        if (created == null || created.id() == null) {
+            throw new IllegalStateException(
+                    "Gateway returned a null patient or null id after creation — cannot redirect");
+        }
         log.debug("Patient created, id={}", created.id());
         return "redirect:/ui/patients/" + created.id();
     }
