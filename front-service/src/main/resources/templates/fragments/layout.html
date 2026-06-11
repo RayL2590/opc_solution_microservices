@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<!--
+  Shared UI shell (Story 5.1) — head/header/nav/footer fragments reused by every page (5.2+).
+  Server-rendered Thymeleaf only: no SPA, no JS bundler, no CSS framework (epics.md §exclusions v1).
+  A page includes the pieces it needs, e.g.:
+    <head th:replace="~{fragments/layout :: head('Patients')}"></head>
+    <body>
+      <div th:replace="~{fragments/layout :: header}"></div>
+      <main> ... page content ... </main>
+      <div th:replace="~{fragments/layout :: footer}"></div>
+    </body>
+-->
+
+<!-- head: pulls in the single legibility-only stylesheet; title is page-supplied. -->
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} ?: 'Medilabo'">Medilabo</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+
+<!-- header: app title + nav + the logged-in user (via sec:authentication). -->
+<header th:fragment="header" class="app-header">
+    <div class="app-header__brand">
+        <a th:href="@{/ui/patients}">Medilabo</a>
+    </div>
+    <nav class="app-nav">
+        <a th:href="@{/ui/patients}">Patients</a>
+    </nav>
+    <div class="app-header__user" sec:authorize="isAuthenticated()">
+        Connecté : <span sec:authentication="name">user</span>
+    </div>
+</header>
+
+<!-- footer: minimal, no scripts. -->
+<footer th:fragment="footer" class="app-footer">
+    <small>Medilabo &mdash; interface clinique</small>
+</footer>
+
+</body>
+</html>
