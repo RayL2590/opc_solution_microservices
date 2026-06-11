@@ -5,9 +5,11 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import com.medilabo.frontservice.dto.PatientForm;
 import com.medilabo.frontservice.dto.PatientView;
 
 /**
@@ -21,6 +23,8 @@ import com.medilabo.frontservice.dto.PatientView;
  *
  * <p>PII contract: this class never logs patient names, addresses, phones, or dates of birth.
  * Only counts and IDs are permitted in log statements (Logging discipline — epics.md §108).
+ *
+ * <p>Extended in Story 5.4 (FR-12) with {@link #createPatient(PatientForm)} — POST to Gateway.
  */
 @Component
 @Slf4j
@@ -41,5 +45,22 @@ public class PatientGatewayClient {
                 .body(new ParameterizedTypeReference<>() {});
         log.debug("Fetched {} patient(s) from Gateway", patients != null ? patients.size() : 0);
         return patients != null ? patients : List.of();
+    }
+
+    /**
+     * Creates a new patient via the Gateway ({@code POST /patients}).
+     *
+     * @param form the validated form data from the UI layer
+     * @return the created patient as returned by the Gateway (includes the generated {@code id})
+     */
+    public PatientView createPatient(PatientForm form) {
+        PatientView created = gatewayClient.post()
+                .uri("/patients")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(form)
+                .retrieve()
+                .body(PatientView.class);
+        log.debug("Created patient id={}", created != null ? created.id() : null);
+        return created;
     }
 }
