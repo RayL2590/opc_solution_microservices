@@ -1,0 +1,127 @@
+/*
+ * Single legibility-only stylesheet (Story 5.1).
+ * No CSS framework, no CDN @import, no JS — a deliberately spartan, readable shell
+ * (brief: "l'interface doit être la plus sobre possible"; epics.md §exclusions v1).
+ * Rules cover typography, spacing, and table/nav readability only — not a design system.
+ */
+
+:root {
+    --color-text: #1f2933;
+    --color-muted: #616e7c;
+    --color-border: #cbd2d9;
+    --color-bg: #ffffff;
+    --color-header-bg: #f5f7fa;
+    --space: 1rem;
+    --max-width: 60rem;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    color: var(--color-text);
+    background: var(--color-bg);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+main {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: var(--space);
+}
+
+/* Header / nav */
+.app-header {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space);
+    flex-wrap: wrap;
+    padding: var(--space);
+    background: var(--color-header-bg);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.app-header__brand a {
+    font-weight: 700;
+    font-size: 1.25rem;
+    text-decoration: none;
+    color: var(--color-text);
+}
+
+.app-nav {
+    display: flex;
+    gap: var(--space);
+}
+
+.app-nav a {
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+.app-nav a:hover {
+    text-decoration: underline;
+}
+
+.app-header__user {
+    margin-left: auto;
+    color: var(--color-muted);
+    font-size: 0.9rem;
+}
+
+/* Footer */
+.app-footer {
+    max-width: var(--max-width);
+    margin: var(--space) auto 0;
+    padding: var(--space);
+    border-top: 1px solid var(--color-border);
+    color: var(--color-muted);
+}
+
+/* Tables (used by the patient list from 5.2 onward) */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+th {
+    color: var(--color-muted);
+    font-weight: 600;
+}
+
+/* Forms (used by the add-patient form from 5.4 onward) */
+label {
+    display: block;
+    margin: 0.75rem 0 0.25rem;
+    font-weight: 600;
+}
+
+input,
+select {
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    font: inherit;
+}
+
+button {
+    margin-top: var(--space);
+    padding: 0.5rem 1rem;
+    font: inherit;
+    cursor: pointer;
+}
+
+a {
+    color: #1f6feb;
+}
