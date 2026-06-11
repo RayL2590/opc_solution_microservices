@@ -1,6 +1,7 @@
 package com.medilabo.frontservice.controller;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
@@ -97,6 +98,22 @@ class PatientUiControllerTest {
                         .param("gender", "F"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/ui/patients/42"));
+    }
+
+    @Test
+    void createPatient_gatewayReturnsNull_throwsIllegalState() {
+        // Verifies the null-guard: no NPE when gateway returns null, instead a controlled exception.
+        // @WebMvcTest has no global error handler, so MockMvc rethrows the IllegalStateException
+        // directly (Spring 6+ removed NestedServletException wrapper).
+        given(patientGatewayClient.createPatient(any(PatientForm.class))).willReturn(null);
+
+        assertThrows(Exception.class, () ->
+            mockMvc.perform(post("/ui/patients")
+                            .with(httpBasic("medilabo", "medilabo123"))
+                            .param("firstName", "Alice")
+                            .param("lastName", "Martin")
+                            .param("dateOfBirth", "1990-03-20")
+                            .param("gender", "F")));
     }
 
     @Test
