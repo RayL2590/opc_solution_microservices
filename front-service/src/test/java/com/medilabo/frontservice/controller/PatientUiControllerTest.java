@@ -77,7 +77,7 @@ class PatientUiControllerTest {
     }
 
     @Test
-    void createPatient_validForm_redirectsToDetail() throws Exception {
+    void createPatient_validForm_redirectsToList() throws Exception {
         PatientView created = new PatientView(42L, "Alice", "Martin",
                 LocalDate.of(1990, 3, 20), "F", null, null);
         given(patientGatewayClient.createPatient(any(PatientForm.class))).willReturn(created);
@@ -89,7 +89,8 @@ class PatientUiControllerTest {
                         .param("dateOfBirth", "1990-03-20")
                         .param("gender", "F"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/ui/patients/42"));
+                // Retour à la liste — la fiche détail est hors Sprint 1 (story 5.3).
+                .andExpect(redirectedUrl("/ui/patients"));
     }
 
     @Test
