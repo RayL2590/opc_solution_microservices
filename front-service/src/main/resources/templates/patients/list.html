@@ -7,6 +7,7 @@
 
 <main class="container">
     <h1>Liste des patients</h1>
+    <p><a th:href="@{/ui/patients/new}">+ Ajouter un patient</a></p>
     <table>
         <thead>
             <tr>
@@ -22,7 +23,7 @@
                 <td th:text="${p.firstName}"></td>
                 <td th:text="${p.dateOfBirth}"></td>
                 <td>
-                    <a th:href="@{/ui/patients/{id}(id=${p.id})}">Voir</a>
+                    <a th:href="@{/ui/patients/{id}/edit(id=${p.id})}">Modifier</a>
                 </td>
             </tr>
         </tbody>

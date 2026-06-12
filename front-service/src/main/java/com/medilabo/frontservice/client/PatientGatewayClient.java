@@ -42,4 +42,24 @@ public class PatientGatewayClient {
         log.debug("Created patient id={}", created != null ? created.id() : null);
         return created;
     }
+
+    public PatientView getPatient(Long id) {
+        PatientView patient = gatewayClient.get()
+                .uri("/patients/{id}", id)
+                .retrieve()
+                .body(PatientView.class);
+        log.debug("Fetched patient id={}", id);
+        return patient;
+    }
+
+    public PatientView updatePatient(Long id, PatientForm form) {
+        PatientView updated = gatewayClient.put()
+                .uri("/patients/{id}", id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(form)
+                .retrieve()
+                .body(PatientView.class);
+        log.debug("Updated patient id={}", id);
+        return updated;
+    }
 }
