@@ -29,12 +29,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * {@code @WebMvcTest} slice for {@link PatientController} — Story 2.2 read-endpoint contract.
- *
- * <p>Imports the real {@link SecurityConfig} so the HTTP Basic + BCrypt chain is exercised:
- * no credentials → 401, valid {@code medilabo}/{@code medilabo123} → 200. {@link GlobalExceptionHandler}
- * is imported so {@link PatientNotFoundException} maps to a 404 {@code ProblemDetail}. The
- * service is a {@link MockitoBean}, so the slice needs no DataSource and stays DB-free.
+ * Tranche @WebMvcTest pour PatientController — SecurityConfig réelle (chaîne HTTP Basic exercée),
+ * GlobalExceptionHandler importé (404 ProblemDetail), service mocké (DB-free).
  */
 @WebMvcTest(PatientController.class)
 @Import({SecurityConfig.class, GlobalExceptionHandler.class})
@@ -93,9 +89,6 @@ class PatientControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(404))
-                // The handler's ex.getMessage() must actually reach the body — assert the
-                // id propagates into $.detail (id only, never the localized text — epic-2
-                // 404 assertion discipline: status + structure, not French strings).
                 .andExpect(jsonPath("$.detail").value(containsString("999")));
     }
 
@@ -121,8 +114,6 @@ class PatientControllerTest {
         mockMvc.perform(get("/patients").with(httpBasic("not-a-real-user", "medilabo123")))
                 .andExpect(status().isUnauthorized());
     }
-
-    // ---- Story 2.3: write paths (POST / PUT) ----
 
     private static final String VALID_BODY = """
             {"firstName":"Jean","lastName":"Dupont","dateOfBirth":"1990-01-01","gender":"M"}
@@ -153,14 +144,12 @@ class PatientControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(400))
-                // Assert on the errors-map KEYS + status — never the localized French text.
                 .andExpect(jsonPath("$.errors.firstName").exists())
                 .andExpect(jsonPath("$.errors.lastName").exists());
     }
 
     @Test
     void createPatient_allRequiredFieldsInvalid_returns400WithAllKeys() throws Exception {
-        // Empty body → every required field violated.
         mockMvc.perform(post("/patients").with(httpBasic("medilabo", "medilabo123"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))

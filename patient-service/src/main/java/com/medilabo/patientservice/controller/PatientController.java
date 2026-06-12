@@ -17,19 +17,16 @@ public class PatientController {
 
     private final PatientService patientService;
 
-    // GET /patients → liste de tous les patients
     @GetMapping
     public ResponseEntity<List<PatientDTO>> getAllPatients() {
         return ResponseEntity.ok(patientService.getAllPatients());
     }
 
-    // GET /patients/{id} → détail d'un patient
     @GetMapping("/{id}")
     public ResponseEntity<PatientDTO> getPatientById(@PathVariable Long id) {
         return ResponseEntity.ok(patientService.getPatientById(id));
     }
 
-    // POST /patients → créer un patient
     @PostMapping
     public ResponseEntity<PatientDTO> createPatient(
             @Valid @RequestBody PatientDTO dto) {
@@ -37,7 +34,6 @@ public class PatientController {
                 .body(patientService.createPatient(dto));
     }
 
-    // PUT /patients/{id} → mettre à jour un patient
     @PutMapping("/{id}")
     public ResponseEntity<PatientDTO> updatePatient(
             @PathVariable Long id,
