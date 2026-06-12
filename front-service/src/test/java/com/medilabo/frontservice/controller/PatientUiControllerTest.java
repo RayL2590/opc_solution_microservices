@@ -3,6 +3,7 @@ package com.medilabo.frontservice.controller;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -117,6 +118,54 @@ class PatientUiControllerTest {
                         .param("gender", "F"))
                 .andExpect(status().isBadRequest())
                 .andExpect(view().name("patients/new"))
+                .andExpect(model().attributeHasFieldErrors("patientForm", "firstName"));
+    }
+
+    @Test
+    void showEditForm_authenticated_returns200WithPrefilledForm() throws Exception {
+        PatientView existing = new PatientView(1L, "Test", "TestNone",
+                LocalDate.of(1966, 12, 31), "F", "1 Brookside St", "100-222-3333");
+        given(patientGatewayClient.getPatient(1L)).willReturn(existing);
+
+        mockMvc.perform(get("/ui/patients/1/edit").with(httpBasic("medilabo", "medilabo123")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("patients/edit"))
+                .andExpect(model().attributeExists("patientForm"))
+                .andExpect(model().attribute("patientId", 1L));
+    }
+
+    @Test
+    void showEditForm_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(get("/ui/patients/1/edit"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updatePatient_validForm_redirectsToList() throws Exception {
+        PatientView updated = new PatientView(1L, "Test", "TestNone",
+                LocalDate.of(1966, 12, 31), "F", "New Address", null);
+        given(patientGatewayClient.updatePatient(eq(1L), any(PatientForm.class))).willReturn(updated);
+
+        mockMvc.perform(post("/ui/patients/1/edit")
+                        .with(httpBasic("medilabo", "medilabo123"))
+                        .param("firstName", "Test")
+                        .param("lastName", "TestNone")
+                        .param("dateOfBirth", "1966-12-31")
+                        .param("gender", "F"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/ui/patients"));
+    }
+
+    @Test
+    void updatePatient_invalidForm_returns400WithErrors() throws Exception {
+        mockMvc.perform(post("/ui/patients/1/edit")
+                        .with(httpBasic("medilabo", "medilabo123"))
+                        .param("firstName", "")        // blank — @NotBlank
+                        .param("lastName", "TestNone")
+                        .param("dateOfBirth", "1966-12-31")
+                        .param("gender", "F"))
+                .andExpect(status().isBadRequest())
+                .andExpect(view().name("patients/edit"))
                 .andExpect(model().attributeHasFieldErrors("patientForm", "firstName"));
     }
 }
