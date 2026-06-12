@@ -8,19 +8,9 @@ import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
 /**
- * Mutable command object for the add-patient form (Story 5.4, FR-12).
- *
- * <p>Must be a mutable class — Thymeleaf {@code th:field} requires setter methods
- * ({@code setFirstName(…)}, etc.) at binding time. A Java record only exposes read
- * accessors and would break the {@code POST /ui/patients} binding silently.
- *
- * <p>{@code @DateTimeFormat(iso = ISO.DATE)} on {@code dateOfBirth} is mandatory:
- * an HTML {@code <input type="date">} submits the value as {@code yyyy-MM-dd}; without
- * this annotation, Spring MVC's ConversionService cannot coerce that string to a
- * {@link LocalDate} and every submission fails with 400.
- *
- * <p>Validation messages mirror {@code patient-service}'s {@code PatientDTO} constraints
- * so that client-side and server-side rejections carry identical French copy.
+ * Objet de commande mutable (Thymeleaf th:field exige des setters — un record casserait le binding).
+ * @DateTimeFormat(ISO.DATE) obligatoire : input[type=date] soumet yyyy-MM-dd,
+ * sans ça Spring MVC ne peut pas convertir en LocalDate (400 silencieux).
  */
 @Data
 public class PatientForm {

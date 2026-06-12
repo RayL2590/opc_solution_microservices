@@ -16,7 +16,6 @@ public class PatientService {
 
     private final PatientRepository patientRepository;
 
-    // Récupérer tous les patients
     public List<PatientDTO> getAllPatients() {
         return patientRepository.findAll()
                 .stream()
@@ -24,7 +23,6 @@ public class PatientService {
                 .collect(Collectors.toList());
     }
 
-    // Récupérer un patient par son id
     public PatientDTO getPatientById(Long id) {
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new PatientNotFoundException(id));

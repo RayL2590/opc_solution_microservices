@@ -18,16 +18,6 @@ import org.springframework.web.server.ServerWebExchange;
 
 import reactor.core.publisher.Mono;
 
-/**
- * AC-2 oracle: proves the Gateway loads exactly the four configured routes
- * ({@code patients}, {@code notes}, {@code assessments}, {@code front}) and that
- * each route's path predicate matches a representative request path.
- *
- * <p>Boots the full reactive context so the YAML route definitions under
- * {@code spring.cloud.gateway.server.webflux.routes} are resolved by the real
- * {@link RouteLocator} — this is what would catch a wrong property prefix
- * (the routes list would be empty).
- */
 @SpringBootTest
 class RoutesConfigTest {
 
@@ -59,7 +49,6 @@ class RoutesConfigTest {
 		assertThat(matches(routes.get("patients"), "/patients/x")).isTrue();
 		assertThat(matches(routes.get("notes"), "/notes")).isTrue();
 		assertThat(matches(routes.get("assessments"), "/assessments/1")).isTrue();
-		// G-1: the single `front` route carries both `/` and `/ui/**` (including bare `/ui`).
 		assertThat(matches(routes.get("front"), "/")).isTrue();
 		assertThat(matches(routes.get("front"), "/ui")).isTrue();
 		assertThat(matches(routes.get("front"), "/ui/anything")).isTrue();
@@ -69,11 +58,8 @@ class RoutesConfigTest {
 	void routesDoNotLeakAcrossPaths() {
 		Map<String, Route> routes = routesById();
 
-		// front must not swallow the API routes — guards against an over-greedy
-		// predicate (e.g. Path=/**) silently capturing /patients/**.
 		assertThat(matches(routes.get("front"), "/patients/x")).isFalse();
 		assertThat(matches(routes.get("front"), "/notes")).isFalse();
-		// API routes stay disjoint from one another.
 		assertThat(matches(routes.get("patients"), "/notes")).isFalse();
 		assertThat(matches(routes.get("notes"), "/assessments/1")).isFalse();
 	}
@@ -90,9 +76,6 @@ class RoutesConfigTest {
 	void defaultProfileResolvesEachRouteToItsLocalhostTarget() {
 		Map<String, Route> routes = routesById();
 
-		// Backs the AC-3 fallback: the /patients/** route resolves to
-		// http://localhost:8081 even though full authenticated E2E against a
-		// running patient-service is deferred (host port 8081 is occupied).
 		assertThat(routes.get("patients").getUri()).hasToString("http://localhost:8081");
 		assertThat(routes.get("notes").getUri()).hasToString("http://localhost:8082");
 		assertThat(routes.get("assessments").getUri()).hasToString("http://localhost:8083");

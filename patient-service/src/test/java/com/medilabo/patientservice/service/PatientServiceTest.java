@@ -21,12 +21,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 /**
- * Pure-Mockito unit test for {@link PatientService} read methods — Story 2.2.
- *
- * <p>Proves the service-layer translation the {@code @WebMvcTest} slice mocks away:
- * a present row maps to a {@link PatientDTO}, and an absent row ({@code Optional.empty()})
- * raises {@link PatientNotFoundException} (which {@code GlobalExceptionHandler} maps to 404).
- * No Spring context, no DataSource.
+ * Service isolé (Mockito, pas de contexte Spring) — vérifie le mapping entité ↔ DTO
+ * et la levée de PatientNotFoundException.
  */
 @ExtendWith(MockitoExtension.class)
 class PatientServiceTest {
@@ -76,8 +72,6 @@ class PatientServiceTest {
                 .isInstanceOf(PatientNotFoundException.class)
                 .hasMessageContaining("999");
     }
-
-    // ---- Story 2.3: write paths (create / update) ----
 
     private PatientDTO validDto() {
         return PatientDTO.builder()

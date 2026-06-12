@@ -14,17 +14,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase.Replace.NONE;
 
 /**
- * Integration test for {@link PatientRepository} — Story 2.1 oracle for the canonical seed.
- *
- * <p>Boots a {@link DataJpaTest} slice against the real MySQL configured in
- * {@code application.properties} (no H2 substitution) so that {@code schema.sql} +
- * {@code data.sql} run exactly as in production. Requires the {@code SPRING_DATASOURCE_PASSWORD}
- * environment variable to authenticate against local MySQL (see project memory
- * {@code patient-service-db-secret}).
- *
- * <p>Asserts the NFR-D1 / NFR-D2 contract: a fresh boot yields exactly the four canonical
- * patients (TestNone, TestBorderline, TestInDanger, TestEarlyOnset) with ids 1..4, in that
- * order — Epic 4 Risk Assessment fixtures depend on this mapping.
+ * Intégration @DataJpaTest contre MySQL réel (AutoConfigureTestDatabase.Replace.NONE) —
+ * vérifie les 4 patients canoniques (ids 1..4). Requiert SPRING_DATASOURCE_PASSWORD.
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = NONE)

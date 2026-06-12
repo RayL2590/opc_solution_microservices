@@ -28,12 +28,8 @@ import com.medilabo.frontservice.dto.PatientForm;
 import com.medilabo.frontservice.dto.PatientView;
 
 /**
- * {@code @WebMvcTest} slice for {@link PatientUiController} (Stories 5.2 & 5.4, FR-10 & FR-12).
- *
- * <p>The real {@link SecurityConfig} is imported so the HTTP Basic chain is exercised.
- * {@link PatientGatewayClient} is mocked via {@code @MockitoBean} — no real HTTP call to the
- * Gateway is made. CSRF is disabled in {@link SecurityConfig}, so POST tests do not need
- * {@code .with(csrf())}. front-service is DB-free; no datasource is needed.
+ * Tranche @WebMvcTest pour PatientUiController — SecurityConfig réelle (HTTP Basic exercé),
+ * PatientGatewayClient mocké. CSRF désactivé dans SecurityConfig, les POST n'ont pas besoin de csrf().
  */
 @WebMvcTest(PatientUiController.class)
 @Import(SecurityConfig.class)
@@ -44,8 +40,6 @@ class PatientUiControllerTest {
 
     @MockitoBean
     private PatientGatewayClient patientGatewayClient;
-
-    // ── Story 5.2: Patient List ────────────────────────────────────────────────
 
     @Test
     void listPatients_authenticated_returns200WithPatientsList() throws Exception {
@@ -67,8 +61,6 @@ class PatientUiControllerTest {
         mockMvc.perform(get("/ui/patients"))
                 .andExpect(status().isUnauthorized());
     }
-
-    // ── Story 5.4: Add Patient Form ───────────────────────────────────────────
 
     @Test
     void showNewPatientForm_authenticated_returns200WithEmptyForm() throws Exception {
@@ -102,9 +94,7 @@ class PatientUiControllerTest {
 
     @Test
     void createPatient_gatewayReturnsNull_throwsIllegalState() {
-        // Verifies the null-guard: no NPE when gateway returns null, instead a controlled exception.
-        // @WebMvcTest has no global error handler, so MockMvc rethrows the IllegalStateException
-        // directly (Spring 6+ removed NestedServletException wrapper).
+        // @WebMvcTest sans handler global : MockMvc rethrow l'IllegalStateException directement (Spring 6+ retire NestedServletException).
         given(patientGatewayClient.createPatient(any(PatientForm.class))).willReturn(null);
 
         assertThrows(Exception.class, () ->

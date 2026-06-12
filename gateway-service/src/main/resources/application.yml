@@ -5,8 +5,6 @@ spring:
     gateway:
       server:
         webflux:
-          # Spring Cloud Gateway 2025.1.1 (server-webflux 5.0.x) route prefix.
-          # NOT the legacy `spring.cloud.gateway.routes` — see RoutesConfigTest.
           routes:
             - id: patients
               uri: http://localhost:8081
@@ -20,23 +18,13 @@ spring:
               uri: http://localhost:8083
               predicates:
                 - Path=/assessments/**
-            # G-1: single route forwarding both the root and the /ui/** UI tree
-            # to front-service (the `/`→/ui/patients redirect lives in front-service).
             - id: front
               uri: http://localhost:8084
               predicates:
                 - Path=/,/ui/**
-
 server:
   port: 8080
 
-# In-memory user store credentials (Story 1.4, FR-15/FR-16).
-# Overridden at runtime by the MEDILABO_* environment variables (injected via the
-# compose env_file in Epic 6). The inline defaults below let the gateway boot and the
-# tests run with NO external env: 'medilabo' / 'medilabo123'.
-# password-bcrypt is a REAL BCrypt hash (NFR-S3: no plaintext secret in a tracked file);
-# the raw demo password 'medilabo123' is recorded in the story's Dev Agent Record.
-# Single-quoted because the hash contains '$'.
 medilabo:
   user: ${MEDILABO_USER:medilabo}
   password-bcrypt: '${MEDILABO_PASSWORD_BCRYPT:$2a$10$GzMGhp/NWTujVhv4VyYh9eM.aia95IXMsse7Yl6jUC3DC42/VIinq}'

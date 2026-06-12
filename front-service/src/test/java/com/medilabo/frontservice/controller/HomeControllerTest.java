@@ -14,13 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.medilabo.frontservice.config.SecurityConfig;
 
 /**
- * {@code @WebMvcTest} slice for {@link HomeController} (Story 5.1).
- *
- * <p>Imports the real {@link SecurityConfig} so the HTTP Basic chain is exercised: an
- * unauthenticated request gets the Basic challenge (401), and an authenticated request
- * ({@code medilabo}/{@code medilabo123}, resolved from the {@code application.properties} bridge
- * defaults) gets the {@code / → /ui/patients} redirect (FR-10, G-1). The slice needs no
- * DataSource — front-service is DB-free.
+ * Tranche @WebMvcTest pour HomeController — SecurityConfig réelle (HTTP Basic). Front DB-free.
  */
 @WebMvcTest(HomeController.class)
 @Import(SecurityConfig.class)
