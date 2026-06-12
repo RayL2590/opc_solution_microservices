@@ -59,6 +59,7 @@ public class PatientUiController {
                     "Gateway returned a null patient or null id after creation — cannot redirect");
         }
         log.debug("Patient created, id={}", created.id());
-        return "redirect:/ui/patients/" + created.id();
+        // Retour à la liste (la fiche détail /ui/patients/{id} est hors Sprint 1 — story 5.3).
+        return "redirect:/ui/patients";
     }
 }
