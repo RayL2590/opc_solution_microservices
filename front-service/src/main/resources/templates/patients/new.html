@@ -23,7 +23,12 @@
         <span th:if="${#fields.hasErrors('dateOfBirth')}" th:errors="*{dateOfBirth}" style="color:red"></span>
 
         <label for="gender">Genre *</label>
-        <input type="text" id="gender" th:field="*{gender}" placeholder="M ou F">
+        <select id="gender" th:field="*{gender}">
+            <option value="">-- Choisir --</option>
+            <option value="M">M</option>
+            <option value="F">F</option>
+            <option value="U">U (inconnu)</option>
+        </select>
         <span th:if="${#fields.hasErrors('gender')}" th:errors="*{gender}" style="color:red"></span>
 
         <label for="address">Adresse</label>

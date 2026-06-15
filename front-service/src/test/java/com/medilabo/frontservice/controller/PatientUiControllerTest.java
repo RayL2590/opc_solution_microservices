@@ -122,6 +122,32 @@ class PatientUiControllerTest {
     }
 
     @Test
+    void createPatient_invalidGender_returns400WithErrors() throws Exception {
+        mockMvc.perform(post("/ui/patients")
+                        .with(httpBasic("medilabo", "medilabo123"))
+                        .param("firstName", "Alice")
+                        .param("lastName", "Martin")
+                        .param("dateOfBirth", "1990-03-20")
+                        .param("gender", "X"))        // hors {M,F,U}
+                .andExpect(status().isBadRequest())
+                .andExpect(view().name("patients/new"))
+                .andExpect(model().attributeHasFieldErrors("patientForm", "gender"));
+    }
+
+    @Test
+    void createPatient_futureBirthDate_returns400WithErrors() throws Exception {
+        mockMvc.perform(post("/ui/patients")
+                        .with(httpBasic("medilabo", "medilabo123"))
+                        .param("firstName", "Alice")
+                        .param("lastName", "Martin")
+                        .param("dateOfBirth", "2999-01-01")   // futur
+                        .param("gender", "F"))
+                .andExpect(status().isBadRequest())
+                .andExpect(view().name("patients/new"))
+                .andExpect(model().attributeHasFieldErrors("patientForm", "dateOfBirth"));
+    }
+
+    @Test
     void showEditForm_authenticated_returns200WithPrefilledForm() throws Exception {
         PatientView existing = new PatientView(1L, "Test", "TestNone",
                 LocalDate.of(1966, 12, 31), "F", "1 Brookside St", "100-222-3333");
