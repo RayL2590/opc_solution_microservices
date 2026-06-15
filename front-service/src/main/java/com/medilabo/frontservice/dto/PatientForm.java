@@ -2,8 +2,10 @@ package com.medilabo.frontservice.dto;
 
 import java.time.LocalDate;
 
+import com.medilabo.frontservice.validation.BirthDate;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -22,10 +24,12 @@ public class PatientForm {
     private String lastName;
 
     @NotNull(message = "La date de naissance est obligatoire")
+    @BirthDate
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate dateOfBirth;
 
     @NotBlank(message = "Le genre est obligatoire")
+    @Pattern(regexp = "^[MFU]$", message = "Le genre doit être M, F ou U")
     private String gender;
 
     private String address;

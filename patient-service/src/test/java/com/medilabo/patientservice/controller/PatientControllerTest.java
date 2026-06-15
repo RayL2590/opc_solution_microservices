@@ -161,6 +161,46 @@ class PatientControllerTest {
     }
 
     @Test
+    void createPatient_invalidGender_returns400WithGenderKey() throws Exception {
+        // Genre hors {M,F,U} → rejeté par @Pattern.
+        mockMvc.perform(post("/patients").with(httpBasic("medilabo", "medilabo123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"Jean\",\"lastName\":\"Dupont\",\"dateOfBirth\":\"1990-01-01\",\"gender\":\"X\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.gender").exists());
+    }
+
+    @Test
+    void createPatient_futureBirthDate_returns400WithDateKey() throws Exception {
+        // Date dans le futur → rejetée par @BirthDate.
+        mockMvc.perform(post("/patients").with(httpBasic("medilabo", "medilabo123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"Jean\",\"lastName\":\"Dupont\",\"dateOfBirth\":\"2999-01-01\",\"gender\":\"M\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.dateOfBirth").exists());
+    }
+
+    @Test
+    void createPatient_olderThan160Years_returns400WithDateKey() throws Exception {
+        // Âge > 160 ans → rejeté par @BirthDate.
+        mockMvc.perform(post("/patients").with(httpBasic("medilabo", "medilabo123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"Jean\",\"lastName\":\"Dupont\",\"dateOfBirth\":\"1800-01-01\",\"gender\":\"M\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.dateOfBirth").exists());
+    }
+
+    @Test
+    void createPatient_genderU_isAccepted() throws Exception {
+        // U (inconnu) est une valeur valide.
+        given(patientService.createPatient(any(PatientDTO.class))).willReturn(samplePatient());
+        mockMvc.perform(post("/patients").with(httpBasic("medilabo", "medilabo123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"Jean\",\"lastName\":\"Dupont\",\"dateOfBirth\":\"1990-01-01\",\"gender\":\"U\"}"))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
     void createPatient_withoutCredentials_returns401() throws Exception {
         mockMvc.perform(post("/patients")
                         .contentType(MediaType.APPLICATION_JSON)
