@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Nouveau patient')}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: header}"></header>
+
+<main class="container">
+    <h1>Nouveau patient</h1>
+
+    <form th:action="@{/ui/patients}" method="post" th:object="${patientForm}">
+
+        <label for="lastName">Nom *</label>
+        <input type="text" id="lastName" th:field="*{lastName}" placeholder="Nom de famille">
+        <span th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}" style="color:red"></span>
+
+        <label for="firstName">Prénom *</label>
+        <input type="text" id="firstName" th:field="*{firstName}" placeholder="Prénom">
+        <span th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}" style="color:red"></span>
+
+        <label for="dateOfBirth">Date de naissance *</label>
+        <input type="date" id="dateOfBirth" th:field="*{dateOfBirth}">
+        <span th:if="${#fields.hasErrors('dateOfBirth')}" th:errors="*{dateOfBirth}" style="color:red"></span>
+
+        <label for="gender">Genre *</label>
+        <select id="gender" th:field="*{gender}">
+            <option value="">-- Choisir --</option>
+            <option value="M">M</option>
+            <option value="F">F</option>
+            <option value="U">U (inconnu)</option>
+        </select>
+        <span th:if="${#fields.hasErrors('gender')}" th:errors="*{gender}" style="color:red"></span>
+
+        <label for="address">Adresse</label>
+        <input type="text" id="address" th:field="*{address}" placeholder="Adresse (optionnel)">
+
+        <label for="phone">Téléphone</label>
+        <input type="text" id="phone" th:field="*{phone}" placeholder="Téléphone (optionnel)">
+
+        <button type="submit">Enregistrer</button>
+        <a th:href="@{/ui/patients}">Annuler</a>
+
+    </form>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

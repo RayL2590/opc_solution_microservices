@@ -1,9 +1,9 @@
 package com.medilabo.patientservice.service;
 
 import com.medilabo.patientservice.dto.PatientDTO;
+import com.medilabo.patientservice.exception.PatientNotFoundException;
 import com.medilabo.patientservice.model.Patient;
 import com.medilabo.patientservice.repository.PatientRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +16,6 @@ public class PatientService {
 
     private final PatientRepository patientRepository;
 
-    // Récupérer tous les patients
     public List<PatientDTO> getAllPatients() {
         return patientRepository.findAll()
                 .stream()
@@ -24,11 +23,9 @@ public class PatientService {
                 .collect(Collectors.toList());
     }
 
-    // Récupérer un patient par son id
-    public PatientDTO getPatientById(Integer id) {
+    public PatientDTO getPatientById(Long id) {
         Patient patient = patientRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Patient introuvable avec l'id : " + id));
+                .orElseThrow(() -> new PatientNotFoundException(id));
         return toDTO(patient);
     }
 
@@ -37,10 +34,9 @@ public class PatientService {
         return toDTO(patientRepository.save(patient));
     }
 
-    public PatientDTO updatePatient(Integer id, PatientDTO dto) {
+    public PatientDTO updatePatient(Long id, PatientDTO dto) {
         Patient existing = patientRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Patient introuvable avec l'id : " + id));
+                .orElseThrow(() -> new PatientNotFoundException(id));
 
         existing.setFirstName(dto.getFirstName());
         existing.setLastName(dto.getLastName());
