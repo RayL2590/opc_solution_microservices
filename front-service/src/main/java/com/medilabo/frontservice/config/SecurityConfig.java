@@ -1,4 +1,4 @@
-package com.medilabo.patientservice.config;
+package com.medilabo.frontservice.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -14,10 +14,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Sécurité servlet de front-service — même contrat que patient-service (HTTP Basic, CSRF off, STATELESS).
+ * HTTP Basic délibéré : stateless + le navigateur ré-envoie Authorization à chaque requête,
+ * ce qui permet à CredentialForwardingInitializer de le forwarder au Gateway (D-SEC-4).
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    /** BCrypt encoder used only to match the raw login password against the stored hash. */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -37,7 +43,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // REST API, no HTML form
+            .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth

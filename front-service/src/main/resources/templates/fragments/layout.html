@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<!-- Shell UI partagé — Thymeleaf côté serveur uniquement (pas de SPA, pas de framework CSS). -->
+
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} ?: 'Medilabo'">Medilabo</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+
+<header th:fragment="header" class="app-header">
+    <div class="app-header__brand">
+        <a th:href="@{/ui/patients}">Medilabo</a>
+    </div>
+    <nav class="app-nav">
+        <a th:href="@{/ui/patients}">Patients</a>
+    </nav>
+    <div class="app-header__user" sec:authorize="isAuthenticated()">
+        Connecté : <span sec:authentication="name">user</span>
+    </div>
+</header>
+
+<footer th:fragment="footer" class="app-footer">
+    <small>Medilabo &mdash; interface clinique</small>
+</footer>
+
+</body>
+</html>

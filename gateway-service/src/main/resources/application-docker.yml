@@ -1,12 +1,3 @@
-# Docker profile: overrides the route URIs to use compose service names.
-#
-# Spring does NOT merge YAML list elements across profiles — a route list in a
-# profile-specific file REPLACES the default list rather than patching it. So
-# this file repeats the FULL four-route list (only the URIs differ from
-# application.yml; IDs and predicates are identical).
-#
-# Activation (SPRING_PROFILES_ACTIVE=docker) is wired by compose in Story 6.2;
-# this file only needs to exist and be valid.
 spring:
   cloud:
     gateway:
