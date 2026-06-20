@@ -1,10 +1,12 @@
 package com.medilabo.notesservice.repository;
 
+import com.medilabo.notesservice.config.MongoConfig;
 import com.medilabo.notesservice.model.Note;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.mongodb.test.autoconfigure.DataMongoTest;
+import org.springframework.context.annotation.Import;
 
 import java.util.List;
 
@@ -12,7 +14,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 // @DataMongoTest tape un Mongo réel localhost:27017 — Mongo doit être démarré avant mvn test.
 // Même brittleness que @DataJpaTest sur patient-service ; déférée à Epic 6 (CI / isolation).
+// @EnableMongoAuditing déplacé dans MongoConfig (pour que @WebMvcTest ne charge pas le contexte Mongo).
 @DataMongoTest
+@Import(MongoConfig.class)
 class NoteRepositoryTest {
 
     @Autowired
