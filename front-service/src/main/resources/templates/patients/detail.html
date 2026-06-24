@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Fiche patient')}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: header}"></header>
+
+<main class="container">
+    <h1 th:text="${patient.lastName} + ' ' + ${patient.firstName}"></h1>
+
+    <section>
+        <h2>Données démographiques</h2>
+        <p><strong>Date de naissance :</strong> <span th:text="${patient.dateOfBirth}"></span></p>
+        <p><strong>Genre :</strong> <span th:text="${patient.gender}"></span></p>
+        <p th:if="${patient.address}"><strong>Adresse :</strong> <span th:text="${patient.address}"></span></p>
+        <p th:if="${patient.phone}"><strong>Téléphone :</strong> <span th:text="${patient.phone}"></span></p>
+        <p><a th:href="@{/ui/patients/{id}/edit(id=${patient.id})}">Modifier les informations</a></p>
+    </section>
+
+    <section>
+        <h2>Historique des notes</h2>
+        <ul>
+            <li th:each="n : ${notes}">
+                <p th:text="${n.createdAt}"></p>
+                <p th:text="${n.note}"></p>
+            </li>
+        </ul>
+        <p th:if="${#lists.isEmpty(notes)}">Aucune note enregistrée pour ce patient.</p>
+    </section>
+
+    <section>
+        <h2>Ajouter une note</h2>
+        <form th:action="@{/ui/patients/{id}/notes(id=${patient.id})}" method="post" th:object="${noteForm}">
+            <label for="note">Note *</label>
+            <textarea id="note" th:field="*{note}" rows="4"></textarea>
+            <span th:if="${#fields.hasErrors('note')}" th:errors="*{note}" style="color:red"></span>
+            <button type="submit">Ajouter</button>
+        </form>
+    </section>
+
+    <p><a th:href="@{/ui/patients}">Retour à la liste</a></p>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>
