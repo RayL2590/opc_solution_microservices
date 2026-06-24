@@ -14,12 +14,15 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import com.medilabo.frontservice.client.NotesGatewayClient;
 import com.medilabo.frontservice.client.PatientGatewayClient;
+import com.medilabo.frontservice.dto.NoteForm;
+import com.medilabo.frontservice.dto.NoteView;
 import com.medilabo.frontservice.dto.PatientForm;
 import com.medilabo.frontservice.dto.PatientView;
 
 /**
- * Contrôleur UI patients (liste + formulaire d'ajout, PRG).
+ * Contrôleur UI patients (liste, formulaire d'ajout/édition, fiche détail + notes, PRG).
  * PII : seuls les comptes et ids sont loggés.
  */
 @Controller
@@ -28,6 +31,7 @@ import com.medilabo.frontservice.dto.PatientView;
 public class PatientUiController {
 
     private final PatientGatewayClient patientGatewayClient;
+    private final NotesGatewayClient notesGatewayClient;
 
     @GetMapping("/ui/patients")
     public String listPatients(Model model) {
@@ -60,12 +64,11 @@ public class PatientUiController {
                     "Gateway returned a null patient or null id after creation — cannot redirect");
         }
         log.debug("Patient created, id={}", created.id());
-        // Retour à la liste (la fiche détail /ui/patients/{id} est hors Sprint 1 — story 5.3).
         return "redirect:/ui/patients";
     }
 
     // Édition d'un patient existant. URL en /{id}/edit pour ne pas entrer en collision avec
-    // la future fiche détail /ui/patients/{id} (story 5.3).
+    // la fiche détail /ui/patients/{id}.
     @GetMapping("/ui/patients/{id}/edit")
     public String showEditPatientForm(@PathVariable Long id, Model model) {
         PatientView patient = patientGatewayClient.getPatient(id);
@@ -91,6 +94,41 @@ public class PatientUiController {
         patientGatewayClient.updatePatient(id, patientForm);
         log.debug("Patient updated, id={}", id);
         return "redirect:/ui/patients";
+    }
+
+    @GetMapping("/ui/patients/{id}")
+    public String showPatientDetail(@PathVariable Long id, Model model) {
+        PatientView patient = patientGatewayClient.getPatient(id);
+        List<NoteView> notes = notesGatewayClient.getNotesByPatId(id);
+        model.addAttribute("patient", patient);
+        model.addAttribute("notes", notes);
+        model.addAttribute("noteForm", new NoteForm());
+        log.debug("Rendering patient detail, id={}, noteCount={}", id, notes.size());
+        return "patients/detail";
+    }
+
+    @PostMapping("/ui/patients/{id}/notes")
+    public String addNote(
+            @PathVariable Long id,
+            @Valid @ModelAttribute NoteForm noteForm,
+            BindingResult bindingResult,
+            Model model,
+            HttpServletResponse response) {
+
+        if (bindingResult.hasErrors()) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            PatientView patient = patientGatewayClient.getPatient(id);
+            model.addAttribute("patient", patient);
+            model.addAttribute("notes", notesGatewayClient.getNotesByPatId(id));
+            return "patients/detail";
+        }
+
+        PatientView patient = patientGatewayClient.getPatient(id);
+        noteForm.setPatId(id.intValue());
+        noteForm.setPatient(patient.lastName());
+        notesGatewayClient.addNote(noteForm);
+        log.debug("Note added, patId={}", id);
+        return "redirect:/ui/patients/" + id;
     }
 
     /** Pré-remplit le formulaire d'édition depuis le patient renvoyé par le Gateway. */
