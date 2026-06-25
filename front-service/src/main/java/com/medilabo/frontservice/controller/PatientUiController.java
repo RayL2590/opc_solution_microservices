@@ -22,8 +22,8 @@ import com.medilabo.frontservice.dto.PatientForm;
 import com.medilabo.frontservice.dto.PatientView;
 
 /**
- * Contrôleur UI patients (liste, formulaire d'ajout/édition, fiche détail + notes, PRG).
- * PII : seuls les comptes et ids sont loggés.
+ * Contrôleur UI patients (liste, formulaire d'ajout/édition, fiche détail + notes, Post-Redirect-Get).
+ * PII (Personally Identifiable Information) : seuls les comptes et ids sont loggés.
  */
 @Controller
 @Slf4j
@@ -98,12 +98,8 @@ public class PatientUiController {
 
     @GetMapping("/ui/patients/{id}")
     public String showPatientDetail(@PathVariable Long id, Model model) {
-        PatientView patient = patientGatewayClient.getPatient(id);
-        List<NoteView> notes = notesGatewayClient.getNotesByPatId(id);
-        model.addAttribute("patient", patient);
-        model.addAttribute("notes", notes);
+        loadPatientDetailModel(id, model);
         model.addAttribute("noteForm", new NoteForm());
-        log.debug("Rendering patient detail, id={}, noteCount={}", id, notes.size());
         return "patients/detail";
     }
 
@@ -117,21 +113,27 @@ public class PatientUiController {
 
         if (bindingResult.hasErrors()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            PatientView patient = patientGatewayClient.getPatient(id);
-            model.addAttribute("patient", patient);
-            model.addAttribute("notes", notesGatewayClient.getNotesByPatId(id));
+            loadPatientDetailModel(id, model);
             return "patients/detail";
         }
 
         PatientView patient = patientGatewayClient.getPatient(id);
-        noteForm.setPatId(id.intValue());
+        noteForm.setPatId(Math.toIntExact(id));
         noteForm.setPatient(patient.lastName());
         notesGatewayClient.addNote(noteForm);
         log.debug("Note added, patId={}", id);
         return "redirect:/ui/patients/" + id;
     }
 
-    /** Pré-remplit le formulaire d'édition depuis le patient renvoyé par le Gateway. */
+    /** Charge patient + notes dans le modèle pour la fiche détail (GET initial et re-rendu après erreur de validation). */
+    private void loadPatientDetailModel(Long id, Model model) {
+        PatientView patient = patientGatewayClient.getPatient(id);
+        List<NoteView> notes = notesGatewayClient.getNotesByPatId(id);
+        model.addAttribute("patient", patient);
+        model.addAttribute("notes", notes);
+        log.debug("Rendering patient detail, id={}, noteCount={}", id, notes.size());
+    }
+
     private PatientForm toForm(PatientView patient) {
         PatientForm form = new PatientForm();
         form.setFirstName(patient.firstName());

@@ -10,9 +10,9 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Attache le header Authorization entrant à chaque appel sortant vers le Gateway (D-SEC-4).
+ * Attache le header Authorization entrant à chaque appel sortant vers le Gateway.
  * Deux garde-fous : pas de contexte requête → rien ; header absent → rien.
- * Valeur jamais loggée (NFR : pas de credential en logs).
+ * Valeur jamais loggée (pas de credential en logs).
  */
 @Slf4j
 public class CredentialForwardingInitializer implements ClientHttpRequestInitializer {

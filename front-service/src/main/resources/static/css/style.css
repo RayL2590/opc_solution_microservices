@@ -1,10 +1,3 @@
-/*
- * Single legibility-only stylesheet (Story 5.1).
- * No CSS framework, no CDN @import, no JS — a deliberately spartan, readable shell
- * (brief: "l'interface doit être la plus sobre possible"; epics.md §exclusions v1).
- * Rules cover typography, spacing, and table/nav readability only — not a design system.
- */
-
 :root {
     --color-text: #1f2933;
     --color-muted: #616e7c;
@@ -81,7 +74,6 @@ main {
     color: var(--color-muted);
 }
 
-/* Tables (used by the patient list from 5.2 onward) */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -99,7 +91,6 @@ th {
     font-weight: 600;
 }
 
-/* Forms (used by the add-patient form from 5.4 onward) */
 label {
     display: block;
     margin: 0.75rem 0 0.25rem;
