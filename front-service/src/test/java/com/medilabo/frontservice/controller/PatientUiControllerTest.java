@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -23,14 +24,16 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.medilabo.frontservice.client.NotesGatewayClient;
 import com.medilabo.frontservice.client.PatientGatewayClient;
 import com.medilabo.frontservice.config.SecurityConfig;
+import com.medilabo.frontservice.dto.NoteView;
 import com.medilabo.frontservice.dto.PatientForm;
 import com.medilabo.frontservice.dto.PatientView;
 
 /**
  * Tranche @WebMvcTest pour PatientUiController — SecurityConfig réelle (HTTP Basic exercé),
- * PatientGatewayClient mocké. CSRF désactivé dans SecurityConfig, les POST n'ont pas besoin de csrf().
+ * PatientGatewayClient et NotesGatewayClient mockés. CSRF désactivé dans SecurityConfig, les POST n'ont pas besoin de csrf().
  */
 @WebMvcTest(PatientUiController.class)
 @Import(SecurityConfig.class)
@@ -41,6 +44,9 @@ class PatientUiControllerTest {
 
     @MockitoBean
     private PatientGatewayClient patientGatewayClient;
+
+    @MockitoBean
+    private NotesGatewayClient notesGatewayClient;
 
     @Test
     void listPatients_authenticated_returns200WithPatientsList() throws Exception {
@@ -193,5 +199,77 @@ class PatientUiControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(view().name("patients/edit"))
                 .andExpect(model().attributeHasFieldErrors("patientForm", "firstName"));
+    }
+
+    @Test
+    void showPatientDetail_authenticated_returns200WithPatientAndNotes() throws Exception {
+        PatientView patient = new PatientView(1L, "Test", "TestNone",
+                LocalDate.of(1966, 12, 31), "F", "1 Brookside St", "100-222-3333");
+        NoteView note = new NoteView("abc123", 1, "TestNone", "Observation clinique.", Instant.now());
+        given(patientGatewayClient.getPatient(1L)).willReturn(patient);
+        given(notesGatewayClient.getNotesByPatId(1L)).willReturn(List.of(note));
+
+        mockMvc.perform(get("/ui/patients/1").with(httpBasic("medilabo", "medilabo123")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("patients/detail"))
+                .andExpect(model().attributeExists("patient"))
+                .andExpect(model().attribute("notes", hasSize(1)))
+                .andExpect(model().attributeExists("noteForm"));
+    }
+
+    @Test
+    void showPatientDetail_noNotes_returns200WithEmptyNotesList() throws Exception {
+        PatientView patient = new PatientView(1L, "Test", "TestNone",
+                LocalDate.of(1966, 12, 31), "F", null, null);
+        given(patientGatewayClient.getPatient(1L)).willReturn(patient);
+        given(notesGatewayClient.getNotesByPatId(1L)).willReturn(List.of());
+
+        mockMvc.perform(get("/ui/patients/1").with(httpBasic("medilabo", "medilabo123")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("patients/detail"))
+                .andExpect(model().attribute("notes", hasSize(0)));
+    }
+
+    @Test
+    void showPatientDetail_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(get("/ui/patients/1"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void addNote_validForm_redirectsToDetailPage() throws Exception {
+        PatientView patient = new PatientView(1L, "Test", "TestNone",
+                LocalDate.of(1966, 12, 31), "F", null, null);
+        given(patientGatewayClient.getPatient(1L)).willReturn(patient);
+        given(notesGatewayClient.addNote(any())).willReturn(
+                new NoteView("abc123", 1, "TestNone", "Observation clinique.", Instant.now()));
+
+        mockMvc.perform(post("/ui/patients/1/notes")
+                        .with(httpBasic("medilabo", "medilabo123"))
+                        .param("note", "Observation clinique."))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/ui/patients/1"));
+    }
+
+    @Test
+    void addNote_blankNote_returns400WithFieldError() throws Exception {
+        PatientView patient = new PatientView(1L, "Test", "TestNone",
+                LocalDate.of(1966, 12, 31), "F", null, null);
+        given(patientGatewayClient.getPatient(1L)).willReturn(patient);
+        given(notesGatewayClient.getNotesByPatId(1L)).willReturn(List.of());
+
+        mockMvc.perform(post("/ui/patients/1/notes")
+                        .with(httpBasic("medilabo", "medilabo123"))
+                        .param("note", ""))
+                .andExpect(status().isBadRequest())
+                .andExpect(view().name("patients/detail"))
+                .andExpect(model().attributeHasFieldErrors("noteForm", "note"));
+    }
+
+    @Test
+    void addNote_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(post("/ui/patients/1/notes")
+                        .param("note", "Observation clinique."))
+                .andExpect(status().isUnauthorized());
     }
 }

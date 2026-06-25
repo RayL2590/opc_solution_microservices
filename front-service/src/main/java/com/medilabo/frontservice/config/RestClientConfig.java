@@ -9,7 +9,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 /**
- * Bean RestClient vers le Gateway (D-SEC-4).
+ * Bean RestClient vers le Gateway.
  * Aucun appel réseau à la construction — le contexte démarre même Gateway arrêté (front DB-free).
  */
 @Configuration
