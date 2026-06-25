@@ -23,6 +23,7 @@
                 <td th:text="${p.firstName}"></td>
                 <td th:text="${p.dateOfBirth}"></td>
                 <td>
+                    <a th:href="@{/ui/patients/{id}(id=${p.id})}">Voir</a>
                     <a th:href="@{/ui/patients/{id}/edit(id=${p.id})}">Modifier</a>
                 </td>
             </tr>

@@ -17,13 +17,12 @@ import org.springframework.security.web.SecurityFilterChain;
 /**
  * Sécurité servlet de front-service — même contrat que patient-service (HTTP Basic, CSRF off, STATELESS).
  * HTTP Basic délibéré : stateless + le navigateur ré-envoie Authorization à chaque requête,
- * ce qui permet à CredentialForwardingInitializer de le forwarder au Gateway (D-SEC-4).
+ * ce qui permet à CredentialForwardingInitializer de le forwarder au Gateway.
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    /** BCrypt encoder used only to match the raw login password against the stored hash. */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
