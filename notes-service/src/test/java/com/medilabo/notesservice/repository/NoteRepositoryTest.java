@@ -30,12 +30,12 @@ class NoteRepositoryTest {
     @Test
     void findByPatId_returnsTwoNotes_orderedByCreatedAtDesc() throws InterruptedException {
         // @CreatedDate pose le timestamp réel à l'insert — on insère les deux notes
-        // séquentiellement avec 10 ms d'écart pour garantir un ordre observable.
+        // séquentiellement avec 50 ms d'écart pour garantir un ordre observable.
         Note older = Note.builder().patId(2).patient("TestBorderline")
                 .note("première note").build();
         noteRepository.save(older);
 
-        Thread.sleep(10);
+        Thread.sleep(50);
 
         Note newer = Note.builder().patId(2).patient("TestBorderline")
                 .note("deuxième note").build();
