@@ -3,6 +3,7 @@ package com.medilabo.notesservice.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -10,7 +11,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -19,9 +22,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new LinkedHashMap<>();
+        Map<String, List<String>> errors = new LinkedHashMap<>();
         for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
-            errors.putIfAbsent(fieldError.getField(), fieldError.getDefaultMessage());
+            errors.computeIfAbsent(fieldError.getField(), f -> new ArrayList<>())
+                    .add(fieldError.getDefaultMessage());
         }
         log.warn("Validation failed on fields: {}", errors.keySet());
 
@@ -48,6 +52,13 @@ public class GlobalExceptionHandler {
         log.warn("Type mismatch on parameter: {}", ex.getName());
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
                 "Paramètre invalide : " + ex.getName());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleUnreadableBody(HttpMessageNotReadableException ex) {
+        log.warn("Malformed request body");
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "Corps de requête illisible ou malformé");
     }
 
     @ExceptionHandler(Exception.class)

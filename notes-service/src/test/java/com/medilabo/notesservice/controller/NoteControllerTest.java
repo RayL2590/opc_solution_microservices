@@ -64,7 +64,7 @@ class NoteControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"note\":\"Observation clinique.\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.patId").value(
+                .andExpect(jsonPath("$.errors.patId[0]").value(
                         containsString("obligatoire")));
     }
 
@@ -75,7 +75,7 @@ class NoteControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"patId\":1,\"note\":\"\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.note").value(
+                .andExpect(jsonPath("$.errors.note[0]").value(
                         containsString("vide")));
     }
 
