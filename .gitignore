@@ -33,3 +33,7 @@ replay_pid*
 .claude/
 _bmad/
 _bmad-output/
+.agents/
+
+# Local notes and documentation (not part of the project deliverable)
+docs/
