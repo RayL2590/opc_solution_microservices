@@ -21,7 +21,10 @@ spring:
             - id: front
               uri: http://localhost:8084
               predicates:
-                - Path=/,/ui/**
+                - Path=/,/ui/**,/css/**,/js/**,/favicon.ico
+              filters:
+                - AddRequestHeader=X-Forwarded-Host, localhost:8080
+                - AddRequestHeader=X-Forwarded-Proto, http
 server:
   port: 8080
 

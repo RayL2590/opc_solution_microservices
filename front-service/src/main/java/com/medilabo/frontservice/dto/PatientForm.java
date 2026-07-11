@@ -6,6 +6,7 @@ import com.medilabo.frontservice.validation.BirthDate;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -32,7 +33,19 @@ public class PatientForm {
     @Pattern(regexp = "^[MFU]$", message = "Le genre doit être M, F ou U")
     private String gender;
 
+    @Size(max = 255, message = "L'adresse ne doit pas dépasser 255 caractères")
     private String address;
 
+    /**
+     * Pays de l'indicatif choisi dans le formulaire. Sert à normaliser {@link #phone}
+     * vers E.164 (voir {@code PhoneNormalizer}). Défaut FR pour un formulaire vierge.
+     */
+    private PhoneCountry phoneCountry = PhoneCountry.FR;
+
+    /**
+     * Téléphone tel que saisi (format libre). Normalisé en E.164 par le contrôleur
+     * avant l'envoi vers patient-service ; jamais borné par @Pattern ici car la
+     * normalisation tolère espaces, points, +, 00, etc.
+     */
     private String phone;
 }

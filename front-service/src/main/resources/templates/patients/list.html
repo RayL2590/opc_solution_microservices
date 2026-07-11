@@ -6,30 +6,37 @@
 <header th:replace="~{fragments/layout :: header}"></header>
 
 <main class="container">
-    <h1>Liste des patients</h1>
-    <p><a th:href="@{/ui/patients/new}">+ Ajouter un patient</a></p>
-    <table>
-        <thead>
-            <tr>
-                <th>Nom</th>
-                <th>Prénom</th>
-                <th>Date de naissance</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="p : ${patients}">
-                <td th:text="${p.lastName}"></td>
-                <td th:text="${p.firstName}"></td>
-                <td th:text="${p.dateOfBirth}"></td>
-                <td>
-                    <a th:href="@{/ui/patients/{id}(id=${p.id})}">Voir</a>
-                    <a th:href="@{/ui/patients/{id}/edit(id=${p.id})}">Modifier</a>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <p th:if="${#lists.isEmpty(patients)}">Aucun patient enregistré.</p>
+    <div class="hstack justify-between">
+        <h1>Liste des patients</h1>
+        <a th:href="@{/ui/patients/new}" class="button">+ Ajouter un patient</a>
+    </div>
+
+    <article class="card mt-4">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Date de naissance</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="p : ${patients}">
+                    <td th:text="${p.lastName}"></td>
+                    <td th:text="${p.firstName}"></td>
+                    <td th:text="${p.dateOfBirth}"></td>
+                    <td>
+                        <menu class="buttons">
+                            <li><a th:href="@{/ui/patients/{id}(id=${p.id})}" class="button small outline">Voir</a></li>
+                            <li><a th:href="@{/ui/patients/{id}/edit(id=${p.id})}" class="button small outline">Modifier</a></li>
+                        </menu>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <p th:if="${#lists.isEmpty(patients)}" class="text-light">Aucun patient enregistré.</p>
+    </article>
 </main>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>

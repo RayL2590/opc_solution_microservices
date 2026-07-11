@@ -88,7 +88,7 @@ class SecurityConfigTest {
 
     @Test
     void validCredentialsPassAuthenticationCheck() {
-        // Upstream 8081 = httpd externe : réponse non-401 prouve que l'auth a passé (pas que le service répond).
+        // 8081 est occupé par un httpd externe en local, donc on vérifie juste qu'on passe le 401, pas que le service répond.
         webTestClient.get().uri("/patients/1")
                 .headers(h -> h.setBasicAuth(DEMO_USER, DEMO_RAW_PASSWORD))
                 .exchange()

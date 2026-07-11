@@ -59,7 +59,7 @@ class NoteControllerTest {
 
     @Test
     void addNote_missingPatId_returns400WithFieldError() throws Exception {
-        // patId absent → @NotNull déclenche la validation
+        // patId absent → @NotNull
         mockMvc.perform(post("/notes").with(httpBasic("medilabo", "medilabo123"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"note\":\"Observation clinique.\"}"))
@@ -70,7 +70,7 @@ class NoteControllerTest {
 
     @Test
     void addNote_blankNote_returns400WithFieldError() throws Exception {
-        // note vide → @NotBlank déclenche la validation
+        // note vide → @NotBlank
         mockMvc.perform(post("/notes").with(httpBasic("medilabo", "medilabo123"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"patId\":1,\"note\":\"\"}"))

@@ -14,12 +14,16 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import com.medilabo.frontservice.client.AssessmentGatewayClient;
 import com.medilabo.frontservice.client.NotesGatewayClient;
 import com.medilabo.frontservice.client.PatientGatewayClient;
+import com.medilabo.frontservice.dto.AssessmentView;
 import com.medilabo.frontservice.dto.NoteForm;
 import com.medilabo.frontservice.dto.NoteView;
 import com.medilabo.frontservice.dto.PatientForm;
 import com.medilabo.frontservice.dto.PatientView;
+import com.medilabo.frontservice.dto.PhoneCountry;
+import com.medilabo.frontservice.util.PhoneNormalizer;
 
 /**
  * Contrôleur UI patients (liste, formulaire d'ajout/édition, fiche détail + notes, Post-Redirect-Get).
@@ -32,6 +36,7 @@ public class PatientUiController {
 
     private final PatientGatewayClient patientGatewayClient;
     private final NotesGatewayClient notesGatewayClient;
+    private final AssessmentGatewayClient assessmentGatewayClient;
 
     @GetMapping("/ui/patients")
     public String listPatients(Model model) {
@@ -44,6 +49,7 @@ public class PatientUiController {
     @GetMapping("/ui/patients/new")
     public String showNewPatientForm(Model model) {
         model.addAttribute("patientForm", new PatientForm());
+        model.addAttribute("phoneCountries", PhoneCountry.values());
         return "patients/new";
     }
 
@@ -51,10 +57,14 @@ public class PatientUiController {
     public String createPatient(
             @Valid @ModelAttribute PatientForm patientForm,
             BindingResult bindingResult,
+            Model model,
             HttpServletResponse response) {
+
+        normalizePhone(patientForm, bindingResult);
 
         if (bindingResult.hasErrors()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            model.addAttribute("phoneCountries", PhoneCountry.values());
             return "patients/new";
         }
 
@@ -74,6 +84,7 @@ public class PatientUiController {
         PatientView patient = patientGatewayClient.getPatient(id);
         model.addAttribute("patientForm", toForm(patient));
         model.addAttribute("patientId", id);
+        model.addAttribute("phoneCountries", PhoneCountry.values());
         return "patients/edit";
     }
 
@@ -85,9 +96,12 @@ public class PatientUiController {
             Model model,
             HttpServletResponse response) {
 
+        normalizePhone(patientForm, bindingResult);
+
         if (bindingResult.hasErrors()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             model.addAttribute("patientId", id);
+            model.addAttribute("phoneCountries", PhoneCountry.values());
             return "patients/edit";
         }
 
@@ -129,9 +143,26 @@ public class PatientUiController {
     private void loadPatientDetailModel(Long id, Model model) {
         PatientView patient = patientGatewayClient.getPatient(id);
         List<NoteView> notes = notesGatewayClient.getNotesByPatId(id);
+        AssessmentView assessment = assessmentGatewayClient.getAssessment(id);
         model.addAttribute("patient", patient);
         model.addAttribute("notes", notes);
+        model.addAttribute("assessment", assessment);
         log.debug("Rendering patient detail, id={}, noteCount={}", id, notes.size());
+    }
+
+    /**
+     * Normalise le téléphone saisi vers E.164 et réécrit {@code patientForm.phone} en place.
+     * En cas d'échec, rejette le champ dans {@code bindingResult} pour un retour utilisateur
+     * cohérent avec les autres erreurs de validation. Champ optionnel : une saisie vide passe.
+     */
+    private void normalizePhone(PatientForm patientForm, BindingResult bindingResult) {
+        PhoneNormalizer.Result result =
+                PhoneNormalizer.normalize(patientForm.getPhone(), patientForm.getPhoneCountry());
+        if (result.isValid()) {
+            patientForm.setPhone(result.e164());
+        } else {
+            bindingResult.rejectValue("phone", "phone.invalid", result.errorMessage());
+        }
     }
 
     private PatientForm toForm(PatientView patient) {
@@ -142,6 +173,22 @@ public class PatientUiController {
         form.setGender(patient.gender());
         form.setAddress(patient.address());
         form.setPhone(patient.phone());
+        form.setPhoneCountry(detectCountry(patient.phone()));
         return form;
+    }
+
+    /**
+     * Retrouve le pays d'un numéro E.164 stocké pour pré-sélectionner l'indicatif en édition.
+     * Défaut FR si absent ou non reconnu (le numéro reste affiché tel quel).
+     */
+    private PhoneCountry detectCountry(String e164Phone) {
+        if (e164Phone != null && e164Phone.startsWith("+")) {
+            for (PhoneCountry candidate : PhoneCountry.values()) {
+                if (e164Phone.startsWith(candidate.dialingCode())) {
+                    return candidate;
+                }
+            }
+        }
+        return PhoneCountry.FR;
     }
 }

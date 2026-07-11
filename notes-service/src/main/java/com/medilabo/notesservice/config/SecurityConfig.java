@@ -28,7 +28,7 @@ public class SecurityConfig {
             @Value("${medilabo.user}") String username,
             @Value("${medilabo.password-bcrypt}") String bcryptHash) {
         UserDetails user = User.withUsername(username)
-                .password(bcryptHash) // already a BCrypt hash — stored as-is, no re-encode
+                .password(bcryptHash) // déjà un hash BCrypt — stocké tel quel, pas de ré-encodage
                 .roles("USER")
                 .build();
         return new InMemoryUserDetailsManager(user);
@@ -37,7 +37,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // REST API, no HTML form
+            .csrf(csrf -> csrf.disable()) // API REST, pas de formulaire HTML
             .sessionManagement(session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth

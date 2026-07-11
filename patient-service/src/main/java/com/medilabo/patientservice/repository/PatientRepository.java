@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PatientRepository extends JpaRepository<Patient, Long> {
-    // JpaRepository fournit déjà : findAll, findById, save, deleteById
+    // vide exprès, JpaRepository fournit déjà findAll/findById/save/deleteById
 }

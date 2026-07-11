@@ -100,11 +100,10 @@ class PatientControllerTest {
 
     @Test
     void listPatients_validUserWrongPassword_returns401() throws Exception {
-        // Exercises the password-MATCH path (not just the no-creds gate): a known user with a
-        // wrong password must be rejected. This is the only slice test that proves the seeded
-        // BCrypt hash — resolved from medilabo.password-bcrypt in application.properties — is
-        // actually matched. A NoOp encoder or a broken hash bridge would make this pass with the
-        // wrong password and go red here.
+        // teste vraiment la vérif du mot de passe, pas juste l'absence de creds : un user connu
+        // avec un mauvais mot de passe doit être rejeté. Seul test qui prouve que le hash BCrypt
+        // seedé (medilabo.password-bcrypt) est réellement comparé. Un encoder NoOp ou un pont
+        // cassé vers le hash ferait passer ce test à tort.
         mockMvc.perform(get("/patients").with(httpBasic("medilabo", "definitely-the-wrong-password")))
                 .andExpect(status().isUnauthorized());
     }
@@ -133,7 +132,7 @@ class PatientControllerTest {
 
     @Test
     void createPatient_blankRequiredField_returns400WithErrorsMapKeys() throws Exception {
-        // firstName blank + lastName missing → two field-keyed errors; dateOfBirth/gender present.
+        // firstName vide + lastName absent → deux erreurs de champ, dateOfBirth/gender ok
         String body = """
                 {"firstName":"","dateOfBirth":"1990-01-01","gender":"M"}
                 """;
@@ -249,8 +248,8 @@ class PatientControllerTest {
 
     @Test
     void getPatientById_malformedId_returns400ProblemDetail() throws Exception {
-        // Non-numeric {id} fails @PathVariable Long conversion BEFORE the controller —
-        // MethodArgumentTypeMismatchException must stay inside the RFC 7807 envelope.
+        // {id} non numérique plante la conversion @PathVariable Long avant même le controller,
+        // l'exception doit quand même rester dans l'enveloppe RFC 7807
         mockMvc.perform(get("/patients/abc").with(httpBasic("medilabo", "medilabo123")))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))

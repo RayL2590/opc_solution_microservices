@@ -24,9 +24,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.medilabo.frontservice.client.AssessmentGatewayClient;
 import com.medilabo.frontservice.client.NotesGatewayClient;
 import com.medilabo.frontservice.client.PatientGatewayClient;
 import com.medilabo.frontservice.config.SecurityConfig;
+import com.medilabo.frontservice.dto.AssessmentView;
 import com.medilabo.frontservice.dto.NoteView;
 import com.medilabo.frontservice.dto.PatientForm;
 import com.medilabo.frontservice.dto.PatientView;
@@ -47,6 +49,9 @@ class PatientUiControllerTest {
 
     @MockitoBean
     private NotesGatewayClient notesGatewayClient;
+
+    @MockitoBean
+    private AssessmentGatewayClient assessmentGatewayClient;
 
     @Test
     void listPatients_authenticated_returns200WithPatientsList() throws Exception {
@@ -208,13 +213,16 @@ class PatientUiControllerTest {
         NoteView note = new NoteView("abc123", 1, "TestNone", "Observation clinique.", Instant.now());
         given(patientGatewayClient.getPatient(1L)).willReturn(patient);
         given(notesGatewayClient.getNotesByPatId(1L)).willReturn(List.of(note));
+        given(assessmentGatewayClient.getAssessment(1L)).willReturn(
+                new AssessmentView("None", 0, List.of()));
 
         mockMvc.perform(get("/ui/patients/1").with(httpBasic("medilabo", "medilabo123")))
                 .andExpect(status().isOk())
                 .andExpect(view().name("patients/detail"))
                 .andExpect(model().attributeExists("patient"))
                 .andExpect(model().attribute("notes", hasSize(1)))
-                .andExpect(model().attributeExists("noteForm"));
+                .andExpect(model().attributeExists("noteForm"))
+                .andExpect(model().attributeExists("assessment"));
     }
 
     @Test
@@ -223,6 +231,8 @@ class PatientUiControllerTest {
                 LocalDate.of(1966, 12, 31), "F", null, null);
         given(patientGatewayClient.getPatient(1L)).willReturn(patient);
         given(notesGatewayClient.getNotesByPatId(1L)).willReturn(List.of());
+        given(assessmentGatewayClient.getAssessment(1L)).willReturn(
+                new AssessmentView("None", 0, List.of()));
 
         mockMvc.perform(get("/ui/patients/1").with(httpBasic("medilabo", "medilabo123")))
                 .andExpect(status().isOk())
@@ -257,6 +267,8 @@ class PatientUiControllerTest {
                 LocalDate.of(1966, 12, 31), "F", null, null);
         given(patientGatewayClient.getPatient(1L)).willReturn(patient);
         given(notesGatewayClient.getNotesByPatId(1L)).willReturn(List.of());
+        given(assessmentGatewayClient.getAssessment(1L)).willReturn(
+                new AssessmentView("None", 0, List.of()));
 
         mockMvc.perform(post("/ui/patients/1/notes")
                         .with(httpBasic("medilabo", "medilabo123"))

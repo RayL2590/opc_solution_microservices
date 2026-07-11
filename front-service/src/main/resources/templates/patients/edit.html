@@ -8,39 +8,69 @@
 <main class="container">
     <h1>Modifier un patient</h1>
 
-    <form th:action="@{/ui/patients/{id}/edit(id=${patientId})}" method="post" th:object="${patientForm}">
+    <article class="card mt-4">
+        <form th:action="@{/ui/patients/{id}/edit(id=${patientId})}" method="post" th:object="${patientForm}">
 
-        <label for="lastName">Nom *</label>
-        <input type="text" id="lastName" th:field="*{lastName}" placeholder="Nom de famille">
-        <span th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}" style="color:red"></span>
+            <div th:attr="data-field=${#fields.hasErrors('lastName')} ? 'error' : ''">
+                <label for="lastName">Nom *</label>
+                <input type="text" id="lastName" th:field="*{lastName}" placeholder="Nom de famille"
+                       th:attr="aria-invalid=${#fields.hasErrors('lastName')} ? 'true'">
+                <div class="error" role="status" th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}"></div>
+            </div>
 
-        <label for="firstName">Prénom *</label>
-        <input type="text" id="firstName" th:field="*{firstName}" placeholder="Prénom">
-        <span th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}" style="color:red"></span>
+            <div th:attr="data-field=${#fields.hasErrors('firstName')} ? 'error' : ''">
+                <label for="firstName">Prénom *</label>
+                <input type="text" id="firstName" th:field="*{firstName}" placeholder="Prénom"
+                       th:attr="aria-invalid=${#fields.hasErrors('firstName')} ? 'true'">
+                <div class="error" role="status" th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}"></div>
+            </div>
 
-        <label for="dateOfBirth">Date de naissance *</label>
-        <input type="date" id="dateOfBirth" th:field="*{dateOfBirth}">
-        <span th:if="${#fields.hasErrors('dateOfBirth')}" th:errors="*{dateOfBirth}" style="color:red"></span>
+            <div th:attr="data-field=${#fields.hasErrors('dateOfBirth')} ? 'error' : ''">
+                <label for="dateOfBirth">Date de naissance *</label>
+                <input type="date" id="dateOfBirth" th:field="*{dateOfBirth}" max="9999-12-31"
+                       th:attr="aria-invalid=${#fields.hasErrors('dateOfBirth')} ? 'true'">
+                <div class="error" role="status" th:if="${#fields.hasErrors('dateOfBirth')}" th:errors="*{dateOfBirth}"></div>
+            </div>
 
-        <label for="gender">Genre *</label>
-        <select id="gender" th:field="*{gender}">
-            <option value="">-- Choisir --</option>
-            <option value="M">M</option>
-            <option value="F">F</option>
-            <option value="U">U (inconnu)</option>
-        </select>
-        <span th:if="${#fields.hasErrors('gender')}" th:errors="*{gender}" style="color:red"></span>
+            <div th:attr="data-field=${#fields.hasErrors('gender')} ? 'error' : ''">
+                <label for="gender">Genre *</label>
+                <select id="gender" th:field="*{gender}"
+                        th:attr="aria-invalid=${#fields.hasErrors('gender')} ? 'true'">
+                    <option value="">-- Choisir --</option>
+                    <option value="M">M</option>
+                    <option value="F">F</option>
+                    <option value="U">U (inconnu)</option>
+                </select>
+                <div class="error" role="status" th:if="${#fields.hasErrors('gender')}" th:errors="*{gender}"></div>
+            </div>
 
-        <label for="address">Adresse</label>
-        <input type="text" id="address" th:field="*{address}" placeholder="Adresse (optionnel)">
+            <div th:attr="data-field=${#fields.hasErrors('address')} ? 'error' : ''">
+                <label for="address">Adresse</label>
+                <input type="text" id="address" th:field="*{address}" placeholder="Adresse (optionnel)"
+                       th:attr="aria-invalid=${#fields.hasErrors('address')} ? 'true'">
+                <div class="error" role="status" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></div>
+            </div>
 
-        <label for="phone">Téléphone</label>
-        <input type="text" id="phone" th:field="*{phone}" placeholder="Téléphone (optionnel)">
+            <div th:attr="data-field=${#fields.hasErrors('phone')} ? 'error' : ''">
+                <label for="phone">Téléphone</label>
+                <div class="hstack">
+                    <select id="phoneCountry" th:field="*{phoneCountry}" aria-label="Indicatif pays">
+                        <option th:each="c : ${phoneCountries}" th:value="${c}"
+                                th:text="${c.label() + ' (' + c.dialingCode() + ')'}"></option>
+                    </select>
+                    <input type="text" id="phone" th:field="*{phone}" placeholder="Téléphone (optionnel)"
+                           th:attr="aria-invalid=${#fields.hasErrors('phone')} ? 'true'">
+                </div>
+                <div class="error" role="status" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
+            </div>
 
-        <button type="submit">Enregistrer</button>
-        <a th:href="@{/ui/patients}">Annuler</a>
+            <div class="hstack mt-4">
+                <button type="submit">Enregistrer</button>
+                <a th:href="@{/ui/patients}" class="button outline">Annuler</a>
+            </div>
 
-    </form>
+        </form>
+    </article>
 </main>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>

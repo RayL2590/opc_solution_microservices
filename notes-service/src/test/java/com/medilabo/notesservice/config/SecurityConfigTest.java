@@ -30,7 +30,7 @@ class SecurityConfigTest {
 
         assertThat(user).isNotNull();
         assertThat(user.getUsername()).isEqualTo(DEMO_USER);
-        // Stored verbatim as a BCrypt hash — never plaintext, never double-encoded.
+        // Stocké tel quel en hash BCrypt — jamais en clair, jamais ré-encodé.
         assertThat(user.getPassword()).startsWith("$2");
         assertThat(user.getPassword()).isEqualTo(DEMO_BCRYPT_HASH);
         assertThat(user.getPassword()).isNotEqualTo(DEMO_RAW_PASSWORD);

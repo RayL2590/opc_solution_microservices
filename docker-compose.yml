@@ -1,0 +1,89 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    # service_started veut juste dire que le process mysqld a démarré, pas qu'il accepte les connexions.
+    # Sans ce healthcheck le seed de patient-service (sql.init.mode=always) part trop tôt et plante.
+    # --protocol=tcp obligatoire : le serveur temporaire de bootstrap de l'image répond au ping
+    # via le socket Unix avant que TCP:3306 écoute vraiment, ça faussait le healthcheck (healthy trop tôt).
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--protocol=tcp", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  mongo:
+    image: mongo:7.0
+    volumes:
+      - mongo-data:/data/db
+      - ./docker/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+
+  gateway-service:
+    build: ./gateway-service
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MEDILABO_USER: ${MEDILABO_USER}
+    depends_on:
+      patient-service:
+        condition: service_started
+      notes-service:
+        condition: service_started
+      assessment-service:
+        condition: service_started
+      front-service:
+        condition: service_started
+
+  patient-service:
+    build: ./patient-service
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      MEDILABO_USER: ${MEDILABO_USER}
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  notes-service:
+    build: ./notes-service
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MEDILABO_USER: ${MEDILABO_USER}
+    depends_on:
+      mongo:
+        condition: service_started
+
+  assessment-service:
+    build: ./assessment-service
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MEDILABO_USER: ${MEDILABO_USER}
+
+  front-service:
+    build: ./front-service
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MEDILABO_USER: ${MEDILABO_USER}
+
+volumes:
+  mysql-data:
+  mongo-data:

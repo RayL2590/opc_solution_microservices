@@ -6,39 +6,55 @@
 <header th:replace="~{fragments/layout :: header}"></header>
 
 <main class="container">
-    <h1 th:text="${patient.lastName} + ' ' + ${patient.firstName}"></h1>
+    <div class="hstack justify-between">
+        <h1 th:text="${patient.lastName} + ' ' + ${patient.firstName}"></h1>
+        <a th:href="@{/ui/patients}" class="button small outline">← Retour à la liste</a>
+    </div>
 
-    <section>
-        <h2>Données démographiques</h2>
+    <p class="hstack gap-2">
+        <strong>Risque de diabète :</strong>
+        <span class="badge"
+              th:classappend="${assessment.riskBand == 'None'} ? 'outline' : ''"
+              th:attr="data-variant=${assessment.riskBand == 'Early Onset'} ? 'danger'
+                            : (${assessment.riskBand == 'In Danger'} ? 'warning'
+                            : (${assessment.riskBand == 'Borderline'} ? 'secondary' : ''))"
+              th:text="${assessment.riskBand}"></span>
+    </p>
+
+    <article class="card mt-4">
+        <header><h2>Données démographiques</h2></header>
         <p><strong>Date de naissance :</strong> <span th:text="${patient.dateOfBirth}"></span></p>
         <p><strong>Genre :</strong> <span th:text="${patient.gender}"></span></p>
         <p th:if="${patient.address}"><strong>Adresse :</strong> <span th:text="${patient.address}"></span></p>
         <p th:if="${patient.phone}"><strong>Téléphone :</strong> <span th:text="${patient.phone}"></span></p>
-        <p><a th:href="@{/ui/patients/{id}/edit(id=${patient.id})}">Modifier les informations</a></p>
-    </section>
+        <footer>
+            <a th:href="@{/ui/patients/{id}/edit(id=${patient.id})}" class="button small outline">Modifier les informations</a>
+        </footer>
+    </article>
 
-    <section>
-        <h2>Historique des notes</h2>
-        <ul>
-            <li th:each="n : ${notes}">
-                <p th:text="${n.createdAt}"></p>
+    <article class="card mt-4">
+        <header><h2>Historique des notes</h2></header>
+        <div class="vstack">
+            <article class="card" th:each="n : ${notes}">
+                <small class="text-light" th:text="${n.createdAt}"></small>
                 <p th:text="${n.note}"></p>
-            </li>
-        </ul>
-        <p th:if="${#lists.isEmpty(notes)}">Aucune note enregistrée pour ce patient.</p>
-    </section>
+            </article>
+        </div>
+        <p th:if="${#lists.isEmpty(notes)}" class="text-light">Aucune note enregistrée pour ce patient.</p>
+    </article>
 
-    <section>
-        <h2>Ajouter une note</h2>
+    <article class="card mt-4">
+        <header><h2>Ajouter une note</h2></header>
         <form th:action="@{/ui/patients/{id}/notes(id=${patient.id})}" method="post" th:object="${noteForm}">
-            <label for="note">Note *</label>
-            <textarea id="note" th:field="*{note}" rows="4"></textarea>
-            <span th:if="${#fields.hasErrors('note')}" th:errors="*{note}" style="color:red"></span>
-            <button type="submit">Ajouter</button>
+            <div th:attr="data-field=${#fields.hasErrors('note')} ? 'error' : ''">
+                <label for="note">Note *</label>
+                <textarea id="note" th:field="*{note}" rows="4"
+                          th:attr="aria-invalid=${#fields.hasErrors('note')} ? 'true'"></textarea>
+                <div class="error" role="status" th:if="${#fields.hasErrors('note')}" th:errors="*{note}"></div>
+            </div>
+            <button type="submit" class="mt-4">Ajouter</button>
         </form>
-    </section>
-
-    <p><a th:href="@{/ui/patients}">Retour à la liste</a></p>
+    </article>
 </main>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>

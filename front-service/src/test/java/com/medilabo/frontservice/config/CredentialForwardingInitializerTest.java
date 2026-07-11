@@ -39,7 +39,7 @@ class CredentialForwardingInitializerTest {
 
     @Test
     void forwardsNothingWhenNoRequestContextBound() {
-        // No RequestContextHolder attributes (a background / boot thread).
+        // Aucun attribut RequestContextHolder (thread de fond / boot).
         MockClientHttpRequest outbound = new MockClientHttpRequest();
 
         initializer.initialize(outbound);

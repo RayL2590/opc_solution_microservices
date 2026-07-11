@@ -30,7 +30,7 @@ class SecurityConfigTest {
 
         assertThat(user).isNotNull();
         assertThat(user.getUsername()).isEqualTo(DEMO_USER);
-        // Stored verbatim as a BCrypt hash — never plaintext, never double-encoded.
+        // stocké tel quel en hash BCrypt, jamais en clair, jamais ré-encodé
         assertThat(user.getPassword()).startsWith("$2");
         assertThat(user.getPassword()).isEqualTo(DEMO_BCRYPT_HASH);
         assertThat(user.getPassword()).isNotEqualTo(DEMO_RAW_PASSWORD);
@@ -43,7 +43,7 @@ class SecurityConfigTest {
                 securityConfig.userDetailsService(DEMO_USER, DEMO_BCRYPT_HASH)
                         .loadUserByUsername(DEMO_USER);
 
-        // Aucun double-hash ; ancien password scaffolding rejeté.
+        // pas de double-hash, l'ancien mot de passe du scaffold est bien rejeté
         assertThat(encoder.matches(DEMO_RAW_PASSWORD, user.getPassword())).isTrue();
         assertThat(encoder.matches("user123", user.getPassword())).isFalse();
     }

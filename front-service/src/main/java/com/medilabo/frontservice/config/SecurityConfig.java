@@ -33,7 +33,7 @@ public class SecurityConfig {
             @Value("${medilabo.user}") String username,
             @Value("${medilabo.password-bcrypt}") String bcryptHash) {
         UserDetails user = User.withUsername(username)
-                .password(bcryptHash) // already a BCrypt hash — stored as-is, no re-encode
+                .password(bcryptHash) // déjà un hash BCrypt, stocké tel quel, pas de ré-encodage
                 .roles("USER")
                 .build();
         return new InMemoryUserDetailsManager(user);

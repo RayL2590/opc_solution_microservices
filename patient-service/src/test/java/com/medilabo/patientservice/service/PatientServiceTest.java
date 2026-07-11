@@ -84,7 +84,7 @@ class PatientServiceTest {
 
     @Test
     void createPatient_mapsDtoAndReturnsDtoWithAssignedId() {
-        // Repo assigns the surrogate id on save.
+        // le repo attribue l'id au save
         given(patientRepository.save(any(Patient.class))).willAnswer(invocation -> {
             Patient toSave = invocation.getArgument(0);
             toSave.setId(42L);
@@ -100,8 +100,8 @@ class PatientServiceTest {
 
     @Test
     void updatePatient_existingId_fullReplaceAppliesAllFields() {
-        // Existing row has address/phone set; the incoming DTO omits them (null) →
-        // full-replace must overwrite them to null (documented PUT contract, not PATCH).
+        // la ligne existante a address/phone renseignés, le DTO entrant les omet (null) :
+        // en PUT plein remplacement, ça doit écraser à null, c'est pas un PATCH
         Patient existing = samplePatient();
         existing.setAddress("1 rue Ancienne");
         existing.setPhone("0102030405");
@@ -116,7 +116,7 @@ class PatientServiceTest {
         assertThat(saved.getFirstName()).isEqualTo("Jean");
         assertThat(saved.getLastName()).isEqualTo("Dupont");
         assertThat(saved.getGender()).isEqualTo("M");
-        // Absent optional fields are overwritten to null — full-replace semantics.
+        // champs optionnels absents écrasés à null, sémantique full-replace
         assertThat(saved.getAddress()).isNull();
         assertThat(saved.getPhone()).isNull();
     }

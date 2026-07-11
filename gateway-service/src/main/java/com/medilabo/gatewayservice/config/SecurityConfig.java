@@ -39,7 +39,9 @@ public class SecurityConfig {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
-                .authorizeExchange(exchange -> exchange.anyExchange().authenticated())
+                .authorizeExchange(exchange -> exchange
+                        .pathMatchers("/css/**", "/js/**", "/favicon.ico").permitAll()
+                        .anyExchange().authenticated())
                 .httpBasic(Customizer.withDefaults())
                 .build();
     }
