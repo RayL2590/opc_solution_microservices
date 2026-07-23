@@ -104,12 +104,16 @@ Le grid d'évaluation demande d'**expliquer** les principes Green Code et de **p
 - DTOs explicites à chaque frontière HTTP plutôt que de sérialiser des entités JPA/documents Mongo complets — chaque réponse ne transporte que les champs consommés par l'appelant.
 - `assessment-service` ne met jamais en cache le résultat du calcul de risque et ne fait aucun appel réseau superflu : un seul aller-retour vers `patient-service` et un seul vers `notes-service` par évaluation, via la Gateway.
 
+**Corrigé suite à l'analyse Green Code :**
+- **Log SQL désactivé** (`spring.jpa.show-sql=false`) : le profil `docker` n'ayant pas de surcharge, chaque requête SQL était formatée et écrite sur la sortie standard jusque dans le conteneur de déploiement — du CPU et de l'I/O consommés en continu pour une information utile au seul débogage. Mesuré sur le conteneur en fonctionnement : 4 requêtes loggées → 0. Réactivable ponctuellement en dev via `-Dspring.jpa.show-sql=true`.
+- **Index MongoDB sur `Note.patId`** (`@Indexed` + `spring.data.mongodb.auto-index-creation=true`, ce second réglage étant indispensable — la création automatique d'index est désactivée par défaut depuis Spring Data MongoDB 3.0) : `findByPatIdOrderByCreatedAtDesc` est appelée à chaque ouverture de fiche patient et provoquait un balayage complet de la collection. Plan de requête vérifié par `explain()` : `COLLSCAN` → `IXSCAN`.
+
 **Recommandations pour la suite :**
 - Limiter les échanges réseau inter-services superflus (regrouper les appels quand c'est possible plutôt que multiplier les allers-retours).
 - Éviter les logs verbeux en production (niveau `INFO` minimal, jamais de payload complet en `DEBUG` par défaut).
 - Paginer les listes volumineuses (`GET /patients`, `GET /notes`) avant qu'elles ne grossissent au-delà du jeu de données de démonstration.
 - Mutualiser les dépendances Maven et retirer les librairies non utilisées à chaque montée de version.
-- Optimiser les requêtes base de données (éviter le N+1, indexer les colonnes de recherche fréquente).
+- Poursuivre l'optimisation des requêtes base de données (éviter le N+1, indexer toute nouvelle colonne de recherche fréquente).
 - Poursuivre l'usage d'images Docker slim pour tout nouveau service.
 - Documenter et outiller l'arrêt des environnements non utilisés (dev/démo) plutôt que de les laisser tourner en continu.
 - Surveiller le temps de réponse et la consommation mémoire par service une fois un outil d'observabilité introduit (hors périmètre v1).

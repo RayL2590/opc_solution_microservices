@@ -117,9 +117,12 @@ class SecurityConfigTest {
     @Test
     void noRouteStripsTheAuthorizationHeader() {
         for (Route route : routeLocator.getRoutes().collectList().block()) {
+            // Les filtres sans rapport avec Authorization sont autorisés (ex. AddRequestHeader
+            // X-Forwarded-* sur la route front) : seule la pass-through du header
+            // Authorization doit rester intacte de bout en bout (D-SEC-4).
             assertThat(route.getFilters())
-                    .as("route %s must declare no gateway filter (no Authorization rewrite/strip)", route.getId())
-                    .isEmpty();
+                    .as("route %s must not rewrite/strip the Authorization header", route.getId())
+                    .noneMatch(filter -> filter.toString().toLowerCase().contains("authorization"));
         }
     }
 
