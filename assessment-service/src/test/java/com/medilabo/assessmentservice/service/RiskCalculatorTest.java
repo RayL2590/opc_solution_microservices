@@ -18,10 +18,10 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests unitaires purs pour {@link RiskCalculator} — pas de contexte Spring. Les quatre
- * fixtures canoniques du Sprint 3 (oracle SM-2) tournent sur le vrai texte de notes du
- * Sprint 2 ({@code docker/mongo-init.js}) ; les âges sont figés via {@link #REFERENCE_DATE}
- * pour que la suite reste déterministe dans le temps.
+ * Tests unitaires purs pour {@link RiskCalculator}, pas de contexte Spring. Les quatre cas de
+ * test du client servent d'oracle et tournent sur le vrai texte des notes semées
+ * ({@code docker/mongo-init.js}) ; les âges sont figés via {@link #REFERENCE_DATE} pour que la
+ * suite reste stable dans le temps.
  */
 class RiskCalculatorTest {
 
@@ -38,7 +38,7 @@ class RiskCalculatorTest {
         return Instant.parse(String.format("2024-01-10T%02d:00:00Z", hour));
     }
 
-    // ---- AC2: les quatre fixtures canoniques (oracle SM-2) ----
+    // ---- AC2 : les quatre fixtures canoniques (oracle SM-2) ----
 
     private static Stream<Arguments> canonicalFixtures() {
         PatientView p1 = new PatientView(1, "Test", "TestNone", LocalDate.of(1966, 12, 31), "F");
@@ -146,6 +146,51 @@ class RiskCalculatorTest {
                 .containsExactly("Anormal", "Cholestérol", "Vertiges");
     }
 
+    // ---- AC3: matching insensible aux accents ----
+
+    @Test
+    @DisplayName("AC3 — unaccented note text matches accented vocabulary terms")
+    void accentFolding_matchesUnaccentedVariants() {
+        PatientView p = new PatientView(9, "T", "T", LocalDate.of(1980, 1, 1), "F");
+        List<NoteView> notes = List.of(
+                note(9, "T", "hemoglobine a1c elevee, cholesterol LDL haut, reaction aux medicaments", at(9))
+        );
+
+        RiskResult result = calculator.compute(p, notes, REFERENCE_DATE);
+
+        assertThat(result.triggersDetected())
+                .containsExactly("Hémoglobine A1C", "Cholestérol", "Réaction");
+    }
+
+    @Test
+    @DisplayName("AC3 — accented and unaccented spellings of the same term count once")
+    void accentFolding_accentedAndUnaccented_countOnce() {
+        PatientView p = new PatientView(9, "T", "T", LocalDate.of(1980, 1, 1), "F");
+        List<NoteView> notes = List.of(
+                note(9, "T", "cholestérol élevé", at(9)),
+                note(9, "T", "cholesterol toujours élevé", at(10))
+        );
+
+        RiskResult result = calculator.compute(p, notes, REFERENCE_DATE);
+
+        assertThat(result.triggerCount()).isEqualTo(1);
+        assertThat(result.triggersDetected()).containsExactly("Cholestérol");
+    }
+
+    @Test
+    @DisplayName("AC3 — folding preserves offsets: NFD-decomposed text keeps textual first-match order")
+    void accentFolding_preservesFirstMatchOrder_onDecomposedText() {
+        PatientView p = new PatientView(9, "T", "T", LocalDate.of(1980, 1, 1), "F");
+        // même texte, mais encodé en NFD (e + accent combinant), comme un copier-coller pourrait le produire
+        String decomposed = java.text.Normalizer.normalize(
+                "réaction aux médicaments puis cholestérol élevé", java.text.Normalizer.Form.NFD);
+        List<NoteView> notes = List.of(note(9, "T", decomposed, at(9)));
+
+        RiskResult result = calculator.compute(p, notes, REFERENCE_DATE);
+
+        assertThat(result.triggersDetected()).containsExactly("Réaction", "Cholestérol");
+    }
+
     // ---- AC4: idempotence du comptage & plancher None ----
 
     @Test
@@ -200,8 +245,8 @@ class RiskCalculatorTest {
         NoteView newer = note(9, "T", "anticorps élevés", at(11));
         NoteView older = note(9, "T", "poids et taille", at(9));
 
-        // on passe newest-first (comme le ferait une lecture DESC) ; la détection doit quand même
-        // partir du plus ancien, et dans la note ancienne l'ordre suit le texte ("poids" avant "taille")
+        // on passe newest-first, comme le ferait une lecture DESC ; la détection doit quand même
+        // repartir du plus ancien, et dans la note ancienne l'ordre suit le texte ("poids" avant "taille")
         RiskResult result = calculator.compute(p, List.of(newer, older), REFERENCE_DATE);
 
         assertThat(result.triggersDetected()).containsExactly("Poids", "Taille", "Anticorps");
@@ -235,8 +280,8 @@ class RiskCalculatorTest {
     void ageExactly30_isInclusive_male() {
         RiskResult r = calculator.compute(patient(dobForAge(30), "M"), List.of(noteWithTriggers(5)), REFERENCE_DATE);
         assertThat(r.triggerCount()).isEqualTo(5);
-        // age==30 & M & count>=5 → Early Onset via la branche age<=30 ; un refactor qui glisse
-        // vers `>=30` retomberait sur les branches age>30 (count=5 → Borderline) et casserait ce test.
+        // age==30 & M & count>=5 → Early Onset via la branche age<=30. Si un refactor glisse
+        // vers `>=30` un jour, on retombe sur les branches age>30 (count=5 → Borderline) et ce test casse.
         assertThat(r.riskBand()).isEqualTo(RiskBand.EARLY_ONSET);
     }
 
@@ -254,8 +299,9 @@ class RiskCalculatorTest {
     @DisplayName("F4 — gender null, age<=30, count=10 → None (neither M nor F arm applies)")
     void genderNull_youngHighCount_isNone() {
         // Contrat FR-9 : tout ce qui n'est ni M ni F ne prend aucune des deux branches, et les
-        // branches age>30 ne s'appliquent pas si age<=30 → None. Documenté ici pour que ce soit
-        // un choix assumé, pas un trou accidentel. L'intégrité du genre est gérée en amont (4.2).
+        // branches age>30 ne s'appliquent pas non plus si age<=30, donc on tombe à None. On le
+        // documente ici pour que ce soit un choix assumé, pas un trou qu'on aurait oublié. La
+        // validité du genre est vérifiée en amont (4.2).
         RiskResult r = calculator.compute(patient(dobForAge(25), null), List.of(noteWithTriggers(10)), REFERENCE_DATE);
         assertThat(r.triggerCount()).isEqualTo(10);
         assertThat(r.riskBand()).isEqualTo(RiskBand.NONE);
@@ -307,8 +353,9 @@ class RiskCalculatorTest {
     @DisplayName("F6 — F count=3 is not yet In Danger (F floor is 4, unlike M)")
     void young_female_belowFloor() {
         PatientView f = patient(dobForAge(25), "F");
-        // count=3 : aucune branche age<=30 ne matche (M demande >=3 mais c'est F ; F demande >=4),
-        // et pas de branche age>30. Si les seuils M/F étaient inversés ça deviendrait In Danger à tort.
+        // count=3 : aucune branche age<=30 ne matche (M demande >=3 mais on est en F ; F demande
+        // >=4), et pas de branche age>30 non plus. Si on inversait les seuils M/F par erreur, ça
+        // basculerait à tort en In Danger.
         assertThat(calculator.compute(f, List.of(noteWithTriggers(3)), REFERENCE_DATE).riskBand())
                 .isEqualTo(RiskBand.NONE);
     }
@@ -346,7 +393,7 @@ class RiskCalculatorTest {
 
         calculator.compute(patient(dobForAge(45), "F"), input, REFERENCE_DATE);
 
-        // un tri in-place dans compute() réordonnerait ça et ferait échouer l'assertion
+        // un tri in-place dans compute() réordonnerait la liste et ferait échouer l'assertion
         assertThat(input).containsExactlyElementsOf(snapshot);
     }
 
@@ -367,6 +414,31 @@ class RiskCalculatorTest {
     }
 
     @Test
+    @DisplayName("F9 — notes sharing a createdAt are scanned oldest-id-first, not in upstream order")
+    void sameCreatedAt_tiebreaksOnIdAscending() {
+        // notes-service renvoie du DESC sur (createdAt, id) : à createdAt égal, la plus récente
+        // arrive en premier. Un tri stable sur le seul createdAt garderait cet ordre newest-first
+        // et inverserait l'ordre chronologique attendu.
+        NoteView newer = new NoteView("65a000000000000000000002", 9, "T", "anticorps", at(9));
+        NoteView older = new NoteView("65a000000000000000000001", 9, "T", "poids", at(9));
+
+        RiskResult r = calculator.compute(patient(dobForAge(45), "F"), List.of(newer, older), REFERENCE_DATE);
+
+        assertThat(r.triggersDetected()).containsExactly("Poids", "Anticorps");
+    }
+
+    @Test
+    @DisplayName("F9 — a null id at equal createdAt does not break ordering")
+    void sameCreatedAt_nullId_isTolerated() {
+        NoteView withId = new NoteView("65a000000000000000000001", 9, "T", "poids", at(9));
+        NoteView noId = new NoteView(null, 9, "T", "anticorps", at(9));
+
+        RiskResult r = calculator.compute(patient(dobForAge(45), "F"), List.of(noId, withId), REFERENCE_DATE);
+
+        assertThat(r.triggerCount()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("F9 — a note with null text is skipped without error")
     void nullNoteText_isSkipped() {
         List<NoteView> notes = List.of(
@@ -377,7 +449,7 @@ class RiskCalculatorTest {
         assertThat(r.triggersDetected()).containsExactly("Poids");
     }
 
-    // ---- F12: les quatre chaînes FR-8 sont verrouillées (utilisées par l'enveloppe Story 4.3) ----
+    // ---- Les quatre libellés de risque sont figés, l'enveloppe HTTP les expose tels quels ----
 
     @Test
     @DisplayName("F12 — RiskBand display names match the exact FR-8 wire strings")

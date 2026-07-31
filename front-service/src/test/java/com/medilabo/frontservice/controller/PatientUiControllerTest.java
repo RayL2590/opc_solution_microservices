@@ -24,18 +24,17 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.medilabo.frontservice.client.AssessmentGatewayClient;
-import com.medilabo.frontservice.client.NotesGatewayClient;
-import com.medilabo.frontservice.client.PatientGatewayClient;
 import com.medilabo.frontservice.config.SecurityConfig;
 import com.medilabo.frontservice.dto.AssessmentView;
+import com.medilabo.frontservice.dto.NoteForm;
 import com.medilabo.frontservice.dto.NoteView;
 import com.medilabo.frontservice.dto.PatientForm;
 import com.medilabo.frontservice.dto.PatientView;
+import com.medilabo.frontservice.service.PatientUiService;
 
 /**
  * Tranche @WebMvcTest pour PatientUiController — SecurityConfig réelle (HTTP Basic exercé),
- * PatientGatewayClient et NotesGatewayClient mockés. CSRF désactivé dans SecurityConfig, les POST n'ont pas besoin de csrf().
+ * PatientUiService mocké. CSRF désactivé dans SecurityConfig, les POST n'ont pas besoin de csrf().
  */
 @WebMvcTest(PatientUiController.class)
 @Import(SecurityConfig.class)
@@ -45,13 +44,7 @@ class PatientUiControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private PatientGatewayClient patientGatewayClient;
-
-    @MockitoBean
-    private NotesGatewayClient notesGatewayClient;
-
-    @MockitoBean
-    private AssessmentGatewayClient assessmentGatewayClient;
+    private PatientUiService patientUiService;
 
     @Test
     void listPatients_authenticated_returns200WithPatientsList() throws Exception {
@@ -59,7 +52,7 @@ class PatientUiControllerTest {
                 LocalDate.of(1980, 1, 15), "M", null, null);
         PatientView p2 = new PatientView(2L, "Marie", "Martin",
                 LocalDate.of(1975, 6, 30), "F", null, null);
-        given(patientGatewayClient.getAllPatients()).willReturn(List.of(p1, p2));
+        given(patientUiService.getAllPatients()).willReturn(List.of(p1, p2));
 
         mockMvc.perform(get("/ui/patients").with(httpBasic("medilabo", "medilabo123")))
                 .andExpect(status().isOk())
@@ -92,7 +85,7 @@ class PatientUiControllerTest {
     void createPatient_validForm_redirectsToList() throws Exception {
         PatientView created = new PatientView(42L, "Alice", "Martin",
                 LocalDate.of(1990, 3, 20), "F", null, null);
-        given(patientGatewayClient.createPatient(any(PatientForm.class))).willReturn(created);
+        given(patientUiService.createPatient(any(PatientForm.class))).willReturn(created);
 
         mockMvc.perform(post("/ui/patients")
                         .with(httpBasic("medilabo", "medilabo123"))
@@ -101,14 +94,16 @@ class PatientUiControllerTest {
                         .param("dateOfBirth", "1990-03-20")
                         .param("gender", "F"))
                 .andExpect(status().is3xxRedirection())
-                // Retour à la liste — la fiche détail est hors Sprint 1 (story 5.3).
+                // après création, retour à la liste, pas vers la fiche détail
                 .andExpect(redirectedUrl("/ui/patients"));
     }
 
     @Test
-    void createPatient_gatewayReturnsNull_throwsIllegalState() {
+    void createPatient_serviceRejectsUnusableGatewayResponse_propagatesIllegalState() {
         // @WebMvcTest sans handler global : MockMvc rethrow l'IllegalStateException directement (Spring 6+ retire NestedServletException).
-        given(patientGatewayClient.createPatient(any(PatientForm.class))).willReturn(null);
+        given(patientUiService.createPatient(any(PatientForm.class)))
+                .willThrow(new IllegalStateException(
+                        "Gateway returned a null patient or null id after creation — cannot redirect"));
 
         assertThrows(Exception.class, () ->
             mockMvc.perform(post("/ui/patients")
@@ -162,7 +157,7 @@ class PatientUiControllerTest {
     void showEditForm_authenticated_returns200WithPrefilledForm() throws Exception {
         PatientView existing = new PatientView(1L, "Test", "TestNone",
                 LocalDate.of(1966, 12, 31), "F", "1 Brookside St", "100-222-3333");
-        given(patientGatewayClient.getPatient(1L)).willReturn(existing);
+        given(patientUiService.getPatient(1L)).willReturn(existing);
 
         mockMvc.perform(get("/ui/patients/1/edit").with(httpBasic("medilabo", "medilabo123")))
                 .andExpect(status().isOk())
@@ -181,7 +176,7 @@ class PatientUiControllerTest {
     void updatePatient_validForm_redirectsToList() throws Exception {
         PatientView updated = new PatientView(1L, "Test", "TestNone",
                 LocalDate.of(1966, 12, 31), "F", "New Address", null);
-        given(patientGatewayClient.updatePatient(eq(1L), any(PatientForm.class))).willReturn(updated);
+        given(patientUiService.updatePatient(eq(1L), any(PatientForm.class))).willReturn(updated);
 
         mockMvc.perform(post("/ui/patients/1/edit")
                         .with(httpBasic("medilabo", "medilabo123"))
@@ -211,10 +206,9 @@ class PatientUiControllerTest {
         PatientView patient = new PatientView(1L, "Test", "TestNone",
                 LocalDate.of(1966, 12, 31), "F", "1 Brookside St", "100-222-3333");
         NoteView note = new NoteView("abc123", 1, "TestNone", "Observation clinique.", Instant.now());
-        given(patientGatewayClient.getPatient(1L)).willReturn(patient);
-        given(notesGatewayClient.getNotesByPatId(1L)).willReturn(List.of(note));
-        given(assessmentGatewayClient.getAssessment(1L)).willReturn(
-                new AssessmentView("None", 0, List.of()));
+        given(patientUiService.loadPatientDetail(1L)).willReturn(
+                new PatientUiService.PatientDetail(patient, List.of(note),
+                        new AssessmentView("None", 0, List.of())));
 
         mockMvc.perform(get("/ui/patients/1").with(httpBasic("medilabo", "medilabo123")))
                 .andExpect(status().isOk())
@@ -229,10 +223,9 @@ class PatientUiControllerTest {
     void showPatientDetail_noNotes_returns200WithEmptyNotesList() throws Exception {
         PatientView patient = new PatientView(1L, "Test", "TestNone",
                 LocalDate.of(1966, 12, 31), "F", null, null);
-        given(patientGatewayClient.getPatient(1L)).willReturn(patient);
-        given(notesGatewayClient.getNotesByPatId(1L)).willReturn(List.of());
-        given(assessmentGatewayClient.getAssessment(1L)).willReturn(
-                new AssessmentView("None", 0, List.of()));
+        given(patientUiService.loadPatientDetail(1L)).willReturn(
+                new PatientUiService.PatientDetail(patient, List.of(),
+                        new AssessmentView("None", 0, List.of())));
 
         mockMvc.perform(get("/ui/patients/1").with(httpBasic("medilabo", "medilabo123")))
                 .andExpect(status().isOk())
@@ -248,10 +241,7 @@ class PatientUiControllerTest {
 
     @Test
     void addNote_validForm_redirectsToDetailPage() throws Exception {
-        PatientView patient = new PatientView(1L, "Test", "TestNone",
-                LocalDate.of(1966, 12, 31), "F", null, null);
-        given(patientGatewayClient.getPatient(1L)).willReturn(patient);
-        given(notesGatewayClient.addNote(any())).willReturn(
+        given(patientUiService.addNote(eq(1L), any(NoteForm.class))).willReturn(
                 new NoteView("abc123", 1, "TestNone", "Observation clinique.", Instant.now()));
 
         mockMvc.perform(post("/ui/patients/1/notes")
@@ -265,10 +255,9 @@ class PatientUiControllerTest {
     void addNote_blankNote_returns400WithFieldError() throws Exception {
         PatientView patient = new PatientView(1L, "Test", "TestNone",
                 LocalDate.of(1966, 12, 31), "F", null, null);
-        given(patientGatewayClient.getPatient(1L)).willReturn(patient);
-        given(notesGatewayClient.getNotesByPatId(1L)).willReturn(List.of());
-        given(assessmentGatewayClient.getAssessment(1L)).willReturn(
-                new AssessmentView("None", 0, List.of()));
+        given(patientUiService.loadPatientDetail(1L)).willReturn(
+                new PatientUiService.PatientDetail(patient, List.of(),
+                        new AssessmentView("None", 0, List.of())));
 
         mockMvc.perform(post("/ui/patients/1/notes")
                         .with(httpBasic("medilabo", "medilabo123"))

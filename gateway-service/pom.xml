@@ -12,39 +12,30 @@
 	<artifactId>gateway-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>gateway-service</name>
-	<description>Demo project for Spring Boot</description>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+	<description>Point d'entrée unique du système Medilabo : routage et authentification des appels vers les microservices</description>
 	<properties>
 		<java.version>17</java.version>
 		<spring-cloud.version>2025.1.1</spring-cloud.version>
 	</properties>
 	<dependencies>
+		<!-- Authentification HTTP Basic à l'entrée : la Gateway est le seul point exposé au réseau hôte. -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
+		<!-- Spring Cloud Gateway (WebFlux) : moteur de routage /patients, /notes, /assessments vers les services. -->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-gateway-server-webflux</artifactId>
 		</dependency>
 
+		<!-- mockUser/httpBasic sur WebTestClient : teste les 401 et le routage authentifié. -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Outils de test réactifs, la Gateway étant bâtie sur WebFlux et non sur la stack servlet. -->
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-test</artifactId>
@@ -68,6 +59,11 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<!-- Classifier so the executable jar installs alongside the plain jar, which
+				     integration-tests consumes as a regular dependency. -->
+				<configuration>
+					<classifier>exec</classifier>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

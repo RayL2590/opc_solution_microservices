@@ -13,7 +13,7 @@ import com.medilabo.frontservice.dto.NoteForm;
 import com.medilabo.frontservice.dto.NoteView;
 
 /**
- * Client Gateway pour les notes. Credential forwarding géré par CredentialForwardingInitializer.
+ * Client Gateway pour les notes. Authentification sortante gérée par ServiceAccountAuthInitializer.
  * PII : seuls les comptes, ids et compteurs sont loggés — jamais le texte d'une note ni le nom du patient.
  */
 @Component

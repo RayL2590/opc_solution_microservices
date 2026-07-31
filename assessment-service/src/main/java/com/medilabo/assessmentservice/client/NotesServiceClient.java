@@ -17,8 +17,8 @@ import java.util.List;
 
 /**
  * Client upstream pour les notes cliniques (Gateway → notes-service).
- * Le forwarding des credentials est géré par CredentialForwardingInitializer.
- * PII : seuls le patientId et le nombre de notes partent dans les logs, jamais le texte.
+ * L'authentification sortante passe par ServiceAccountAuthInitializer (compte de service).
+ * PII : seuls patientId et le nombre de notes finissent dans les logs, jamais le texte des notes.
  */
 @Component
 @Slf4j
@@ -48,9 +48,10 @@ public class NotesServiceClient {
             return result;
 
         } catch (HttpClientErrorException.NotFound e) {
-            throw new UpstreamNotFoundException("Notes introuvables : patientId=" + patientId);
+            throw new UpstreamNotFoundException("Notes introuvables : patientId=" + patientId, e);
         } catch (HttpServerErrorException e) {
-            throw new BadGatewayException("Erreur upstream notes-service pour patientId=" + patientId);
+            throw new BadGatewayException(
+                    "Erreur upstream notes-service pour patientId=" + patientId, e);
         } catch (ResourceAccessException e) {
             throw new GatewayTimeoutException(
                     "notes-service inaccessible pour patientId=" + patientId, e);

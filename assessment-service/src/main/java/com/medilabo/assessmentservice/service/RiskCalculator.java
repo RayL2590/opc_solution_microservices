@@ -5,53 +5,76 @@ import com.medilabo.assessmentservice.dto.PatientView;
 import com.medilabo.assessmentservice.dto.RiskResult;
 import com.medilabo.assessmentservice.model.RiskBand;
 
+import java.text.Normalizer;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * Calcul de risque déterministe et pur sur les onze termes déclencheurs canoniques (FR-9).
+ * Calcul de risque déterministe et pur sur les onze termes déclencheurs canoniques (FR-9,
+ * voir {@code Documentation/requirements-glossary.md}).
  *
- * <p>Pas de contexte Spring, pas d'état externe : le même {@code (patient, notes, today)}
- * donne toujours le même {@link RiskResult}. Les quatre fixtures canoniques du Sprint 3
- * servent d'oracle (SM-2). Matching, comptage et classification suivent les règles du
- * PRD §4.3 FR-9.</p>
+ * <p>Pas de contexte Spring, pas d'état externe : avec le même {@code (patient, notes, referenceDate)}
+ * on retombe toujours sur le même {@link RiskResult}. Les quatre cas de test fournis par le
+ * client (voir {@code Documentation/}) servent d'oracle.</p>
  */
 public class RiskCalculator {
+
+    /** Motifs du vocabulaire déjà normalisés, indexés par nom canonique. Le vocabulaire est fixe, donc pas de souci de cache. */
+    private static final Map<String, List<String>> FOLDED_PATTERNS = TriggerVocabulary.TERMS.stream()
+            .collect(Collectors.toUnmodifiableMap(
+                    TriggerTerm::canonicalName,
+                    term -> term.matchPatterns().stream().map(RiskCalculator::fold).toList()));
 
     /**
      * Calcule le nombre de déclencheurs, les déclencheurs détectés et la bande de risque.
      *
-     * @param notes   les notes du patient (peu importe l'ordre — triées chronologiquement en interne).
-     * @param today   date de référence pour l'âge (explicite pour rester déterministe).
+     * @param notes         les notes du patient (peu importe l'ordre — triées chronologiquement en interne).
+     * @param referenceDate date à laquelle l'âge est calculé (injectée plutôt que lue de l'horloge,
+     *                      pour que le calcul reste pur et déterministe).
      * @return nombre de déclencheurs distincts, noms canoniques dans l'ordre du premier match
      *         chronologique, et la bande classifiée.
      */
-    public RiskResult compute(PatientView patient, List<NoteView> notes, java.time.LocalDate today) {
+    public RiskResult compute(PatientView patient, List<NoteView> notes, java.time.LocalDate referenceDate) {
         List<String> triggersDetected = detectTriggers(notes);
         int triggerCount = triggersDetected.size();
-        RiskBand band = classify(patient.age(today), patient.gender(), triggerCount);
+        RiskBand band = classify(patient.age(referenceDate), patient.gender(), triggerCount);
         return new RiskResult(triggerCount, triggersDetected, band);
     }
 
     /**
      * Parcourt les notes du plus ancien au plus récent, renvoie chaque terme détecté dans
      * l'ordre du premier match, sans doublon. Dans une même note, l'ordre suit la première
-     * apparition textuelle du terme (comme l'exemple de l'enveloppe FR-8) ; à position égale,
-     * on retombe sur l'ordre de {@code TriggerVocabulary.TERMS}. Match insensible à la casse,
-     * sous-chaîne contiguë (accents conservés) ; répéter un terme dans une autre note ne le
-     * rajoute pas.
+     * apparition textuelle du terme (comme dans l'exemple de l'enveloppe FR-8) ; à position égale,
+     * on retombe sur l'ordre de {@code TriggerVocabulary.TERMS}. Le match ignore casse et accents,
+     * cherche une sous-chaîne contiguë ; répéter un terme dans une autre note ne le rajoute pas.
+     *
+     * <p>Si deux notes ont exactement le même {@code createdAt} (à la milliseconde près), on
+     * départage sur l'id croissant : c'est un ObjectId Mongo, dont les premiers octets encodent
+     * l'instant de création, donc id croissant = ordre d'insertion. Sans ce départage, le tri
+     * stable garderait l'ordre du client upstream, qui trie en {@code DESC} — et on scannerait
+     * la note la plus récente en premier, ce qui fausserait tout.</p>
      */
     private List<String> detectTriggers(List<NoteView> notes) {
         List<NoteView> chronological = new ArrayList<>(notes);
-        chronological.sort(Comparator.comparing(NoteView::createdAt, Comparator.nullsLast(Instant::compareTo)));
+        chronological.sort(Comparator
+                .comparing(NoteView::createdAt, Comparator.nullsLast(Instant::compareTo))
+                .thenComparing(NoteView::id, Comparator.nullsLast(Comparator.naturalOrder())));
 
         List<String> detected = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
         for (NoteView note : chronological) {
-            String haystack = note.note() == null ? "" : note.note().toLowerCase(Locale.ROOT);
-            newInThisNote(haystack, detected).forEach(detected::add);
+            String haystack = fold(note.note() == null ? "" : note.note());
+            for (String canonicalName : newInThisNote(haystack, seen)) {
+                detected.add(canonicalName);
+                seen.add(canonicalName);
+            }
         }
         return List.copyOf(detected);
     }
@@ -60,14 +83,14 @@ public class RiskCalculator {
      * @return les noms pas encore détectés qui matchent cette note, ordonnés par la position
      *         la plus tôt où le motif du terme apparaît dans le texte.
      */
-    private List<String> newInThisNote(String lowercasedNote, List<String> alreadyDetected) {
-        List<int[]> positioned = new ArrayList<>(); // [indexTerme, positionPremierMatch]
+    private List<String> newInThisNote(String foldedNote, Set<String> alreadyDetected) {
+        List<int[]> positioned = new ArrayList<>(); // [indexTerme, positionDuPremierMatch]
         for (int i = 0; i < TriggerVocabulary.TERMS.size(); i++) {
             TriggerTerm term = TriggerVocabulary.TERMS.get(i);
             if (alreadyDetected.contains(term.canonicalName())) {
                 continue;
             }
-            int offset = firstMatchOffset(lowercasedNote, term);
+            int offset = firstMatchOffset(foldedNote, term);
             if (offset >= 0) {
                 positioned.add(new int[]{i, offset});
             }
@@ -85,15 +108,33 @@ public class RiskCalculator {
      * @return la position la plus tôt où un des motifs du terme apparaît dans le texte (déjà
      *         en minuscules), ou -1 si aucun ne matche.
      */
-    private int firstMatchOffset(String lowercasedNote, TriggerTerm term) {
+    private int firstMatchOffset(String foldedNote, TriggerTerm term) {
         int best = -1;
-        for (String pattern : term.matchPatterns()) {
-            int idx = lowercasedNote.indexOf(pattern);
+        for (String pattern : FOLDED_PATTERNS.get(term.canonicalName())) {
+            int idx = foldedNote.indexOf(pattern);
             if (idx >= 0 && (best < 0 || idx < best)) {
                 best = idx;
             }
         }
         return best;
+    }
+
+    /**
+     * Normalise un texte pour le matching : minuscules et accents retirés, comme ça "hemoglobine"
+     * tapé sans accent matche quand même le terme canonique "Hémoglobine A1C".
+     *
+     * <p>On recompose en NFC avant de décomposer, pour qu'un texte déjà décomposé (e + accent
+     * combinant) folde vers exactement la même chaîne qu'un texte précomposé. Les offsets rendus
+     * restent donc comparables entre eux peu importe l'encodage d'entrée — et l'ordre de
+     * {@code triggersDetected} en dépend. Attention : ce sont des positions dans le texte foldé,
+     * plus courtes que dans le texte d'origine s'il y avait des accents, donc ne pas s'en servir
+     * pour indexer la note brute.</p>
+     */
+    private static String fold(String text) {
+        String composed = Normalizer.normalize(text, Normalizer.Form.NFC);
+        return Normalizer.normalize(composed, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase(Locale.ROOT);
     }
 
     /**
@@ -132,7 +173,7 @@ public class RiskCalculator {
             band = highest(band, RiskBand.EARLY_ONSET);
         }
 
-        // count <= 1 ne matche jamais aucune branche au-dessus, donc reste à NONE.
+        // count <= 1 ne matche jamais rien au-dessus, donc ça reste à NONE.
         return band;
     }
 

@@ -7,6 +7,7 @@ import com.medilabo.assessmentservice.exception.GatewayTimeoutException;
 import com.medilabo.assessmentservice.exception.GlobalExceptionHandler;
 import com.medilabo.assessmentservice.exception.IncompletePatientDataException;
 import com.medilabo.assessmentservice.exception.UpstreamNotFoundException;
+import com.medilabo.assessmentservice.model.RiskBand;
 import com.medilabo.assessmentservice.service.AssessmentService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +26,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Slice {@code @WebMvcTest} pour {@link AssessmentController} : {@link AssessmentService} mocké,
- * vrai {@link SecurityConfig} importé et exercé via {@code httpBasic(...)}. Vérifie la forme de
- * l'enveloppe FR-8 en 200, les codes 404/502/504/422 via {@link GlobalExceptionHandler}, et les
- * rejets 401 (pas de credentials, mauvais mot de passe, utilisateur inconnu).
+ * vrai {@link SecurityConfig} importé et exercé via {@code httpBasic(...)}. On vérifie la forme
+ * de l'enveloppe FR-8 en 200, les codes 404/502/504/422 via {@link GlobalExceptionHandler}, et
+ * les rejets en 401 (pas de credentials, mauvais mot de passe, utilisateur inconnu).
  */
 @WebMvcTest(AssessmentController.class)
 @Import({SecurityConfig.class, GlobalExceptionHandler.class})
@@ -44,7 +45,7 @@ class AssessmentControllerTest {
         AssessmentResponseDTO dto = new AssessmentResponseDTO(
                 4,
                 new AssessmentResponseDTO.PatientBlock("TestEarlyOnset", "Patient4", 23),
-                "Early Onset",
+                RiskBand.EARLY_ONSET,
                 7,
                 List.of("Anticorps", "Réaction", "Hémoglobine A1C", "Taille", "Poids", "Cholestérol", "Vertiges"));
         when(assessmentService.assess(4)).thenReturn(dto);

@@ -5,6 +5,9 @@
 > Identifiants par défaut du projet : `medilabo` / `medilabo123` (vérifier que `MEDILABO_USER`
 > dans votre `.env` / `.env.docker` correspond bien à ce couple — le mot de passe en clair
 > n'est jamais stocké, seul son hash BCrypt l'est).
+>
+> Les codes d'exigence cités plus bas (`FR-9`, `FR-13`, `FR-15`) sont définis dans
+> [requirements-glossary.md](requirements-glossary.md).
 
 ---
 
@@ -292,13 +295,16 @@ Ce guide teste le comportement **observé**, pas la couverture de code. Faites t
 tests automatisés pour vérifier qu'ils passent tous avant de considérer le projet terminé :
 
 ```bash
-cd patient-service && ./mvnw test
-cd notes-service && ./mvnw test        # nécessite MongoDB local sur 27017
+cd patient-service && ./mvnw test      # Testcontainers démarre un MySQL éphémère (mysql:8.0)
+cd notes-service && ./mvnw test        # Testcontainers démarre un Mongo éphémère (mongo:7.0)
 cd assessment-service && ./mvnw test   # pas de dépendance DB, tourne toujours
 cd front-service && ./mvnw test
 cd gateway-service && ./mvnw test
 ```
 
+- [ ] Docker Desktop est lancé — `patient-service` et `notes-service` en dépendent désormais
+      pour leurs tests d'intégration (Testcontainers gère MySQL/MongoDB automatiquement, plus
+      besoin d'une instance locale pré-démarrée sur `3306`/`27017`, y compris en Partie D).
 - [ ] Les 5 suites passent sans échec (`BUILD SUCCESS`).
 
 ---

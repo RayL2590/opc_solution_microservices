@@ -9,6 +9,7 @@ import com.medilabo.assessmentservice.exception.BadGatewayException;
 import com.medilabo.assessmentservice.exception.GatewayTimeoutException;
 import com.medilabo.assessmentservice.exception.IncompletePatientDataException;
 import com.medilabo.assessmentservice.exception.UpstreamNotFoundException;
+import com.medilabo.assessmentservice.model.RiskBand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,14 +31,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests d'orchestration pour {@link AssessmentService} : clients 4.2 mockés, vrai
- * {@link RiskCalculator}, vérifie le mapping FR-8 et reproduit les quatre fixtures
- * canoniques du Sprint 3 (oracle SM-2) au-dessus du niveau algo pur.
+ * Tests d'orchestration pour {@link AssessmentService} : clients upstream mockés, vrai
+ * {@link RiskCalculator}. On vérifie le mapping vers l'enveloppe HTTP et on rejoue les quatre
+ * cas de test du client, mais cette fois au-dessus du niveau algo pur.
  */
 @ExtendWith(MockitoExtension.class)
 class AssessmentServiceTest {
 
-    /** "Today" figé pour que les fixtures/assertions basées sur l'âge ne dérivent pas à minuit. */
+    /** "Today" figé pour que les fixtures et assertions basées sur l'âge ne changent pas à minuit. */
     private static final LocalDate TODAY = LocalDate.now();
 
     @Mock private PatientServiceClient patientServiceClient;
@@ -58,7 +59,7 @@ class AssessmentServiceTest {
         return Instant.parse(String.format("2024-01-10T%02d:00:00Z", hour));
     }
 
-    // ---- mapping de l'enveloppe FR-8 ----
+    // ---- mapping vers l'enveloppe FR-8 ----
 
     @Test
     @DisplayName("happy path maps patient + risk result into the FR-8 envelope")
@@ -78,7 +79,7 @@ class AssessmentServiceTest {
         assertThat(result.patient().age()).isEqualTo(23);
         assertThat(result.triggerCount()).isEqualTo(1);
         assertThat(result.triggersDetected()).containsExactly("Poids");
-        assertThat(result.riskBand()).isEqualTo("None");
+        assertThat(result.riskBand()).isEqualTo(RiskBand.NONE);
     }
 
     @Test
@@ -93,7 +94,7 @@ class AssessmentServiceTest {
 
         assertThat(result.triggerCount()).isZero();
         assertThat(result.triggersDetected()).isEmpty();
-        assertThat(result.riskBand()).isEqualTo("None");
+        assertThat(result.riskBand()).isEqualTo(RiskBand.NONE);
     }
 
     // ---- les exceptions cascadent sans être modifiées ----
@@ -172,7 +173,7 @@ class AssessmentServiceTest {
         assertThrows(GatewayTimeoutException.class, () -> assessmentService.assess(1));
     }
 
-    // ---- AC4: les quatre fixtures canoniques (oracle SM-2), reproduites au niveau orchestration ----
+    // ---- AC4 : les quatre fixtures canoniques (oracle SM-2), rejouées au niveau orchestration ----
 
     private static Stream<Arguments> canonicalFixtures() {
         PatientView p1 = new PatientView(1, "Test", "TestNone", TODAY.minusYears(58), "F");
@@ -215,10 +216,10 @@ class AssessmentServiceTest {
         );
 
         return Stream.of(
-                Arguments.of(1, p1, n1, 1, "None"),
-                Arguments.of(2, p2, n2, 2, "Borderline"),
-                Arguments.of(3, p3, n3, 3, "In Danger"),
-                Arguments.of(4, p4, n4, 7, "Early Onset")
+                Arguments.of(1, p1, n1, 1, RiskBand.NONE),
+                Arguments.of(2, p2, n2, 2, RiskBand.BORDERLINE),
+                Arguments.of(3, p3, n3, 3, RiskBand.IN_DANGER),
+                Arguments.of(4, p4, n4, 7, RiskBand.EARLY_ONSET)
         );
     }
 
@@ -227,7 +228,7 @@ class AssessmentServiceTest {
     @DisplayName("AC4 — the four canonical fixtures resolve to the expected band and count via assess()")
     void assess_canonicalFixtures_resolveExpectedBandAndCount(
             Integer patId, PatientView patient, List<NoteView> notes,
-            int expectedCount, String expectedBand) {
+            int expectedCount, RiskBand expectedBand) {
 
         when(patientServiceClient.getPatient(patId)).thenReturn(patient);
         when(notesServiceClient.getNotesByPatId(patId)).thenReturn(notes);

@@ -1,11 +1,16 @@
 package com.medilabo.notesservice.controller;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.medilabo.notesservice.config.SecurityConfig;
 import com.medilabo.notesservice.dto.NoteDTO;
 import com.medilabo.notesservice.exception.GlobalExceptionHandler;
 import com.medilabo.notesservice.exception.NoteNotFoundException;
 import com.medilabo.notesservice.service.NoteService;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.mongodb.autoconfigure.DataMongoAutoConfiguration;
 import org.springframework.boot.data.mongodb.autoconfigure.DataMongoRepositoriesAutoConfiguration;
@@ -19,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -28,8 +34,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// SecurityConfig réelle importée (chaîne HTTP Basic exercée) — Mongo reste exclu : @WebMvcTest DB-free.
-// MongoConfig (@EnableMongoAuditing) requiert mongoMappingContext absent dans le slice MVC.
+// On importe la vraie SecurityConfig pour exercer la chaîne HTTP Basic, mais Mongo reste exclu :
+// @WebMvcTest doit rester sans DB. MongoConfig (@EnableMongoAuditing) a besoin de mongoMappingContext,
+// qui n'existe pas dans ce slice.
 @WebMvcTest(value = NoteController.class,
         excludeAutoConfiguration = {
                 MongoAutoConfiguration.class,
@@ -43,6 +50,44 @@ class NoteControllerTest {
 
     @MockitoBean
     private NoteService noteService;
+
+    @Test
+    void everyEndpoint_emitsADebugLog() throws Exception {
+        Logger controllerLogger = (Logger) LoggerFactory.getLogger(NoteController.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        Level previousLevel = controllerLogger.getLevel();
+        controllerLogger.setLevel(Level.DEBUG);
+        controllerLogger.addAppender(appender);
+        try {
+            NoteDTO dto = new NoteDTO("abc123", 1, "TestNone", "Observation clinique.", Instant.now());
+            given(noteService.addNote(any())).willReturn(dto);
+            given(noteService.getNotesByPatId(1)).willReturn(List.of(dto));
+            given(noteService.getNoteById("abc123")).willReturn(dto);
+
+            mockMvc.perform(post("/notes").with(httpBasic("medilabo", "medilabo123"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"patId\":1,\"patient\":\"TestNone\",\"note\":\"Observation clinique.\"}"))
+                    .andExpect(status().isCreated());
+            mockMvc.perform(get("/notes").with(httpBasic("medilabo", "medilabo123")).param("patId", "1"))
+                    .andExpect(status().isOk());
+            mockMvc.perform(get("/notes/abc123").with(httpBasic("medilabo", "medilabo123")))
+                    .andExpect(status().isOk());
+
+            List<String> debugMessages = appender.list.stream()
+                    .filter(event -> event.getLevel() == Level.DEBUG)
+                    .map(ILoggingEvent::getFormattedMessage)
+                    .toList();
+
+            assertThat(debugMessages).containsExactly(
+                    "POST /notes patId=1",
+                    "GET /notes patId=1",
+                    "GET /notes/abc123");
+        } finally {
+            controllerLogger.detachAppender(appender);
+            controllerLogger.setLevel(previousLevel);
+        }
+    }
 
     @Test
     void addNote_validPayload_returns201() throws Exception {
@@ -77,6 +122,28 @@ class NoteControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.note[0]").value(
                         containsString("vide")));
+    }
+
+    @Test
+    void addNote_blankPatient_returns400WithFieldError() throws Exception {
+        // patient vide → @NotBlank : le nom est dénormalisé sur chaque note (D-DATA-3), une
+        // note sans lui est illisible dans la timeline.
+        mockMvc.perform(post("/notes").with(httpBasic("medilabo", "medilabo123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"patId\":1,\"patient\":\"  \",\"note\":\"Observation clinique.\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.patient[0]").value(
+                        containsString("obligatoire")));
+    }
+
+    @Test
+    void addNote_missingPatient_returns400WithFieldError() throws Exception {
+        mockMvc.perform(post("/notes").with(httpBasic("medilabo", "medilabo123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"patId\":1,\"note\":\"Observation clinique.\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.patient[0]").value(
+                        containsString("obligatoire")));
     }
 
     @Test

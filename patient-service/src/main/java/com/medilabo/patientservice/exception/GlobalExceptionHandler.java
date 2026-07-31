@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PatientNotFoundException.class)
     public ProblemDetail handlePatientNotFound(PatientNotFoundException ex) {
-        log.warn("Patient not found: {}", ex.getMessage());
+        log.warn("Patient not found: {}", ex.getMessage(), ex);
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
         for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
             errors.putIfAbsent(fieldError.getField(), fieldError.getDefaultMessage());
         }
-        log.warn("Validation failed on fields: {}", errors.keySet());
+        log.warn("Validation failed on fields: {}", errors.keySet(), ex);
 
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST, "La validation du patient a échoué");
@@ -39,7 +39,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ProblemDetail handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        log.warn("Type mismatch on path variable: {}", ex.getName());
+        log.warn("Type mismatch on path variable: {}", ex.getName(), ex);
         return ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
                 "Paramètre invalide : " + ex.getName());

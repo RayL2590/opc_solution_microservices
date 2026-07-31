@@ -20,7 +20,9 @@ public class RestClientConfig {
 
     @Bean
     public RestClient gatewayClient(
-            @Value("${medilabo.gateway.base-url:http://localhost:8080}") String gatewayBaseUrl) {
+            @Value("${medilabo.gateway.base-url:http://localhost:8080}") String gatewayBaseUrl,
+            @Value("${medilabo.svc-front-user}") String serviceUsername,
+            @Value("${medilabo.svc-front-password}") String servicePassword) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(CONNECT_TIMEOUT);
         requestFactory.setReadTimeout(READ_TIMEOUT);
@@ -28,7 +30,7 @@ public class RestClientConfig {
         return RestClient.builder()
                 .baseUrl(gatewayBaseUrl)
                 .requestFactory(requestFactory)
-                .requestInitializer(new CredentialForwardingInitializer())
+                .requestInitializer(new ServiceAccountAuthInitializer(serviceUsername, servicePassword))
                 .build();
     }
 }

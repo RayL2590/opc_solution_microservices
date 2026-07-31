@@ -23,15 +23,34 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Trois identités : le clinicien (ROLE_USER) et un compte machine par service appelant
+     * (ROLE_SERVICE). On les sépare pour que le mot de passe du clinicien ne circule pas
+     * entre services, et pour pouvoir révoquer un seul appelant sans toucher aux autres.
+     * Le Gateway ne fait qu'accepter ces identités, il relaie juste le header entrant,
+     * jamais n'en génère un lui-même.
+     */
     @Bean
     MapReactiveUserDetailsService userDetailsService(
             @Value("${medilabo.user}") String username,
-            @Value("${medilabo.password-bcrypt}") String bcryptHash) {
+            @Value("${medilabo.password-bcrypt}") String bcryptHash,
+            @Value("${medilabo.svc-front-user}") String svcFrontUsername,
+            @Value("${medilabo.svc-front-password-bcrypt}") String svcFrontBcryptHash,
+            @Value("${medilabo.svc-assessment-user}") String svcAssessmentUsername,
+            @Value("${medilabo.svc-assessment-password-bcrypt}") String svcAssessmentBcryptHash) {
         UserDetails user = User.withUsername(username)
                 .password(bcryptHash)
                 .roles("USER")
                 .build();
-        return new MapReactiveUserDetailsService(user);
+        UserDetails svcFront = User.withUsername(svcFrontUsername)
+                .password(svcFrontBcryptHash)
+                .roles("SERVICE", "SERVICE_FRONT")
+                .build();
+        UserDetails svcAssessment = User.withUsername(svcAssessmentUsername)
+                .password(svcAssessmentBcryptHash)
+                .roles("SERVICE", "SERVICE_ASSESSMENT")
+                .build();
+        return new MapReactiveUserDetailsService(user, svcFront, svcAssessment);
     }
 
     @Bean

@@ -8,7 +8,7 @@ import org.springframework.web.client.RestClient;
 import com.medilabo.frontservice.dto.AssessmentView;
 
 /**
- * Client Gateway pour l'évaluation du risque. Credential forwarding géré par CredentialForwardingInitializer.
+ * Client Gateway pour l'évaluation du risque. Authentification sortante gérée par ServiceAccountAuthInitializer.
  */
 @Component
 @Slf4j

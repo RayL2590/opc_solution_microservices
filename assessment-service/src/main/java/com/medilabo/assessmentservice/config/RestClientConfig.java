@@ -10,7 +10,7 @@ import org.springframework.web.client.RestClient;
 
 /**
  * Bean RestClient vers le Gateway.
- * Aucun appel réseau à la construction — le contexte démarre même si le Gateway est down.
+ * Pas d'appel réseau à la construction, donc le contexte démarre même si le Gateway est down.
  */
 @Configuration
 public class RestClientConfig {
@@ -20,11 +20,13 @@ public class RestClientConfig {
 
     @Bean
     public RestClient gatewayClient(
-            @Value("${medilabo.gateway.base-url:http://localhost:8080}") String gatewayBaseUrl) {
+            @Value("${medilabo.gateway.base-url:http://localhost:8080}") String gatewayBaseUrl,
+            @Value("${medilabo.svc-assessment-user}") String serviceUsername,
+            @Value("${medilabo.svc-assessment-password}") String servicePassword) {
         return RestClient.builder()
                 .baseUrl(gatewayBaseUrl)
                 .requestFactory(requestFactory())
-                .requestInitializer(new CredentialForwardingInitializer())
+                .requestInitializer(new ServiceAccountAuthInitializer(serviceUsername, servicePassword))
                 .build();
     }
 

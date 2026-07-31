@@ -57,7 +57,15 @@ docker compose down -v
           └──────────┘      └──────────┘
 ```
 
-Authentification HTTP Basic en défense en profondeur : chaque service (Gateway inclus) porte son propre filtre de sécurité et vérifie les mêmes identifiants. Le header `Authorization` du navigateur est propagé tel quel de bout en bout (aucune session, aucun jeton recréé) — voir [Sécurité](#sécurité).
+Authentification HTTP Basic sur chaque service, Gateway inclus : aucun service ne fait confiance à son appelant sur la seule foi de sa position dans le réseau. Deux classes de comptes coexistent — un compte humain pour le clinicien, un compte machine par service appelant — détaillées dans [Sécurité](#sécurité).
+
+**Pourquoi `front-service` est-il lui aussi derrière la Gateway ?** On pourrait le publier directement sur l'hôte : c'est le seul service qu'un humain consulte, et il appelle de toute façon la Gateway pour ses données. Il est malgré tout routé (`Path=/,/ui/**,/css/**,/js/**,/favicon.ico`) pour trois raisons :
+
+- **Un seul port publié, donc une seule surface d'exposition.** Publier le front ajouterait un deuxième port sur l'hôte, et donc un deuxième composant à durcir, à monitorer et à mettre derrière TLS le jour où le projet sortirait de la démo. `docker-compose.yml` ne publie que `8080:8080` ; l'IHM et l'API REST partagent la même porte d'entrée.
+- **Une seule origine pour le navigateur.** L'IHM et les API vivent sous `http://localhost:8080`, donc aucune requête cross-origin, aucune configuration CORS ni préflight `OPTIONS` à gérer.
+- **Une seule chaîne d'authentification.** Le challenge HTTP Basic est présenté par la Gateway à l'ouverture de `/ui/patients` : le clinicien s'authentifie une fois, au même endroit qu'un client d'API. Un front publié à part aurait sa propre porte d'entrée et son propre challenge, à maintenir en parallèle de celui de la Gateway.
+
+Le routage de la Gateway ajoute deux en-têtes `X-Forwarded-*` sur la route front (`X-Forwarded-Host: localhost:8080`, `X-Forwarded-Proto: http`) pour que les URLs générées par Thymeleaf pointent sur le port public et non sur le port interne `8084`.
 
 ## Pourquoi ce découpage en microservices
 
@@ -67,7 +75,7 @@ Le découpage suit les frontières fonctionnelles du domaine plutôt qu'une rép
 - **`notes-service`** possède seul l'historique clinique en texte libre. Le modèle de données (append-only, semi-structuré) est fondamentalement différent de celui des patients — d'où un service et une base séparés plutôt qu'une table de plus dans MySQL.
 - **`assessment-service`** est un service de calcul pur : il ne persiste rien (le risque n'est jamais mis en cache, il est recalculé à chaque consultation) et consomme les deux autres domaines en lecture seule via la Gateway. L'isoler évite de coupler la logique métier du risque aux modèles de persistance de patient-service et notes-service.
 - **`front-service`** est la seule couche de présentation (Thymeleaf, rendu serveur). Elle ne connaît aucun détail de persistance des autres services — elle ne parle qu'au contrat HTTP/JSON exposé par la Gateway.
-- **`gateway-service`** est le point d'entrée unique et le seul composant qui expose un port sur l'hôte. Il centralise le routage et, en défense en profondeur, l'authentification.
+- **`gateway-service`** est le point d'entrée unique et le seul composant qui expose un port sur l'hôte. Il centralise le routage et authentifie les requêtes entrantes — sans dispenser les services back-end de le faire à leur tour (voir [Sécurité](#sécurité)).
 
 Chaque service a son propre `pom.xml` (pas de POM parent agrégateur) et son propre contrat DTO à la frontière HTTP — y compris une duplication volontaire des DTOs consommés par `assessment-service` et `front-service` plutôt qu'un module Java partagé. Un module commun introduirait un couplage de compilation entre services : modifier une entité dans `patient-service` forcerait la recompilation de tous ses consommateurs, ce qui revient à un monolithe distribué au niveau du build. Le contrat entre services est le JSON exposé par chaque API, pas un type Java partagé — chaque service évolue et se déploie indépendamment.
 
@@ -106,7 +114,7 @@ Le grid d'évaluation demande d'**expliquer** les principes Green Code et de **p
 
 **Corrigé suite à l'analyse Green Code :**
 - **Log SQL désactivé** (`spring.jpa.show-sql=false`) : le profil `docker` n'ayant pas de surcharge, chaque requête SQL était formatée et écrite sur la sortie standard jusque dans le conteneur de déploiement — du CPU et de l'I/O consommés en continu pour une information utile au seul débogage. Mesuré sur le conteneur en fonctionnement : 4 requêtes loggées → 0. Réactivable ponctuellement en dev via `-Dspring.jpa.show-sql=true`.
-- **Index MongoDB sur `Note.patId`** (`@Indexed` + `spring.data.mongodb.auto-index-creation=true`, ce second réglage étant indispensable — la création automatique d'index est désactivée par défaut depuis Spring Data MongoDB 3.0) : `findByPatIdOrderByCreatedAtDesc` est appelée à chaque ouverture de fiche patient et provoquait un balayage complet de la collection. Plan de requête vérifié par `explain()` : `COLLSCAN` → `IXSCAN`.
+- **Index MongoDB sur `Note.patId`** (`@Indexed` + `spring.data.mongodb.auto-index-creation=true`, ce second réglage étant indispensable — la création automatique d'index est désactivée par défaut depuis Spring Data MongoDB 3.0) : `findByPatIdOrderByCreatedAtDescIdDesc` est appelée à chaque ouverture de fiche patient et provoquait un balayage complet de la collection. Plan de requête vérifié par `explain()` : `COLLSCAN` → `IXSCAN`.
 
 **Recommandations pour la suite :**
 - Limiter les échanges réseau inter-services superflus (regrouper les appels quand c'est possible plutôt que multiplier les allers-retours).
@@ -134,13 +142,57 @@ Chaque service est un projet Maven indépendant (`pom.xml` propre, pas de POM pa
 
 Deux fichiers-modèles à la racine, à copier en versions réelles (jamais commitées, toutes deux git-ignorées) :
 
-- **[`.env.example`](.env.example) → `.env`** : credentials MySQL applicatifs, URI MongoDB, identité du compte in-memory (`MEDILABO_USER` / `MEDILABO_PASSWORD_BCRYPT` — un hash BCrypt, jamais le mot de passe en clair), URI de la Gateway pour les appels sortants d'`assessment-service`/`front-service` en dev local, et les variables de bootstrap du conteneur MySQL (`MYSQL_ROOT_PASSWORD`, `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`).
-- **[`.env.docker.example`](.env.docker.example) → `.env.docker`** : ne contient qu'une ré-déclaration de `MEDILABO_PASSWORD_BCRYPT`, échappée (`$$` au lieu de `$`). Ce fichier existe uniquement parce que Docker Compose réinterprète les `$` d'une valeur substituée depuis `.env`, ce qui corromprait silencieusement le hash BCrypt (`$2a$10$...`) s'il n'était lu que depuis `.env`. Spring Boot ne lit jamais ce second fichier — il est branché uniquement dans `docker-compose.yml` via `env_file:`.
+- **[`.env.example`](.env.example) → `.env`** : l'intégralité de la surface de configuration (détail ci-dessous).
+- **[`.env.docker.example`](.env.docker.example) → `.env.docker`** : ne contient que les **trois hashes BCrypt**, échappés (`$$` au lieu de `$`). Ce fichier existe uniquement parce que Docker Compose réinterprète les `$` d'une valeur substituée depuis `.env`, ce qui corromprait silencieusement un hash BCrypt (`$2a$10$...`) s'il n'était lu que depuis `.env`. Spring Boot ne lit jamais ce second fichier — il est branché uniquement dans `docker-compose.yml` via `env_file:`. Les mots de passe en clair des comptes de service ne contiennent pas de `$` et restent donc dans `.env`.
+
+Contenu de `.env` :
+
+| Variable | Rôle |
+|---|---|
+| `SPRING_DATASOURCE_URL` / `_USERNAME` / `_PASSWORD` | Connexion JDBC de `patient-service` à MySQL. |
+| `MYSQL_ROOT_PASSWORD`, `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD` | Bootstrap du conteneur MySQL. `MYSQL_USER`/`MYSQL_PASSWORD` doivent correspondre aux deux variables `SPRING_DATASOURCE_*` ci-dessus. |
+| `SPRING_DATA_MONGODB_URI` | Connexion de `notes-service` à MongoDB. |
+| `MEDILABO_USER`, `MEDILABO_PASSWORD_BCRYPT` | Compte **humain** du clinicien. Hash BCrypt uniquement, jamais le mot de passe en clair. |
+| `MEDILABO_SVC_FRONT_USER`, `..._PASSWORD`, `..._PASSWORD_BCRYPT` | Compte **de service** de `front-service`. |
+| `MEDILABO_SVC_ASSESSMENT_USER`, `..._PASSWORD`, `..._PASSWORD_BCRYPT` | Compte **de service** d'`assessment-service`. |
+| `GATEWAY_URI` | Base des appels sortants d'`assessment-service` / `front-service` en dev local. |
+
+Pour chaque compte de service, `..._PASSWORD` (clair) et `..._PASSWORD_BCRYPT` (hash) doivent rester cohérents : l'appelant construit son header Basic depuis le premier, tous les destinataires valident contre le second — voir [Sécurité](#sécurité).
 
 Toutes les variables consommées par les 5 services sont couvertes par ces deux fichiers ; aucun secret réel n'apparaît dans le dépôt.
 
 ## Sécurité
 
-Authentification HTTP Basic activée sur la Gateway **et** sur chaque service back-end (défense en profondeur) : même si un service était un jour exposé directement (mauvaise configuration réseau), il resterait protégé. Chaque service déclare son propre `InMemoryUserDetailsManager`, seedé depuis les mêmes variables d'environnement (`MEDILABO_USER` / `MEDILABO_PASSWORD_BCRYPT`), avec `BCryptPasswordEncoder`. Aucune session serveur : chaque requête porte ses identifiants (`STATELESS`), ce qui permet à `front-service` de retransmettre tel quel le header `Authorization` reçu du navigateur vers la Gateway, et à la Gateway de le retransmettre à son tour vers le service back-end concerné — sans jamais le recréer ni le stocker.
+### Deux classes de comptes, pas un seul compte partagé
 
-Pas d'inscription, pas de gestion fine des rôles à ce stade : un seul compte partagé, cohérent avec le périmètre v1 du projet (outil interne pour une équipe clinique restreinte).
+Le système distingue **qui est l'appelant humain** de **quel service appelle quel service**. Trois identités sont déclarées, avec des rôles distincts :
+
+| Compte | Rôle | Qui l'utilise | Variables |
+|---|---|---|---|
+| `medilabo` | `ROLE_USER` | Le clinicien, uniquement pour se connecter à l'IHM via la Gateway. | `MEDILABO_USER`, `MEDILABO_PASSWORD_BCRYPT` |
+| `svc-front` | `ROLE_SERVICE` | `front-service` pour ses appels sortants vers la Gateway. | `MEDILABO_SVC_FRONT_USER`, `..._PASSWORD`, `..._PASSWORD_BCRYPT` |
+| `svc-assessment` | `ROLE_SERVICE` | `assessment-service` pour lire les patients et les notes via la Gateway. | `MEDILABO_SVC_ASSESSMENT_USER`, `..._PASSWORD`, `..._PASSWORD_BCRYPT` |
+
+Ce découpage répond à un problème concret de la version précédente : le header `Authorization` du navigateur était relayé tel quel de service en service, donc **le mot de passe du clinicien circulait dans tout le système**. Un seul service compromis exposait le credential humain, et le révoquer coupait tout le monde d'un coup. Aujourd'hui, `front-service` et `assessment-service` s'authentifient chacun avec leur propre identité machine (`ServiceAccountAuthInitializer`, branché sur le `RestClient` dans `RestClientConfig`) : le credential du clinicien s'arrête à la frontière du front, et chaque compte de service est révocable indépendamment des deux autres.
+
+Chaque compte de service se décline en deux variables complémentaires : l'**appelant** a besoin du mot de passe en clair (`..._PASSWORD`) pour construire son header Basic, chaque **destinataire** ne stocke que le hash BCrypt (`..._PASSWORD_BCRYPT`). Les deux doivent rester cohérents — un hash qui ne correspond pas au mot de passe fait échouer en 401 tous les appels sortants du service concerné.
+
+### Ce que vérifie chaque service
+
+Les 5 services déclarent chacun leur propre `SecurityConfig` avec les 3 mêmes identités, un `BCryptPasswordEncoder`, le hash stocké **verbatim** (jamais ré-encodé) et CSRF désactivé. Aucun ne conserve de session : les 4 services servlet utilisent `SessionCreationPolicy.STATELESS`, la Gateway (réactive, WebFlux) son équivalent `NoOpServerSecurityContextRepository`. Chaque requête reporte donc ses identifiants.
+
+C'est bien de la vérification redondante : la Gateway authentifie la requête entrante, puis le service back-end ré-authentifie l'appel qu'il reçoit. Un service ne fait donc jamais confiance à son appelant sur la seule foi de sa position dans le réseau interne.
+
+### Ce que la Gateway protège — et ce qu'elle ne protège pas
+
+L'isolation des services back-end est **topologique, pas applicative**, et il vaut mieux le dire précisément :
+
+- **Sous Docker Compose**, seul `gateway-service` publie un port sur l'hôte (`8080:8080`). Les 4 autres services et les 2 bases ne sont joignables que depuis le réseau interne Docker : depuis l'extérieur, la Gateway est effectivement le seul point d'entrée.
+- **En lancement standalone hors Docker**, chaque service écoute sur son propre port (`8081`–`8084`) et est directement joignable. La Gateway n'est alors plus un passage obligé.
+- **Il n'existe aucun mécanisme applicatif anti-contournement** : pas d'en-tête de confiance interne, pas de liste blanche d'IP, pas de mTLS. Un appelant qui atteint le réseau interne et possède des identifiants valides est accepté par un service back-end sans passer par la Gateway.
+
+Ce qui reste vrai dans tous les cas de figure, c'est l'authentification : un service atteint directement exige quand même des identifiants valides. C'est précisément l'intérêt de la redondance décrite plus haut — elle ne dépend pas de la topologie réseau. L'étape suivante identifiée (hors périmètre v1) serait un en-tête de confiance interne ou du mTLS, pour rendre le contournement de la Gateway détectable au niveau applicatif et non seulement improbable au niveau réseau.
+
+### Limites assumées de la v1
+
+Pas d'inscription, pas d'annuaire d'utilisateurs, pas de gestion fine des droits : un unique compte clinicien partagé par l'équipe, déclaré en mémoire (`InMemoryUserDetailsManager`), cohérent avec le périmètre v1 (outil interne pour une équipe restreinte). Les rôles `ROLE_USER` / `ROLE_SERVICE` sont portés par les comptes mais aucune règle d'autorisation ne les distingue encore : les règles sont aujourd'hui en `anyRequest().authenticated()`. Ce socle rend le durcissement possible sans re-modéliser les identités — par exemple réserver les écritures au clinicien et n'ouvrir que la lecture aux comptes de service.

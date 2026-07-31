@@ -37,15 +37,15 @@ public class PatientForm {
     private String address;
 
     /**
-     * Pays de l'indicatif choisi dans le formulaire. Sert à normaliser {@link #phone}
-     * vers E.164 (voir {@code PhoneNormalizer}). Défaut FR pour un formulaire vierge.
+     * Pays de l'indicatif choisi dans le formulaire, sert à normaliser {@link #phone}
+     * vers E.164 (voir {@code PhoneNormalizer}). Défaut FR sur un formulaire vierge.
      */
     private PhoneCountry phoneCountry = PhoneCountry.FR;
 
     /**
      * Téléphone tel que saisi (format libre). Normalisé en E.164 par le contrôleur
-     * avant l'envoi vers patient-service ; jamais borné par @Pattern ici car la
-     * normalisation tolère espaces, points, +, 00, etc.
+     * avant l'envoi vers patient-service. Pas de @Pattern ici : la normalisation
+     * tolère de toute façon espaces, points, +, 00, etc.
      */
     private String phone;
 }

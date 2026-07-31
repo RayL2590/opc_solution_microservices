@@ -35,7 +35,8 @@ class RestClientConfigTest {
     @Test
     void gatewayClientBean_buildsSuccessfully() {
         RestClientConfig config = new RestClientConfig();
-        RestClient client = config.gatewayClient("http://localhost:8080");
+        RestClient client = config.gatewayClient(
+                "http://localhost:8080", "svc-assessment", "svcassess123");
 
         assertNotNull(client);
     }

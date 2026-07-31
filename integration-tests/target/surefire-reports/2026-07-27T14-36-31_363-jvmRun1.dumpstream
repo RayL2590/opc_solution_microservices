@@ -1,0 +1,351 @@
+# Created at 2026-07-27T14:36:57.701
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '  .   ____          _            __ _ _'.
+
+# Created at 2026-07-27T14:36:57.702
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream ' /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \'.
+
+# Created at 2026-07-27T14:36:57.703
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \'.
+
+# Created at 2026-07-27T14:36:57.704
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream ' \\/  ___)| |_)| | | | | || (_| |  ) ) ) )'.
+
+# Created at 2026-07-27T14:36:57.705
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '  '  |____| .__|_| |_|_| |_\__, | / / / /'.
+
+# Created at 2026-07-27T14:36:57.705
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream ' =========|_|==============|___/=/_/_/_/'.
+
+# Created at 2026-07-27T14:36:57.774
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream ' :: Spring Boot ::                (v4.0.3)'.
+
+# Created at 2026-07-27T14:36:57.777
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:36:57.770+02:00  INFO 47660 --- [patient-service] [           main] c.m.p.PatientServiceApplication          : Starting PatientServiceApplication v0.0.1-SNAPSHOT using Java 17.0.14 with PID 47660 (C:\Users\Mayar\.m2\repository\com\medilabo\patient-service\0.0.1-SNAPSHOT\patient-service-0.0.1-SNAPSHOT-exec.jar started by Mayar in C:\Users\Mayar\Documents\DevRyan\opc_solution_microservices\patient-service)'.
+
+# Created at 2026-07-27T14:36:58.478
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:36:57.774+02:00  INFO 47660 --- [patient-service] [           main] c.m.p.PatientServiceApplication          : No active profile set, falling back to 1 default profile: "default"'.
+
+# Created at 2026-07-27T14:36:58.517
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:36:58.476+02:00  INFO 47660 --- [patient-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.'.
+
+# Created at 2026-07-27T14:36:59.106
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:36:58.516+02:00  INFO 47660 --- [patient-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 32 ms. Found 1 JPA repository interface.'.
+
+# Created at 2026-07-27T14:36:59.124
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:36:59.105+02:00  INFO 47660 --- [patient-service] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 14023 (http)'.
+
+# Created at 2026-07-27T14:36:59.125
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:36:59.122+02:00  INFO 47660 --- [patient-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]'.
+
+# Created at 2026-07-27T14:36:59.166
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:36:59.123+02:00  INFO 47660 --- [patient-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]'.
+
+# Created at 2026-07-27T14:36:59.303
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:36:59.165+02:00  INFO 47660 --- [patient-service] [           main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1330 ms'.
+
+# Created at 2026-07-27T14:36:59.639
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:36:59.302+02:00  INFO 47660 --- [patient-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...'.
+
+# Created at 2026-07-27T14:36:59.641
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:36:59.638+02:00  INFO 47660 --- [patient-service] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@1788cb61'.
+
+# Created at 2026-07-27T14:36:59.867
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:36:59.640+02:00  INFO 47660 --- [patient-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.'.
+
+# Created at 2026-07-27T14:36:59.909
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:36:59.867+02:00  INFO 47660 --- [patient-service] [           main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]'.
+
+# Created at 2026-07-27T14:37:00.306
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:36:59.908+02:00  INFO 47660 --- [patient-service] [           main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.4.Final'.
+
+# Created at 2026-07-27T14:37:00.384
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:00.305+02:00  INFO 47660 --- [patient-service] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer'.
+
+# Created at 2026-07-27T14:37:00.397
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:00.383+02:00  WARN 47660 --- [patient-service] [           main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)'.
+
+# Created at 2026-07-27T14:37:00.398
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:00.396+02:00  INFO 47660 --- [patient-service] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:'.
+
+# Created at 2026-07-27T14:37:00.398
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '	Database JDBC URL [jdbc:mysql://localhost:42334/test]'.
+
+# Created at 2026-07-27T14:37:00.399
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '	Database driver: MySQL Connector/J'.
+
+# Created at 2026-07-27T14:37:00.399
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '	Database dialect: MySQLDialect'.
+
+# Created at 2026-07-27T14:37:00.399
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '	Database version: 8.0.46'.
+
+# Created at 2026-07-27T14:37:00.400
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '	Default catalog/schema: test/undefined'.
+
+# Created at 2026-07-27T14:37:00.400
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '	Autocommit mode: undefined/unknown'.
+
+# Created at 2026-07-27T14:37:00.401
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]'.
+
+# Created at 2026-07-27T14:37:00.401
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '	JDBC fetch size: none'.
+
+# Created at 2026-07-27T14:37:00.401
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '	Pool: DataSourceConnectionProvider'.
+
+# Created at 2026-07-27T14:37:00.402
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '	Minimum pool size: undefined/unknown'.
+
+# Created at 2026-07-27T14:37:00.980
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '	Maximum pool size: undefined/unknown'.
+
+# Created at 2026-07-27T14:37:01.019
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:00.980+02:00  INFO 47660 --- [patient-service] [           main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)'.
+
+# Created at 2026-07-27T14:37:01.089
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:01.018+02:00  INFO 47660 --- [patient-service] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default''.
+
+# Created at 2026-07-27T14:37:01.248
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:01.088+02:00  INFO 47660 --- [patient-service] [           main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.'.
+
+# Created at 2026-07-27T14:37:01.349
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:01.247+02:00  WARN 47660 --- [patient-service] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning'.
+
+# Created at 2026-07-27T14:37:01.917
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:01.347+02:00  INFO 47660 --- [patient-service] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailsService'.
+
+# Created at 2026-07-27T14:37:01.932
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:01.915+02:00  INFO 47660 --- [patient-service] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 14023 (http) with context path '/''.
+
+# Created at 2026-07-27T14:37:03.085
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:01.931+02:00  INFO 47660 --- [patient-service] [           main] c.m.p.PatientServiceApplication          : Started PatientServiceApplication in 4.547 seconds (process running for 4.98)'.
+
+# Created at 2026-07-27T14:37:03.086
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '  .   ____          _            __ _ _'.
+
+# Created at 2026-07-27T14:37:03.087
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream ' /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \'.
+
+# Created at 2026-07-27T14:37:03.087
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \'.
+
+# Created at 2026-07-27T14:37:03.087
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream ' \\/  ___)| |_)| | | | | || (_| |  ) ) ) )'.
+
+# Created at 2026-07-27T14:37:03.087
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '  '  |____| .__|_| |_|_| |_\__, | / / / /'.
+
+# Created at 2026-07-27T14:37:03.089
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream ' =========|_|==============|___/=/_/_/_/'.
+
+# Created at 2026-07-27T14:37:03.166
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream ' :: Spring Boot ::                (v4.0.3)'.
+
+# Created at 2026-07-27T14:37:03.167
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:03.155+02:00  INFO 68844 --- [notes-service] [           main] c.m.n.NotesServiceApplication            : Starting NotesServiceApplication v0.0.1-SNAPSHOT using Java 17.0.14 with PID 68844 (C:\Users\Mayar\.m2\repository\com\medilabo\notes-service\0.0.1-SNAPSHOT\notes-service-0.0.1-SNAPSHOT-exec.jar started by Mayar in C:\Users\Mayar\Documents\DevRyan\opc_solution_microservices\notes-service)'.
+
+# Created at 2026-07-27T14:37:03.975
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:03.166+02:00  INFO 68844 --- [notes-service] [           main] c.m.n.NotesServiceApplication            : No active profile set, falling back to 1 default profile: "default"'.
+
+# Created at 2026-07-27T14:37:04.026
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:03.973+02:00  INFO 68844 --- [notes-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data MongoDB repositories in DEFAULT mode.'.
+
+# Created at 2026-07-27T14:37:04.592
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:04.025+02:00  INFO 68844 --- [notes-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 44 ms. Found 1 MongoDB repository interface.'.
+
+# Created at 2026-07-27T14:37:04.602
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:04.591+02:00  INFO 68844 --- [notes-service] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 14024 (http)'.
+
+# Created at 2026-07-27T14:37:04.603
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:04.602+02:00  INFO 68844 --- [notes-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]'.
+
+# Created at 2026-07-27T14:37:04.641
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:04.602+02:00  INFO 68844 --- [notes-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]'.
+
+# Created at 2026-07-27T14:37:04.840
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:04.639+02:00  INFO 68844 --- [notes-service] [           main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1404 ms'.
+
+# Created at 2026-07-27T14:37:04.899
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:04.839+02:00  INFO 68844 --- [notes-service] [           main] org.mongodb.driver.client                : MongoClient with metadata {"driver": {"name": "mongo-java-driver|spring-boot|sync", "version": "5.6.3"}, "os": {"type": "Windows", "name": "Windows 11", "architecture": "amd64", "version": "10.0"}, "platform": "Java/JetBrains s.r.o./17.0.14+1-b1367.22"} created with settings MongoClientSettings{readPreference=primary, writeConcern=WriteConcern{w=null, wTimeout=null ms, journal=null}, retryWrites=true, retryReads=true, readConcern=ReadConcern{level=null}, credential=null, transportSettings=null, commandListeners=[], codecRegistry=ProvidersCodecRegistry{codecProviders=[ValueCodecProvider{}, BsonValueCodecProvider{}, DBRefCodecProvider{}, DBObjectCodecProvider{}, DocumentCodecProvider{}, CollectionCodecProvider{}, IterableCodecProvider{}, MapCodecProvider{}, GeoJsonCodecProvider{}, GridFSFileCodecProvider{}, Jsr310CodecProvider{}, JsonObjectCodecProvider{}, BsonCodecProvider{}, com.mongodb.client.model.mql.ExpressionCodecProvider@20c812c8, com.mongodb.Jep395RecordCodecProvider@71aaf151, com.mongodb.KotlinCodecProvider@7061622, EnumCodecProvider{}]}, loggerSettings=LoggerSettings{maxDocumentLength=1000}, clusterSettings={hosts=[localhost:63143], srvServiceName=mongodb, mode=SINGLE, requiredClusterType=UNKNOWN, requiredReplicaSetName='null', serverSelector='null', clusterListeners='[]', serverSelectionTimeout='30000 ms', localThreshold='15 ms'}, socketSettings=SocketSettings{connectTimeoutMS=10000, readTimeoutMS=0, receiveBufferSize=0, proxySettings=ProxySettings{host=null, port=null, username=null, password=null}}, heartbeatSocketSettings=SocketSettings{connectTimeoutMS=10000, readTimeoutMS=10000, receiveBufferSize=0, proxySettings=ProxySettings{host=null, port=null, username=null, password=null}}, connectionPoolSettings=ConnectionPoolSettings{maxSize=100, minSize=0, maxWaitTimeMS=120000, maxConnectionLifeTimeMS=0, maxConnectionIdleTimeMS=0, maintenanceInitialDelayMS=0, maintenanceFrequencyMS=60000, connectionPoolListeners=[], maxConnecting=2}, serverSettings=ServerSettings{heartbeatFrequencyMS=10000, minHeartbeatFrequencyMS=500, serverMonitoringMode=AUTO, serverListeners='[]', serverMonitorListeners='[]'}, sslSettings=SslSettings{enabled=false, invalidHostNameAllowed=false, context=null}, applicationName='null', compressorList=[], uuidRepresentation=UNSPECIFIED, serverApi=null, autoEncryptionSettings=null, dnsClient=null, inetAddressResolver=null, contextProvider=null, timeoutMS=null}'.
+
+# Created at 2026-07-27T14:37:05.400
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:04.898+02:00  INFO 68844 --- [notes-service] [localhost:63143] org.mongodb.driver.cluster               : Monitor thread successfully connected to server with description ServerDescription{address=localhost:63143, type=STANDALONE, cryptd=false, state=CONNECTED, ok=true, minWireVersion=0, maxWireVersion=21, maxDocumentSize=16777216, logicalSessionTimeoutMinutes=30, roundTripTimeNanos=47515100, minRoundTripTimeNanos=0}'.
+
+# Created at 2026-07-27T14:37:05.811
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:05.399+02:00  INFO 68844 --- [notes-service] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailsService'.
+
+# Created at 2026-07-27T14:37:05.827
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:05.810+02:00  INFO 68844 --- [notes-service] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 14024 (http) with context path '/''.
+
+# Created at 2026-07-27T14:37:07.067
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:05.826+02:00  INFO 68844 --- [notes-service] [           main] c.m.n.NotesServiceApplication            : Started NotesServiceApplication in 3.213 seconds (process running for 3.723)'.
+
+# Created at 2026-07-27T14:37:07.068
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '  .   ____          _            __ _ _'.
+
+# Created at 2026-07-27T14:37:07.068
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream ' /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \'.
+
+# Created at 2026-07-27T14:37:07.068
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \'.
+
+# Created at 2026-07-27T14:37:07.070
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream ' \\/  ___)| |_)| | | | | || (_| |  ) ) ) )'.
+
+# Created at 2026-07-27T14:37:07.070
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '  '  |____| .__|_| |_|_| |_\__, | / / / /'.
+
+# Created at 2026-07-27T14:37:07.071
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream ' =========|_|==============|___/=/_/_/_/'.
+
+# Created at 2026-07-27T14:37:07.140
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream ' :: Spring Boot ::                (v4.0.3)'.
+
+# Created at 2026-07-27T14:37:07.141
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:07.135+02:00  INFO 70480 --- [assessment-service] [           main] c.m.a.AssessmentServiceApplication       : Starting AssessmentServiceApplication v0.0.1-SNAPSHOT using Java 17.0.14 with PID 70480 (C:\Users\Mayar\.m2\repository\com\medilabo\assessment-service\0.0.1-SNAPSHOT\assessment-service-0.0.1-SNAPSHOT-exec.jar started by Mayar in C:\Users\Mayar\Documents\DevRyan\opc_solution_microservices\assessment-service)'.
+
+# Created at 2026-07-27T14:37:08.115
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:07.140+02:00  INFO 70480 --- [assessment-service] [           main] c.m.a.AssessmentServiceApplication       : No active profile set, falling back to 1 default profile: "default"'.
+
+# Created at 2026-07-27T14:37:08.132
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:08.114+02:00  INFO 70480 --- [assessment-service] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 14025 (http)'.
+
+# Created at 2026-07-27T14:37:08.132
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:08.130+02:00  INFO 70480 --- [assessment-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]'.
+
+# Created at 2026-07-27T14:37:08.162
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:08.130+02:00  INFO 70480 --- [assessment-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]'.
+
+# Created at 2026-07-27T14:37:08.420
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:08.160+02:00  INFO 70480 --- [assessment-service] [           main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 961 ms'.
+
+# Created at 2026-07-27T14:37:08.805
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:08.419+02:00  INFO 70480 --- [assessment-service] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailsService'.
+
+# Created at 2026-07-27T14:37:08.818
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:08.804+02:00  INFO 70480 --- [assessment-service] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 14025 (http) with context path '/''.
+
+# Created at 2026-07-27T14:37:11.218
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:08.817+02:00  INFO 70480 --- [assessment-service] [           main] c.m.a.AssessmentServiceApplication       : Started AssessmentServiceApplication in 2.16 seconds (process running for 2.596)'.
+
+# Created at 2026-07-27T14:37:11.219
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '  .   ____          _            __ _ _'.
+
+# Created at 2026-07-27T14:37:11.220
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream ' /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \'.
+
+# Created at 2026-07-27T14:37:11.220
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \'.
+
+# Created at 2026-07-27T14:37:11.220
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream ' \\/  ___)| |_)| | | | | || (_| |  ) ) ) )'.
+
+# Created at 2026-07-27T14:37:11.221
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '  '  |____| .__|_| |_|_| |_\__, | / / / /'.
+
+# Created at 2026-07-27T14:37:11.221
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream ' =========|_|==============|___/=/_/_/_/'.
+
+# Created at 2026-07-27T14:37:11.281
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream ' :: Spring Boot ::                (v4.0.3)'.
+
+# Created at 2026-07-27T14:37:11.282
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:11.276+02:00  INFO 37232 --- [gateway-service] [           main] c.m.g.GatewayServiceApplication          : Starting GatewayServiceApplication v0.0.1-SNAPSHOT using Java 17.0.14 with PID 37232 (C:\Users\Mayar\.m2\repository\com\medilabo\gateway-service\0.0.1-SNAPSHOT\gateway-service-0.0.1-SNAPSHOT-exec.jar started by Mayar in C:\Users\Mayar\Documents\DevRyan\opc_solution_microservices\gateway-service)'.
+
+# Created at 2026-07-27T14:37:11.970
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:11.281+02:00  INFO 37232 --- [gateway-service] [           main] c.m.g.GatewayServiceApplication          : No active profile set, falling back to 1 default profile: "default"'.
+
+# Created at 2026-07-27T14:37:13.916
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:11.969+02:00  INFO 37232 --- [gateway-service] [           main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=6253ac3f-8f1d-37d5-90d9-4e4865d1f1d5'.
+
+# Created at 2026-07-27T14:37:14.235
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:13.915+02:00  INFO 37232 --- [gateway-service] [           main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname'.
+
+# Created at 2026-07-27T14:37:14.236
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:14.234+02:00  INFO 37232 --- [gateway-service] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [After]'.
+
+# Created at 2026-07-27T14:37:14.237
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:14.234+02:00  INFO 37232 --- [gateway-service] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Before]'.
+
+# Created at 2026-07-27T14:37:14.237
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:14.234+02:00  INFO 37232 --- [gateway-service] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Between]'.
+
+# Created at 2026-07-27T14:37:14.238
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:14.234+02:00  INFO 37232 --- [gateway-service] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Cookie]'.
+
+# Created at 2026-07-27T14:37:14.238
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:14.234+02:00  INFO 37232 --- [gateway-service] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Header]'.
+
+# Created at 2026-07-27T14:37:14.239
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:14.235+02:00  INFO 37232 --- [gateway-service] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Host]'.
+
+# Created at 2026-07-27T14:37:14.240
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:14.235+02:00  INFO 37232 --- [gateway-service] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Method]'.
+
+# Created at 2026-07-27T14:37:14.240
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:14.235+02:00  INFO 37232 --- [gateway-service] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Path]'.
+
+# Created at 2026-07-27T14:37:14.241
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:14.235+02:00  INFO 37232 --- [gateway-service] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Query]'.
+
+# Created at 2026-07-27T14:37:14.242
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:14.235+02:00  INFO 37232 --- [gateway-service] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [ReadBody]'.
+
+# Created at 2026-07-27T14:37:14.242
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:14.235+02:00  INFO 37232 --- [gateway-service] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [RemoteAddr]'.
+
+# Created at 2026-07-27T14:37:14.243
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:14.235+02:00  INFO 37232 --- [gateway-service] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Version]'.
+
+# Created at 2026-07-27T14:37:14.243
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:14.235+02:00  INFO 37232 --- [gateway-service] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [XForwardedRemoteAddr]'.
+
+# Created at 2026-07-27T14:37:14.244
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:14.235+02:00  INFO 37232 --- [gateway-service] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Weight]'.
+
+# Created at 2026-07-27T14:37:15.601
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:14.235+02:00  INFO 37232 --- [gateway-service] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [CloudFoundryRouteService]'.
+
+# Created at 2026-07-27T14:37:15.833
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:15.599+02:00  INFO 37232 --- [gateway-service] [           main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname'.
+
+# Created at 2026-07-27T14:37:15.921
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:15.832+02:00  INFO 37232 --- [gateway-service] [           main] o.s.boot.reactor.netty.NettyWebServer    : Netty started on port 14026 (http)'.
+
+# Created at 2026-07-27T14:37:16.464
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:16.463+02:00  INFO 70480 --- [assessment-service] [io-14025-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet''.
+
+# Created at 2026-07-27T14:37:16.465
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:16.463+02:00  INFO 70480 --- [assessment-service] [io-14025-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet''.
+
+# Created at 2026-07-27T14:37:16.680
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:16.464+02:00  INFO 70480 --- [assessment-service] [io-14025-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms'.
+
+# Created at 2026-07-27T14:37:16.680
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:16.679+02:00  INFO 47660 --- [patient-service] [io-14023-exec-8] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet''.
+
+# Created at 2026-07-27T14:37:16.681
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:16.680+02:00  INFO 47660 --- [patient-service] [io-14023-exec-8] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet''.
+
+# Created at 2026-07-27T14:37:17.027
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:16.680+02:00  INFO 47660 --- [patient-service] [io-14023-exec-8] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms'.
+
+# Created at 2026-07-27T14:37:17.058
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:17.026+02:00  INFO 37232 --- [gateway-service] [           main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname'.
+
+# Created at 2026-07-27T14:37:17.058
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:17.057+02:00  INFO 68844 --- [notes-service] [io-14024-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet''.
+
+# Created at 2026-07-27T14:37:17.059
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:17.057+02:00  INFO 68844 --- [notes-service] [io-14024-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet''.
+
+# Created at 2026-07-27T14:37:17.224
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:17.058+02:00  INFO 68844 --- [notes-service] [io-14024-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms'.
+
+# Created at 2026-07-27T14:37:17.329
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:17.224+02:00  INFO 68844 --- [notes-service] [io-14024-exec-2] c.m.notesservice.service.NoteService     : Notes fetched patId=4 count=0'.
+
+# Created at 2026-07-27T14:37:17.714
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '2026-07-27T14:37:17.701+02:00  INFO 68844 --- [notes-service] [io-14024-exec-5] c.m.notesservice.service.NoteService     : Notes fetched patId=4 count=0'.
+

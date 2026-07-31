@@ -7,6 +7,7 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,12 @@ class SecurityConfigTest {
 
     private static final String DEMO_USER = "medilabo";
     private static final String DEMO_RAW_PASSWORD = "medilabo123";
+
+    // Comptes machine, un par appelant
+    private static final String SVC_FRONT_USER = "svc-front";
+    private static final String SVC_FRONT_RAW_PASSWORD = "svcfront123";
+    private static final String SVC_ASSESSMENT_USER = "svc-assessment";
+    private static final String SVC_ASSESSMENT_RAW_PASSWORD = "svcassess123";
 
     @LocalServerPort
     private int port;
@@ -88,7 +95,7 @@ class SecurityConfigTest {
 
     @Test
     void validCredentialsPassAuthenticationCheck() {
-        // 8081 est occupé par un httpd externe en local, donc on vérifie juste qu'on passe le 401, pas que le service répond.
+        // 8081 est pris par un httpd externe en local, du coup on vérifie juste qu'on passe le 401, pas que le service répond vraiment.
         webTestClient.get().uri("/patients/1")
                 .headers(h -> h.setBasicAuth(DEMO_USER, DEMO_RAW_PASSWORD))
                 .exchange()
@@ -115,11 +122,63 @@ class SecurityConfigTest {
     }
 
     @Test
+    void serviceAccountsAreSeededWithBcryptHashesAndTheServiceRole() {
+        for (String svcUser : List.of(SVC_FRONT_USER, SVC_ASSESSMENT_USER)) {
+            UserDetails user = userDetailsService.findByUsername(svcUser).block();
+            assertThat(user).as("service account %s must be seeded", svcUser).isNotNull();
+            assertThat(user.getPassword()).startsWith("$2");
+            assertThat(user.getAuthorities()).extracting(Object::toString)
+                    .contains("ROLE_SERVICE");
+        }
+    }
+
+    @Test
+    void theThreeSeededIdentitiesArePairwiseDistinct() {
+        List<String> hashes = List.of(DEMO_USER, SVC_FRONT_USER, SVC_ASSESSMENT_USER).stream()
+                .map(name -> userDetailsService.findByUsername(name).block().getPassword())
+                .toList();
+
+        // trois credentials vraiment différents, pas un alias partagé
+        assertThat(hashes).doesNotHaveDuplicates();
+    }
+
+    @Test
+    void eachServiceAccountPassesAuthenticationWithItsOwnPassword() {
+        // 8081 est pris par un httpd externe en local, du coup on vérifie juste qu'on passe le 401.
+        Map<String, String> serviceCredentials = Map.of(
+                SVC_FRONT_USER, SVC_FRONT_RAW_PASSWORD,
+                SVC_ASSESSMENT_USER, SVC_ASSESSMENT_RAW_PASSWORD);
+
+        serviceCredentials.forEach((user, password) ->
+                webTestClient.get().uri("/patients/1")
+                        .headers(h -> h.setBasicAuth(user, password))
+                        .exchange()
+                        .expectStatus().value(status ->
+                                assertThat(status)
+                                        .as("service account %s must clear the 401 auth gate", user)
+                                        .isNotEqualTo(401)));
+    }
+
+    @Test
+    void serviceAccountsDoNotAcceptEachOthersPassword() {
+        // Si front-service est compromis, ça ne doit pas donner l'identité d'assessment-service.
+        webTestClient.get().uri("/patients/1")
+                .headers(h -> h.setBasicAuth(SVC_FRONT_USER, SVC_ASSESSMENT_RAW_PASSWORD))
+                .exchange()
+                .expectStatus().isUnauthorized();
+
+        webTestClient.get().uri("/patients/1")
+                .headers(h -> h.setBasicAuth(SVC_ASSESSMENT_USER, DEMO_RAW_PASSWORD))
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    @Test
     void noRouteStripsTheAuthorizationHeader() {
         for (Route route : routeLocator.getRoutes().collectList().block()) {
-            // Les filtres sans rapport avec Authorization sont autorisés (ex. AddRequestHeader
-            // X-Forwarded-* sur la route front) : seule la pass-through du header
-            // Authorization doit rester intacte de bout en bout (D-SEC-4).
+            // Les autres filtres sont permis (AddRequestHeader X-Forwarded-* sur la route front),
+            // mais Authorization doit traverser intact. Sinon les backends ne savent plus
+            // qui est derrière la requête.
             assertThat(route.getFilters())
                     .as("route %s must not rewrite/strip the Authorization header", route.getId())
                     .noneMatch(filter -> filter.toString().toLowerCase().contains("authorization"));

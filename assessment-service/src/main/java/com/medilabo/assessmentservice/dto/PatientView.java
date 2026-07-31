@@ -4,14 +4,13 @@ import java.time.LocalDate;
 import java.time.Period;
 
 /**
- * Copie locale des données démographiques d'un patient (pas de module partagé entre services
- * — contrainte d'archi). Remplie par le client upstream (Story 4.2).
+ * Copie locale des données démographiques d'un patient (pas de module partagé entre services,
+ * contrainte d'archi). Remplie par le client upstream.
  *
- * <p><b>Contrat d'entrée :</b> {@code dateOfBirth} non-null et pas dans le futur. Valider la
- * complétude du patient est la responsabilité du client upstream (Story 4.2) : un patient sans
- * date de naissance est une donnée corrompue, rejetée/mappée à la frontière du client, jamais
- * envoyée à l'algo de risque. {@link RiskCalculator} suppose donc un {@code PatientView} valide
- * et reste pur et minimal.</p>
+ * <p><b>Contrat d'entrée :</b> {@code dateOfBirth} non-null et pas dans le futur. Cette
+ * validation, c'est le boulot du client upstream : un patient sans date de naissance, c'est une
+ * donnée corrompue, on la rejette à la frontière, elle n'arrive jamais jusqu'à l'algo de risque.
+ * Le calculateur peut donc supposer un {@code PatientView} valide et rester pur.</p>
  *
  * @param id           id entier du patient.
  * @param firstName    prénom.
@@ -30,14 +29,14 @@ public record PatientView(
     /**
      * Calcule l'âge du patient en années pleines à la date donnée.
      *
-     * <p>Suppose {@code dateOfBirth} non-null et {@code <= today} (contrat d'entrée du record,
-     * garanti par le client upstream Story 4.2). Une {@code dateOfBirth} future donnerait un
-     * âge négatif ; ce cas est filtré en amont, pas ici.</p>
+     * <p>Suppose {@code dateOfBirth} non-null et {@code <= referenceDate} (contrat d'entrée du
+     * record). Une date future donnerait un âge négatif, mais ce cas est filtré en amont, pas ici.</p>
      *
-     * @param today la date de référence (gardée explicite pour que le calcul reste pur et déterministe).
-     * @return années pleines entre {@code dateOfBirth} et {@code today}.
+     * @param referenceDate date à laquelle l'âge est calculé (injectée plutôt que lue de
+     *                      l'horloge courante, pour garder un calcul pur et déterministe).
+     * @return années pleines entre {@code dateOfBirth} et {@code referenceDate}.
      */
-    public int age(LocalDate today) {
-        return Period.between(dateOfBirth, today).getYears();
+    public int age(LocalDate referenceDate) {
+        return Period.between(dateOfBirth, referenceDate).getYears();
     }
 }

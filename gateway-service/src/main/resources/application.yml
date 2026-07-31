@@ -29,5 +29,12 @@ server:
   port: 8080
 
 medilabo:
+  # Compte HUMAIN — le clinicien. Jamais utilisé pour les appels entre services.
   user: ${MEDILABO_USER:medilabo}
   password-bcrypt: '${MEDILABO_PASSWORD_BCRYPT:$2a$10$GzMGhp/NWTujVhv4VyYh9eM.aia95IXMsse7Yl6jUC3DC42/VIinq}'
+  # Comptes de SERVICE, un par appelant. Le Gateway accepte juste ces identités,
+  # il n'émet aucun appel sortant authentifié — il relaie le header entrant, point.
+  svc-front-user: ${MEDILABO_SVC_FRONT_USER:svc-front}
+  svc-front-password-bcrypt: '${MEDILABO_SVC_FRONT_PASSWORD_BCRYPT:$2a$10$Xd3QlU4YmaRxph5pGkq6guQs7RtdxxF/N3X9xVvyJ.wjiEM6MNwFy}'
+  svc-assessment-user: ${MEDILABO_SVC_ASSESSMENT_USER:svc-assessment}
+  svc-assessment-password-bcrypt: '${MEDILABO_SVC_ASSESSMENT_PASSWORD_BCRYPT:$2a$10$cQNaASTAabpd03t9EyP6nOCnf.IlVWfa90iFPXZ571UICn69MCjIG}'

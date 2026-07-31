@@ -32,7 +32,7 @@ public class NoteService {
     }
 
     public List<NoteDTO> getNotesByPatId(Integer patId) {
-        List<NoteDTO> notes = noteRepository.findByPatIdOrderByCreatedAtDesc(patId)
+        List<NoteDTO> notes = noteRepository.findByPatIdOrderByCreatedAtDescIdDesc(patId)
                 .stream()
                 .map(NoteDTO::from)
                 .toList();

@@ -4,13 +4,13 @@ import java.time.Instant;
 
 /**
  * Copie locale d'une note clinique, propre à ce service (pas de module partagé entre services).
- * Remplie par le client upstream (Story 4.2).
+ * Remplie par le client upstream.
  *
  * @param id        le {@code _id} MongoDB de la note.
  * @param patId     id du patient propriétaire.
  * @param patient   nom de famille dénormalisé.
- * @param note      texte libre scanné pour les termes déclencheurs.
- * @param createdAt horodatage de création (UTC) ; détermine l'ordre chronologique de détection.
+ * @param note      texte libre, scanné pour y détecter les termes déclencheurs.
+ * @param createdAt horodatage de création (UTC), sert à ordonner les détections dans le temps.
  */
 public record NoteView(
         String id,

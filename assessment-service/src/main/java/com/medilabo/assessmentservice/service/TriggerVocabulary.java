@@ -3,12 +3,14 @@ package com.medilabo.assessmentservice.service;
 import java.util.List;
 
 /**
- * Le set fermé et versionné des onze termes déclencheurs canoniques (PRD §3, FR-9).
+ * Le set fermé des onze termes déclencheurs canoniques (PRD §3, FR-9, voir
+ * {@code Documentation/requirements-glossary.md}).
  *
- * <p>L'ordre suit l'énumération du PRD §3 et compte : {@code triggersDetected} tranche les
- * ex-aequo d'une même note dans cet ordre de déclaration. Les motifs sont mis en minuscules
- * une fois ici (accents conservés) pour que {@link RiskCalculator} n'ait qu'à lowercase le
- * texte de la note au moment du match. Changer le vocabulaire, c'est du code, jamais de la config.</p>
+ * <p>L'ordre suit l'énumération du PRD §3, et il compte : c'est cet ordre de déclaration qui
+ * tranche les ex-aequo d'une même note dans {@code triggersDetected}. Les motifs sont écrits en
+ * minuscules avec leur orthographe accentuée ; {@link RiskCalculator} normalise motifs et texte
+ * de note (minuscules + accents retirés) au moment du match, donc l'orthographe canonique reste
+ * intacte ici. Pour changer le vocabulaire il faut toucher au code, ce n'est pas de la config.</p>
  */
 public final class TriggerVocabulary {
 
@@ -28,6 +30,6 @@ public final class TriggerVocabulary {
     );
 
     private TriggerVocabulary() {
-        // pas instanciable, juste un porte-constantes
+        // juste un porte-constantes, pas la peine de l'instancier
     }
 }

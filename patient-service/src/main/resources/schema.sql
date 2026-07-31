@@ -1,19 +1,19 @@
--- 3NF schema for patient-service (NFR-D1 evaluation artifact).
+-- Schéma en 3NF pour patient-service (livrable d'évaluation NFR-D1).
 --
--- Normalization rationale (referenced by README NFR-C1 3NF justification):
---   * 1NF: every column holds an atomic, single-valued attribute.
---   * 2NF: trivially holds — surrogate single-column PK, no partial dependency possible.
---   * 3NF: no transitive dependency — no derived column (e.g. age is computed at read time,
---          never stored), every non-key column depends on `id` and only on `id`.
---   * One row per patient. Multi-valued attributes (e.g. multiple phones / addresses) would
---          live in a separate table; v1 deliberately stores at most one of each.
+-- Pourquoi c'est en 3NF (repris dans la justification NFR-C1 du README) :
+--   * 1NF : chaque colonne = un attribut atomique, une seule valeur.
+--   * 2NF : acquis d'office, clé primaire sur une seule colonne donc pas de dépendance partielle possible.
+--   * 3NF : pas de dépendance transitive - rien de dérivé stocké (l'âge par exemple se calcule
+--          à la lecture, jamais en base), chaque colonne hors clé ne dépend que de `id`.
+--   * Une ligne par patient. Si un jour on doit gérer plusieurs téléphones ou adresses par
+--          patient, ça ira dans une table à part ; pour la v1 une seule valeur de chaque suffit.
 --
--- Validated at startup: spring.jpa.hibernate.ddl-auto=validate. Any drift between this
--- schema and the JPA entity fails fast at boot.
+-- spring.jpa.hibernate.ddl-auto=validate vérifie ce schéma au démarrage : le moindre écart
+-- avec l'entité JPA et l'appli ne démarre pas.
 --
--- DROP-then-CREATE pattern: every fresh boot recreates the table so data.sql can re-seed
--- the four canonical patients with deterministic ids (NFR-D2 "every fresh boot"). For
--- production deployment, override `spring.sql.init.mode=never` (out of v1 scope).
+-- DROP puis CREATE parce qu'à chaque démarrage à froid on veut repartir propre, pour que
+-- data.sql réinjecte les quatre patients de référence avec des ids stables (NFR-D2). En prod
+-- il faudra surcharger `spring.sql.init.mode=never` — hors périmètre de la v1.
 
 DROP TABLE IF EXISTS patient;
 

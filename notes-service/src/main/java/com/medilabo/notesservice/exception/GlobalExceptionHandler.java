@@ -27,7 +27,7 @@ public class GlobalExceptionHandler {
             errors.computeIfAbsent(fieldError.getField(), f -> new ArrayList<>())
                     .add(fieldError.getDefaultMessage());
         }
-        log.warn("Validation failed on fields: {}", errors.keySet());
+        log.warn("Validation failed on fields: {}", errors.keySet(), ex);
 
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST, "La validation de la note a échoué");
@@ -37,26 +37,26 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NoteNotFoundException.class)
     public ProblemDetail handleNoteNotFound(NoteNotFoundException ex) {
-        log.warn(ex.getMessage());
+        log.warn("Note not found: {}", ex.getMessage(), ex);
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ProblemDetail handleMissingParameter(MissingServletRequestParameterException ex) {
-        log.warn("Missing request parameter: {}", ex.getParameterName());
+        log.warn("Missing request parameter: {}", ex.getParameterName(), ex);
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ProblemDetail handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        log.warn("Type mismatch on parameter: {}", ex.getName());
+        log.warn("Type mismatch on parameter: {}", ex.getName(), ex);
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
                 "Paramètre invalide : " + ex.getName());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ProblemDetail handleUnreadableBody(HttpMessageNotReadableException ex) {
-        log.warn("Malformed request body");
+        log.warn("Malformed request body", ex);
         return ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST, "Corps de requête illisible ou malformé");
     }

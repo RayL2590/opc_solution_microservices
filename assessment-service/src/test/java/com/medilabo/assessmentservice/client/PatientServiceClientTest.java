@@ -90,6 +90,19 @@ class PatientServiceClientTest {
     }
 
     @Test
+    void upstream404_preservesOriginalExceptionAsCause() {
+        HttpClientErrorException original = HttpClientErrorException.create(
+                HttpStatus.NOT_FOUND, "Not Found",
+                org.springframework.http.HttpHeaders.EMPTY, new byte[0], null);
+        stubBodyThrows(original);
+
+        UpstreamNotFoundException thrown = assertThrows(UpstreamNotFoundException.class,
+                () -> client.getPatient(1));
+
+        assertSame(original, thrown.getCause());
+    }
+
+    @Test
     void upstream5xx_throwsBadGatewayException() {
         stubBodyThrows(HttpServerErrorException.create(HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal Server Error",
@@ -99,10 +112,34 @@ class PatientServiceClientTest {
     }
 
     @Test
+    void upstream5xx_preservesOriginalExceptionAsCause() {
+        HttpServerErrorException original = HttpServerErrorException.create(
+                HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
+                org.springframework.http.HttpHeaders.EMPTY, new byte[0], null);
+        stubBodyThrows(original);
+
+        BadGatewayException thrown = assertThrows(BadGatewayException.class,
+                () -> client.getPatient(1));
+
+        assertSame(original, thrown.getCause());
+    }
+
+    @Test
     void connectionRefused_throwsGatewayTimeoutException() {
         stubBodyThrows(new ResourceAccessException("Connection refused"));
 
         assertThrows(GatewayTimeoutException.class, () -> client.getPatient(1));
+    }
+
+    @Test
+    void connectionRefused_preservesOriginalExceptionAsCause() {
+        ResourceAccessException original = new ResourceAccessException("Connection refused");
+        stubBodyThrows(original);
+
+        GatewayTimeoutException thrown = assertThrows(GatewayTimeoutException.class,
+                () -> client.getPatient(1));
+
+        assertSame(original, thrown.getCause());
     }
 
     @Test

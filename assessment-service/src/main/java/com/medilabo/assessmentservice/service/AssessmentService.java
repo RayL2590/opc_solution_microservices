@@ -14,11 +14,11 @@ import java.util.List;
 
 /**
  * Orchestre l'évaluation de risque d'un patient : récupère démographie et notes via les
- * clients upstream (Story 4.2), lance {@link RiskCalculator} (Story 4.1), et mappe le résultat
- * dans l'enveloppe FR-8 {@link AssessmentResponseDTO}.
+ * clients upstream, lance {@link RiskCalculator}, et mappe le résultat dans l'enveloppe
+ * {@link AssessmentResponseDTO}.
  *
- * <p>Chaque appel refait les deux requêtes upstream et recalcule — pas de cache entre les
- * requêtes, donc une note ajoutée est prise en compte dès la prochaine évaluation.</p>
+ * <p>Chaque appel refait les deux requêtes upstream et recalcule tout, pas de cache entre les
+ * requêtes. Du coup une note ajoutée est prise en compte dès la prochaine évaluation.</p>
  */
 @Service
 @RequiredArgsConstructor
@@ -38,20 +38,20 @@ public class AssessmentService {
      * @throws com.medilabo.assessmentservice.exception.IncompletePatientDataException données démographiques du patient incomplètes.
      */
     public AssessmentResponseDTO assess(Integer patId) {
-        LocalDate today = LocalDate.now();
+        LocalDate referenceDate = LocalDate.now();
 
         PatientView patient = patientServiceClient.getPatient(patId);
         List<NoteView> notes = notesServiceClient.getNotesByPatId(patId);
 
-        RiskResult result = riskCalculator.compute(patient, notes, today);
+        RiskResult result = riskCalculator.compute(patient, notes, referenceDate);
 
         AssessmentResponseDTO.PatientBlock patientBlock = new AssessmentResponseDTO.PatientBlock(
-                patient.firstName(), patient.lastName(), patient.age(today));
+                patient.firstName(), patient.lastName(), patient.age(referenceDate));
 
         return new AssessmentResponseDTO(
                 patId,
                 patientBlock,
-                result.riskBand().getDisplayName(),
+                result.riskBand(),
                 result.triggerCount(),
                 result.triggersDetected());
     }

@@ -3,7 +3,8 @@ WORKDIR /workspace
 COPY pom.xml .
 COPY src ./src
 RUN mvn -B clean package -DskipTests
-RUN java -Djarmode=layertools -jar target/*.jar extract --destination extracted
+# -exec.jar explicitement : le build installe aussi le jar simple, donc target/*.jar est ambigu.
+RUN java -Djarmode=layertools -jar target/*-exec.jar extract --destination extracted
 
 FROM eclipse-temurin:17-jre-alpine
 RUN addgroup -S spring && adduser -S spring -G spring

@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 
-// @Data interdit sur les documents Mongo : equals/hashCode généré sur champs muables = footgun.
+// Pas de @Data sur un document Mongo : equals/hashCode générés sur des champs muables, c'est un footgun.
 @Document(collection = "note")
 @Getter
 @Setter
@@ -20,15 +20,15 @@ public class Note {
     @Id
     private String id;
 
-    // Indexé : findByPatIdOrderByCreatedAtDesc est la requête la plus fréquente du service.
-    // Sans index, Mongo balaie toute la collection à chaque lecture de fiche patient.
+    // Indexé parce que findByPatIdOrderByCreatedAtDescIdDesc est la requête la plus fréquente.
+    // Sans index Mongo scanne toute la collection à chaque ouverture de fiche patient.
     @Indexed
     private Integer patId;
 
     private String patient;
     private String note;
 
-    // Peuplé par @EnableMongoAuditing au moment de l'insert — ne jamais affecter manuellement.
+    // Rempli par @EnableMongoAuditing à l'insert — ne pas y toucher à la main.
     @CreatedDate
     private Instant createdAt;
 }

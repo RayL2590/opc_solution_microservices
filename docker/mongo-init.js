@@ -1,6 +1,6 @@
-// Seed canonique Sprint 2 — 9 notes pour les 4 patients de test (NFR-D3).
-// createdAt explicites et distincts pour que findByPatIdOrderByCreatedAtDesc soit prouvable
-// sans démarrer l'application. Montage dans le conteneur Mongo : Epic 6.
+// Seed de base : 9 notes pour les 4 patients de test.
+// createdAt explicites et différents pour pouvoir vérifier findByPatIdOrderByCreatedAtDescIdDesc
+// sans même démarrer l'appli. Monté dans le conteneur Mongo par docker-compose.
 db = db.getSiblingDB("notesdb");
 
 db.note.insertOne({

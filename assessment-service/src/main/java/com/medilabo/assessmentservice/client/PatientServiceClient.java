@@ -15,8 +15,8 @@ import org.springframework.web.client.RestClient;
 
 /**
  * Client upstream pour les données démographiques patient (Gateway → patient-service).
- * Le forwarding des credentials est géré par CredentialForwardingInitializer.
- * PII : seul le patientId part dans les logs, jamais le nom ni l'adresse.
+ * L'authentification sortante passe par ServiceAccountAuthInitializer (compte de service).
+ * PII : seul patientId finit dans les logs, jamais le nom ni l'adresse.
  */
 @Component
 @Slf4j
@@ -42,6 +42,12 @@ public class PatientServiceClient {
                     .retrieve()
                     .body(PatientView.class);
 
+            // Corps absent ou dateOfBirth absente, même traitement : dans les deux cas il manque
+            // la seule donnée sans laquelle on ne peut rien calculer (age() partirait en NPE).
+            // Pas un 404 ceci dit — patient-service a répondu 2xx, la ressource existe, elle est
+            // juste inexploitable. D'où le 422 plutôt qu'un UpstreamNotFoundException.
+            // Les autres champs, on ne les vérifie pas ici : NOT NULL en base + @NotBlank sur
+            // PatientDTO côté patient-service, et gender est déjà géré null-safe dans RiskCalculator.
             if (patient == null || patient.dateOfBirth() == null) {
                 throw new IncompletePatientDataException(patientId);
             }
@@ -49,9 +55,10 @@ public class PatientServiceClient {
             return patient;
 
         } catch (HttpClientErrorException.NotFound e) {
-            throw new UpstreamNotFoundException("Patient introuvable : id=" + patientId);
+            throw new UpstreamNotFoundException("Patient introuvable : id=" + patientId, e);
         } catch (HttpServerErrorException e) {
-            throw new BadGatewayException("Erreur upstream patient-service pour id=" + patientId);
+            throw new BadGatewayException(
+                    "Erreur upstream patient-service pour id=" + patientId, e);
         } catch (ResourceAccessException e) {
             throw new GatewayTimeoutException(
                     "patient-service inaccessible pour id=" + patientId, e);

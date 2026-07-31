@@ -1,7 +1,7 @@
--- Seed the four canonical patients on every fresh boot (NFR-D2).
--- schema.sql DROPs the patient table just before this runs, so the inserts land on a fresh
--- AUTO_INCREMENT sequence and yield ids 1..4 in this exact order — Epic 4 Risk Assessment
--- fixtures depend on this mapping (id 1 → TestNone, 2 → TestBorderline, 3 → TestInDanger,
+-- Insère les quatre patients de référence à chaque démarrage à froid (NFR-D2).
+-- schema.sql vient de faire un DROP sur la table patient, donc l'AUTO_INCREMENT repart de
+-- zéro et ces insertions donnent bien les ids 1..4 dans cet ordre — les tests de l'évaluation
+-- du risque comptent dessus (id 1 → TestNone, 2 → TestBorderline, 3 → TestInDanger,
 -- 4 → TestEarlyOnset).
 
 INSERT INTO patient (first_name, last_name, date_of_birth, gender, address, phone) VALUES

@@ -1,5 +1,6 @@
 package com.medilabo.patientservice.repository;
 
+import com.medilabo.patientservice.AbstractMySqlContainerTest;
 import com.medilabo.patientservice.model.Patient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,12 +15,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase.Replace.NONE;
 
 /**
- * Intégration @DataJpaTest contre MySQL réel (AutoConfigureTestDatabase.Replace.NONE) —
- * vérifie les 4 patients canoniques (ids 1..4). Requiert SPRING_DATASOURCE_PASSWORD.
+ * Intégration @DataJpaTest contre un MySQL Testcontainers (mêmes image/tag que docker-compose.yml) —
+ * vérifie les 4 patients canoniques (ids 1..4).
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = NONE)
-class PatientRepositoryTest {
+class PatientRepositoryTest extends AbstractMySqlContainerTest {
 
     @Autowired
     private PatientRepository patientRepository;

@@ -3,6 +3,7 @@ package com.medilabo.notesservice.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -23,15 +24,37 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Trois comptes : le clinicien (ROLE_USER) et un compte machine par service appelant.
+     * On sépare les comptes pour que le mot de passe du clinicien ne circule pas entre services,
+     * et pour pouvoir révoquer un appelant sans toucher aux autres.
+     * Les hashes sont stockés tels quels, jamais ré-encodés.
+     *
+     * <p>Chaque compte machine a ROLE_SERVICE (le marqueur commun) plus son propre rôle,
+     * c'est ce qui permet de distinguer qui a le droit de lire et qui a le droit d'écrire
+     * dans les règles d'autorisation plus bas.
+     */
     @Bean
     public UserDetailsService userDetailsService(
             @Value("${medilabo.user}") String username,
-            @Value("${medilabo.password-bcrypt}") String bcryptHash) {
+            @Value("${medilabo.password-bcrypt}") String bcryptHash,
+            @Value("${medilabo.svc-front-user}") String svcFrontUsername,
+            @Value("${medilabo.svc-front-password-bcrypt}") String svcFrontBcryptHash,
+            @Value("${medilabo.svc-assessment-user}") String svcAssessmentUsername,
+            @Value("${medilabo.svc-assessment-password-bcrypt}") String svcAssessmentBcryptHash) {
         UserDetails user = User.withUsername(username)
-                .password(bcryptHash) // déjà un hash BCrypt — stocké tel quel, pas de ré-encodage
+                .password(bcryptHash) // déjà hashé en BCrypt, on le stocke tel quel
                 .roles("USER")
                 .build();
-        return new InMemoryUserDetailsManager(user);
+        UserDetails svcFront = User.withUsername(svcFrontUsername)
+                .password(svcFrontBcryptHash)
+                .roles("SERVICE", "SERVICE_FRONT")
+                .build();
+        UserDetails svcAssessment = User.withUsername(svcAssessmentUsername)
+                .password(svcAssessmentBcryptHash)
+                .roles("SERVICE", "SERVICE_ASSESSMENT")
+                .build();
+        return new InMemoryUserDetailsManager(user, svcFront, svcAssessment);
     }
 
     @Bean
@@ -40,7 +63,12 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // API REST, pas de formulaire HTML
             .sessionManagement(session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // svc-assessment ne fait que lire les notes d'un patient pour calculer un risque,
+            // donc pas besoin de plus. L'ajout de note vient du clinicien via svc-front.
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.GET, "/notes/**")
+                    .hasAnyRole("USER", "SERVICE_FRONT", "SERVICE_ASSESSMENT")
+                .requestMatchers("/notes/**").hasAnyRole("USER", "SERVICE_FRONT")
                 .anyRequest().authenticated()
             )
             .httpBasic(httpBasic -> {});

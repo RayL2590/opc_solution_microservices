@@ -1,11 +1,8 @@
 package com.medilabo.frontservice.controller;
 
-import java.util.List;
-
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -14,35 +11,25 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
-import com.medilabo.frontservice.client.AssessmentGatewayClient;
-import com.medilabo.frontservice.client.NotesGatewayClient;
-import com.medilabo.frontservice.client.PatientGatewayClient;
-import com.medilabo.frontservice.dto.AssessmentView;
 import com.medilabo.frontservice.dto.NoteForm;
-import com.medilabo.frontservice.dto.NoteView;
 import com.medilabo.frontservice.dto.PatientForm;
 import com.medilabo.frontservice.dto.PatientView;
 import com.medilabo.frontservice.dto.PhoneCountry;
+import com.medilabo.frontservice.service.PatientUiService;
 import com.medilabo.frontservice.util.PhoneNormalizer;
 
 /**
  * Contrôleur UI patients (liste, formulaire d'ajout/édition, fiche détail + notes, Post-Redirect-Get).
- * PII (Personally Identifiable Information) : seuls les comptes et ids sont loggés.
  */
 @Controller
-@Slf4j
 @RequiredArgsConstructor
 public class PatientUiController {
 
-    private final PatientGatewayClient patientGatewayClient;
-    private final NotesGatewayClient notesGatewayClient;
-    private final AssessmentGatewayClient assessmentGatewayClient;
+    private final PatientUiService patientUiService;
 
     @GetMapping("/ui/patients")
     public String listPatients(Model model) {
-        List<PatientView> patients = patientGatewayClient.getAllPatients();
-        model.addAttribute("patients", patients);
-        log.debug("Rendering patient list, count={}", patients.size());
+        model.addAttribute("patients", patientUiService.getAllPatients());
         return "patients/list";
     }
 
@@ -68,20 +55,15 @@ public class PatientUiController {
             return "patients/new";
         }
 
-        PatientView created = patientGatewayClient.createPatient(patientForm);
-        if (created == null || created.id() == null) {
-            throw new IllegalStateException(
-                    "Gateway returned a null patient or null id after creation — cannot redirect");
-        }
-        log.debug("Patient created, id={}", created.id());
+        patientUiService.createPatient(patientForm);
         return "redirect:/ui/patients";
     }
 
-    // Édition d'un patient existant. URL en /{id}/edit pour ne pas entrer en collision avec
+    // Édition d'un patient existant. URL en /{id}/edit pour ne pas se marcher dessus avec
     // la fiche détail /ui/patients/{id}.
     @GetMapping("/ui/patients/{id}/edit")
     public String showEditPatientForm(@PathVariable Long id, Model model) {
-        PatientView patient = patientGatewayClient.getPatient(id);
+        PatientView patient = patientUiService.getPatient(id);
         model.addAttribute("patientForm", toForm(patient));
         model.addAttribute("patientId", id);
         model.addAttribute("phoneCountries", PhoneCountry.values());
@@ -105,14 +87,13 @@ public class PatientUiController {
             return "patients/edit";
         }
 
-        patientGatewayClient.updatePatient(id, patientForm);
-        log.debug("Patient updated, id={}", id);
+        patientUiService.updatePatient(id, patientForm);
         return "redirect:/ui/patients";
     }
 
     @GetMapping("/ui/patients/{id}")
     public String showPatientDetail(@PathVariable Long id, Model model) {
-        loadPatientDetailModel(id, model);
+        addPatientDetailToModel(id, model);
         model.addAttribute("noteForm", new NoteForm());
         return "patients/detail";
     }
@@ -127,33 +108,26 @@ public class PatientUiController {
 
         if (bindingResult.hasErrors()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            loadPatientDetailModel(id, model);
+            addPatientDetailToModel(id, model);
             return "patients/detail";
         }
 
-        PatientView patient = patientGatewayClient.getPatient(id);
-        noteForm.setPatId(Math.toIntExact(id));
-        noteForm.setPatient(patient.lastName());
-        notesGatewayClient.addNote(noteForm);
-        log.debug("Note added, patId={}", id);
+        patientUiService.addNote(id, noteForm);
         return "redirect:/ui/patients/" + id;
     }
 
-    /** Charge patient + notes dans le modèle pour la fiche détail (GET initial et re-rendu après erreur de validation). */
-    private void loadPatientDetailModel(Long id, Model model) {
-        PatientView patient = patientGatewayClient.getPatient(id);
-        List<NoteView> notes = notesGatewayClient.getNotesByPatId(id);
-        AssessmentView assessment = assessmentGatewayClient.getAssessment(id);
-        model.addAttribute("patient", patient);
-        model.addAttribute("notes", notes);
-        model.addAttribute("assessment", assessment);
-        log.debug("Rendering patient detail, id={}, noteCount={}", id, notes.size());
+    /** Peuple le modèle de la fiche détail (GET initial et re-rendu après erreur de validation). */
+    private void addPatientDetailToModel(Long id, Model model) {
+        PatientUiService.PatientDetail detail = patientUiService.loadPatientDetail(id);
+        model.addAttribute("patient", detail.patient());
+        model.addAttribute("notes", detail.notes());
+        model.addAttribute("assessment", detail.assessment());
     }
 
     /**
      * Normalise le téléphone saisi vers E.164 et réécrit {@code patientForm.phone} en place.
-     * En cas d'échec, rejette le champ dans {@code bindingResult} pour un retour utilisateur
-     * cohérent avec les autres erreurs de validation. Champ optionnel : une saisie vide passe.
+     * En cas d'échec, rejette le champ dans {@code bindingResult} — comme ça l'erreur remonte
+     * avec les autres erreurs de validation. Champ optionnel : une saisie vide passe.
      */
     private void normalizePhone(PatientForm patientForm, BindingResult bindingResult) {
         PhoneNormalizer.Result result =
@@ -178,8 +152,8 @@ public class PatientUiController {
     }
 
     /**
-     * Retrouve le pays d'un numéro E.164 stocké pour pré-sélectionner l'indicatif en édition.
-     * Défaut FR si absent ou non reconnu (le numéro reste affiché tel quel).
+     * Retrouve le pays d'un numéro E.164 stocké, pour pré-sélectionner l'indicatif en édition.
+     * Défaut FR si absent ou non reconnu — le numéro s'affiche quand même tel quel.
      */
     private PhoneCountry detectCountry(String e164Phone) {
         if (e164Phone != null && e164Phone.startsWith("+")) {

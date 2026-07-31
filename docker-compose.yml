@@ -8,10 +8,10 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql-data:/var/lib/mysql
-    # service_started veut juste dire que le process mysqld a démarré, pas qu'il accepte les connexions.
-    # Sans ce healthcheck le seed de patient-service (sql.init.mode=always) part trop tôt et plante.
+    # service_started veut juste dire que le process mysqld a démarré, pas qu'il accepte des connexions.
+    # Sans ce healthcheck, le seed de patient-service (sql.init.mode=always) part trop tôt et plante.
     # --protocol=tcp obligatoire : le serveur temporaire de bootstrap de l'image répond au ping
-    # via le socket Unix avant que TCP:3306 écoute vraiment, ça faussait le healthcheck (healthy trop tôt).
+    # via le socket Unix avant que TCP:3306 écoute pour de vrai, ça faussait le healthcheck (healthy trop tôt).
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--protocol=tcp", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 5s
@@ -34,6 +34,10 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       MEDILABO_USER: ${MEDILABO_USER}
+      # Comptes de service. Les hashes bourrés de $ arrivent via .env.docker (échappés en $$) ;
+      # ces valeurs-là n'ont pas de "$" donc elles peuvent passer par .env directement.
+      MEDILABO_SVC_FRONT_USER: ${MEDILABO_SVC_FRONT_USER}
+      MEDILABO_SVC_ASSESSMENT_USER: ${MEDILABO_SVC_ASSESSMENT_USER}
     depends_on:
       patient-service:
         condition: service_started
@@ -53,6 +57,9 @@ services:
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       MEDILABO_USER: ${MEDILABO_USER}
+      # Service appelé seulement : les usernames suffisent pour authentifier ses appelants.
+      MEDILABO_SVC_FRONT_USER: ${MEDILABO_SVC_FRONT_USER}
+      MEDILABO_SVC_ASSESSMENT_USER: ${MEDILABO_SVC_ASSESSMENT_USER}
     depends_on:
       mysql:
         condition: service_healthy
@@ -64,6 +71,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       MEDILABO_USER: ${MEDILABO_USER}
+      # Service appelé seulement : les usernames suffisent pour authentifier ses appelants.
+      MEDILABO_SVC_FRONT_USER: ${MEDILABO_SVC_FRONT_USER}
+      MEDILABO_SVC_ASSESSMENT_USER: ${MEDILABO_SVC_ASSESSMENT_USER}
     depends_on:
       mongo:
         condition: service_started
@@ -75,6 +85,10 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       MEDILABO_USER: ${MEDILABO_USER}
+      MEDILABO_SVC_FRONT_USER: ${MEDILABO_SVC_FRONT_USER}
+      MEDILABO_SVC_ASSESSMENT_USER: ${MEDILABO_SVC_ASSESSMENT_USER}
+      # APPELANT : ce mot de passe en clair sert à construire son header Basic sortant.
+      MEDILABO_SVC_ASSESSMENT_PASSWORD: ${MEDILABO_SVC_ASSESSMENT_PASSWORD}
 
   front-service:
     build: ./front-service
@@ -83,6 +97,10 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       MEDILABO_USER: ${MEDILABO_USER}
+      MEDILABO_SVC_FRONT_USER: ${MEDILABO_SVC_FRONT_USER}
+      MEDILABO_SVC_ASSESSMENT_USER: ${MEDILABO_SVC_ASSESSMENT_USER}
+      # APPELANT : ce mot de passe en clair sert à construire son header Basic sortant.
+      MEDILABO_SVC_FRONT_PASSWORD: ${MEDILABO_SVC_FRONT_PASSWORD}
 
 volumes:
   mysql-data:
