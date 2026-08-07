@@ -17,7 +17,7 @@
 		<java.version>17</java.version>
 	</properties>
 	<dependencies>
-		<!-- Authentifie le praticien et fournit les identifiants réémis vers la Gateway (D-SEC-4). -->
+		<!-- Authentifie le praticien et fournit les identifiants réémis vers la Gateway. -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>

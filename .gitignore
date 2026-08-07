@@ -23,7 +23,7 @@
 hs_err_pid*
 replay_pid*
 
-# Environment files with real secrets — never commit them (NFR-S3).
+# Environment files with real secrets — never commit them.
 # The secret-free templates ".env.example" / ".env.docker.example" stay tracked.
 .env
 *.env
@@ -39,3 +39,7 @@ _bmad-output/
 
 # Local notes and documentation (not part of the project deliverable)
 docs/
+
+# Scratch/build output — working files, never part of the deliverable
+tmp/
+output/

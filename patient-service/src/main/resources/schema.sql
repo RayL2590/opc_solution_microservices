@@ -1,6 +1,6 @@
--- Schéma en 3NF pour patient-service (livrable d'évaluation NFR-D1).
+-- Schéma en 3NF pour patient-service.
 --
--- Pourquoi c'est en 3NF (repris dans la justification NFR-C1 du README) :
+-- Pourquoi c'est en 3NF (repris dans la justification du README) :
 --   * 1NF : chaque colonne = un attribut atomique, une seule valeur.
 --   * 2NF : acquis d'office, clé primaire sur une seule colonne donc pas de dépendance partielle possible.
 --   * 3NF : pas de dépendance transitive - rien de dérivé stocké (l'âge par exemple se calcule
@@ -12,7 +12,7 @@
 -- avec l'entité JPA et l'appli ne démarre pas.
 --
 -- DROP puis CREATE parce qu'à chaque démarrage à froid on veut repartir propre, pour que
--- data.sql réinjecte les quatre patients de référence avec des ids stables (NFR-D2). En prod
+-- data.sql réinjecte les quatre patients de référence avec des ids stables. En prod
 -- il faudra surcharger `spring.sql.init.mode=never` — hors périmètre de la v1.
 
 DROP TABLE IF EXISTS patient;

@@ -1,4 +1,4 @@
--- Insère les quatre patients de référence à chaque démarrage à froid (NFR-D2).
+-- Insère les quatre patients de référence à chaque démarrage à froid.
 -- schema.sql vient de faire un DROP sur la table patient, donc l'AUTO_INCREMENT repart de
 -- zéro et ces insertions donnent bien les ids 1..4 dans cet ordre — les tests de l'évaluation
 -- du risque comptent dessus (id 1 → TestNone, 2 → TestBorderline, 3 → TestInDanger,

@@ -5,9 +5,6 @@
 > Identifiants par défaut du projet : `medilabo` / `medilabo123` (vérifier que `MEDILABO_USER`
 > dans votre `.env` / `.env.docker` correspond bien à ce couple — le mot de passe en clair
 > n'est jamais stocké, seul son hash BCrypt l'est).
->
-> Les codes d'exigence cités plus bas (`FR-9`, `FR-13`, `FR-15`) sont définis dans
-> [requirements-glossary.md](requirements-glossary.md).
 
 ---
 
@@ -24,8 +21,8 @@
 
 ## Partie A — Test via Docker Compose (scénario de référence)
 
-C'est le scénario qui doit fonctionner pour valider NFR-R4 ("`docker compose up` depuis un
-clone propre doit démarrer tout le système").
+C'est le scénario qui doit fonctionner pour valider que "`docker compose up` depuis un
+clone propre doit démarrer tout le système".
 
 ### A.1 — Démarrage propre
 
@@ -86,20 +83,20 @@ docker compose ps
 - [ ] Seul `gateway-service` publie un port sur l'hôte (`8080:8080`).
 - [ ] `patient-service`, `notes-service`, `assessment-service`, `front-service` n'ont **aucun** port publié (accessibles uniquement entre conteneurs, via le réseau Compose).
 - [ ] MySQL/Mongo : pas de port publié non plus par défaut dans `docker-compose.yml` actuel —
-      normal, ce sont des ports de debug optionnels (D-INFRA-2), pas requis pour le fonctionnement.
+      normal, ce sont des ports de debug optionnels, pas requis pour le fonctionnement.
 
-C'est la preuve concrète que "la Gateway est le seul point d'entrée réseau" (FR-13/NFR-R4) —
+C'est la preuve concrète que "la Gateway est le seul point d'entrée réseau" —
 si vous pouvez joindre `patient-service` directement sur un port hôte, c'est une régression.
 
 ---
 
 ## Partie B — Parcours fonctionnel via l'interface web (front-service)
 
-Toute cette partie se fait dans le navigateur, sur `http://localhost:8080` — **la Gateway elle-même**, pas le port interne du front. La 4ᵉ route de la Gateway (`Path=/,/ui/**`, voir `gateway-service/src/main/resources/application-docker.yml`) route déjà tout le trafic UI vers `front-service:8084` en interne. Aucun port supplémentaire à publier : c'est exactement le sens de D-INFRA-2 ("gateway is the only port published to the host") — l'UI est *un des chemins* derrière la Gateway, pas une exception à côté.
+Toute cette partie se fait dans le navigateur, sur `http://localhost:8080` — **la Gateway elle-même**, pas le port interne du front. La 4ᵉ route de la Gateway (`Path=/,/ui/**`, voir `gateway-service/src/main/resources/application-docker.yml`) route déjà tout le trafic UI vers `front-service:8084` en interne. Aucun port supplémentaire à publier : la Gateway reste le seul point d'entrée publié sur l'hôte — l'UI est *un des chemins* derrière la Gateway, pas une exception à côté.
 
 ### B.1 — Authentification
 
-- [ ] Ouvrir `http://localhost:8080/ui/patients` sans être authentifié → le navigateur affiche une pop-up HTTP Basic (pas un formulaire de login personnalisé — c'est voulu, FR-15).
+- [ ] Ouvrir `http://localhost:8080/ui/patients` sans être authentifié → le navigateur affiche une pop-up HTTP Basic (pas un formulaire de login personnalisé — c'est voulu).
 - [ ] Saisir un mauvais mot de passe → 401 / accès refusé, la pop-up réapparaît.
 - [ ] Saisir `medilabo` / `medilabo123` → accès à la page.
 
@@ -112,7 +109,7 @@ Toute cette partie se fait dans le navigateur, sur `http://localhost:8080` — *
 ### B.3 — Création d'un patient
 
 - [ ] Cliquer sur "Ajouter un patient", remplir le formulaire avec des valeurs valides (nom, prénom, date de naissance passée, genre `M` ou `F`).
-- [ ] Soumettre → redirection vers `/ui/patients` (Post/Redirect/Get, D-FRONT-2), le nouveau patient apparaît dans la liste.
+- [ ] Soumettre → redirection vers `/ui/patients` (pattern Post/Redirect/Get), le nouveau patient apparaît dans la liste.
 - [ ] Retenter avec un champ obligatoire vide (ex : nom vide) → la page reste sur le formulaire, **statut HTTP 400** (vérifiable via les devtools réseau du navigateur), message d'erreur en français affiché sous le champ fautif.
 - [ ] Tester une date de naissance dans le futur → doit être rejetée (validation métier
       Sprint 1 : genre M/F/U et date de naissance dans les 160 dernières années).
@@ -151,7 +148,7 @@ simultanément** (Sprint 3 les a tous les trois sur la même page) :
 - [ ] **Vérifier que la bande de risque a changé** (2 déclencheurs distincts maintenant :
       `Poids` + `Vertiges` — pour TestNone, née 1966, âgée de 59 ans en 2026, `>30` et
       `count>=2 && count<=5` → devrait passer à **Borderline**). C'est la preuve concrète que
-      FR-9 (pas de cache, recalcul systématique) fonctionne réellement, pas seulement en test
+      l'absence de cache (recalcul systématique) fonctionne réellement, pas seulement en test
       unitaire.
 - [ ] Retenter avec un champ note vide → 400, la page se re-rend avec un message d'erreur, sans
       perdre l'affichage patient/notes/risque déjà chargés.
@@ -201,7 +198,7 @@ curl -i -u medilabo:medilabo123 "http://localhost:8080/notes?patId=abc"
 ```
 
 - [ ] `GET /notes?patId=4` renvoie 4 notes pour TestEarlyOnset.
-- [ ] `GET /notes?patId=abc` renvoie **400**, pas 500 (protection ajoutée en 3.3).
+- [ ] `GET /notes?patId=abc` renvoie **400**, pas 500 (validation du paramètre côté contrôleur).
 - [ ] `GET /notes?patId=9999` (patient sans notes ou inexistant) renvoie **200 + `[]`**, pas 404
       (contrat volontaire : liste vide n'est pas une erreur).
 
@@ -236,7 +233,7 @@ curl -i -u medilabo:medilabo123 http://localhost:8080/assessments/9999
       l'erreur cascade correctement).
 - [ ] Rejouer `GET /assessments/1` deux fois de suite avec un léger délai entre les deux (ou
       après avoir ajouté une note entre les deux appels) → le résultat change si une note a été
-      ajoutée. Confirme l'absence de cache (FR-9).
+      ajoutée. Confirme l'absence de cache.
 
 ### C.4 — Défense en profondeur : accès direct à un service interne
 
@@ -251,7 +248,8 @@ curl -i http://localhost:8081/patients/1
 ```
 
 - [ ] Sans credentials, l'accès direct à un service back-end (en bypassant la Gateway) renvoie
-      **401**, pas un accès libre. C'est la preuve de la défense en profondeur (D-SEC-1).
+      **401**, pas un accès libre. C'est la preuve de la défense en profondeur (chaque service
+      applique aussi sa propre sécurité HTTP Basic, pas seulement la Gateway).
 
 ---
 
@@ -320,6 +318,6 @@ cd gateway-service && ./mvnw test
 - [ ] Aucun secret (mot de passe, hash BCrypt) visible dans les logs consultés pendant les tests.
 
 Si tous les points sont cochés, le projet est fonctionnellement validé de bout en bout pour les
-Sprints 1 à 3. Il restera, hors périmètre de ce guide : la rédaction des 4 sous-sections
-NFR-C1 du README (justifications NoSQL, 3NF, découpage microservices, Green Code) — un livrable
-documentaire, pas un comportement à tester.
+Sprints 1 à 3. Il restera, hors périmètre de ce guide : la rédaction des sous-sections
+du README qui justifient les choix d'architecture (NoSQL, 3NF, découpage microservices, Green
+Code) — un livrable documentaire, pas un comportement à tester.

@@ -59,11 +59,11 @@ class AssessmentServiceTest {
         return Instant.parse(String.format("2024-01-10T%02d:00:00Z", hour));
     }
 
-    // ---- mapping vers l'enveloppe FR-8 ----
+    // ---- mapping vers l'enveloppe de réponse ----
 
     @Test
-    @DisplayName("happy path maps patient + risk result into the FR-8 envelope")
-    void assess_happyPath_returnsFr8Envelope() {
+    @DisplayName("happy path maps patient + risk result into the response envelope")
+    void assess_happyPath_returnsResponseEnvelope() {
         PatientView patient = new PatientView(4, "TestEarlyOnset", "Patient4",
                 TODAY.minusYears(23), "F");
         List<NoteView> notes = List.of(note(4, "Patient4", "Poids", at(8)));
@@ -173,7 +173,7 @@ class AssessmentServiceTest {
         assertThrows(GatewayTimeoutException.class, () -> assessmentService.assess(1));
     }
 
-    // ---- AC4 : les quatre fixtures canoniques (oracle SM-2), rejouées au niveau orchestration ----
+    // ---- les quatre fixtures canoniques fournies par le client, rejouées au niveau orchestration ----
 
     private static Stream<Arguments> canonicalFixtures() {
         PatientView p1 = new PatientView(1, "Test", "TestNone", TODAY.minusYears(58), "F");
@@ -225,7 +225,7 @@ class AssessmentServiceTest {
 
     @ParameterizedTest(name = "patId {0} -> count {3}, band {4}")
     @MethodSource("canonicalFixtures")
-    @DisplayName("AC4 — the four canonical fixtures resolve to the expected band and count via assess()")
+    @DisplayName("the four canonical fixtures resolve to the expected band and count via assess()")
     void assess_canonicalFixtures_resolveExpectedBandAndCount(
             Integer patId, PatientView patient, List<NoteView> notes,
             int expectedCount, RiskBand expectedBand) {

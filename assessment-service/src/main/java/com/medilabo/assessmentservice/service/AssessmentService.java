@@ -31,7 +31,7 @@ public class AssessmentService {
     /**
      * Calcule l'évaluation de risque courante pour ce patient.
      *
-     * @return l'enveloppe FR-8 pour ce patient.
+     * @return l'enveloppe de réponse de l'évaluation de risque pour ce patient.
      * @throws com.medilabo.assessmentservice.exception.UpstreamNotFoundException      patient ou notes introuvables upstream.
      * @throws com.medilabo.assessmentservice.exception.BadGatewayException            erreur d'un service upstream.
      * @throws com.medilabo.assessmentservice.exception.GatewayTimeoutException        service upstream injoignable.

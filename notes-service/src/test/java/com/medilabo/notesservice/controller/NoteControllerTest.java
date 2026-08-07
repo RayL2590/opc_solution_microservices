@@ -126,7 +126,7 @@ class NoteControllerTest {
 
     @Test
     void addNote_blankPatient_returns400WithFieldError() throws Exception {
-        // patient vide → @NotBlank : le nom est dénormalisé sur chaque note (D-DATA-3), une
+        // patient vide → @NotBlank : le nom est dénormalisé sur chaque note, une
         // note sans lui est illisible dans la timeline.
         mockMvc.perform(post("/notes").with(httpBasic("medilabo", "medilabo123"))
                         .contentType(MediaType.APPLICATION_JSON)

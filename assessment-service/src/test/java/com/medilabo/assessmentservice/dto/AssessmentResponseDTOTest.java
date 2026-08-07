@@ -12,8 +12,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Verrouille la forme JSON de l'enveloppe FR-8. Le champ {@code riskBand} est bien typé
- * {@link RiskBand} côté Java, mais il doit sérialiser vers la chaîne exacte attendue par FR-8.
+ * Verrouille la forme JSON de l'enveloppe de réponse. Le champ {@code riskBand} est bien typé
+ * {@link RiskBand} côté Java, mais il doit sérialiser vers la chaîne exacte attendue sur le fil.
  */
 class AssessmentResponseDTOTest {
 
@@ -26,8 +26,8 @@ class AssessmentResponseDTOTest {
             "IN_DANGER, In Danger",
             "EARLY_ONSET, Early Onset"
     })
-    @DisplayName("riskBand serializes to the exact FR-8 wire string, not the enum constant name")
-    void riskBand_serializesToFr8String(RiskBand band, String expectedWireValue) throws Exception {
+    @DisplayName("riskBand serializes to the exact wire string, not the enum constant name")
+    void riskBand_serializesToWireString(RiskBand band, String expectedWireValue) throws Exception {
         AssessmentResponseDTO dto = new AssessmentResponseDTO(
                 4,
                 new AssessmentResponseDTO.PatientBlock("Test", "Patient", 23),
@@ -41,8 +41,8 @@ class AssessmentResponseDTOTest {
     }
 
     @Test
-    @DisplayName("the full envelope keeps its FR-8 field names and shape")
-    void envelope_keepsFr8Shape() throws Exception {
+    @DisplayName("the full envelope keeps its expected field names and shape")
+    void envelope_keepsExpectedShape() throws Exception {
         AssessmentResponseDTO dto = new AssessmentResponseDTO(
                 4,
                 new AssessmentResponseDTO.PatientBlock("TestEarlyOnset", "Patient4", 23),

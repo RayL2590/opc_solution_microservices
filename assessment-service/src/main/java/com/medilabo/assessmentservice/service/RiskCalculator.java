@@ -17,8 +17,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Calcul de risque déterministe et pur sur les onze termes déclencheurs canoniques (FR-9,
- * voir {@code Documentation/requirements-glossary.md}).
+ * Calcul de risque déterministe et pur sur les onze termes déclencheurs canoniques.
  *
  * <p>Pas de contexte Spring, pas d'état externe : avec le même {@code (patient, notes, referenceDate)}
  * on retombe toujours sur le même {@link RiskResult}. Les quatre cas de test fournis par le
@@ -51,7 +50,7 @@ public class RiskCalculator {
     /**
      * Parcourt les notes du plus ancien au plus récent, renvoie chaque terme détecté dans
      * l'ordre du premier match, sans doublon. Dans une même note, l'ordre suit la première
-     * apparition textuelle du terme (comme dans l'exemple de l'enveloppe FR-8) ; à position égale,
+     * apparition textuelle du terme (comme dans l'exemple de la réponse HTTP) ; à position égale,
      * on retombe sur l'ordre de {@code TriggerVocabulary.TERMS}. Le match ignore casse et accents,
      * cherche une sous-chaîne contiguë ; répéter un terme dans une autre note ne le rajoute pas.
      *
@@ -139,8 +138,15 @@ public class RiskCalculator {
 
     /**
      * Dérive la bande de risque depuis l'âge, le genre et le nombre de déclencheurs, selon la
-     * table de règles FR-9. Toutes les branches sont évaluées, la plus sévère qui matche gagne
-     * (max sur l'ordinal).
+     * table de règles métier.
+     *
+     * <p>Les bandes se chevauchent (chez un homme de moins de 30 ans, 5 déclencheurs satisfont
+     * à la fois Early Onset et In Danger) et la règle métier veut que la plus sévère l'emporte.
+     * D'où l'ordre des tests, de la plus sévère à la moins sévère, avec sortie immédiate : une
+     * fois qu'Early Onset matche, rien de pire ne peut suivre, donc on rend la main. <b>Cet ordre
+     * porte la règle</b> — permuter deux blocs change le résultat (un homme de 25 ans avec 5
+     * déclencheurs sortirait In Danger). C'est aussi ce qui rend les bornes hautes inutiles :
+     * pas besoin d'écrire {@code count <= 5} sur Borderline, les cas au-dessus sont déjà partis.</p>
      *
      * @param gender code sur un caractère, comparé insensible à la casse, {@code M}/{@code F}.
      * @param count  nombre de déclencheurs distincts, [0, 11].
@@ -153,31 +159,19 @@ public class RiskCalculator {
         boolean female = gender != null && !gender.isBlank()
                 && Character.toUpperCase(gender.charAt(0)) == 'F';
 
-        RiskBand band = RiskBand.NONE;
-
-        if (count >= 2 && over30 && count <= 5) {
-            band = highest(band, RiskBand.BORDERLINE);
+        if ((!over30 && male && count >= 5)
+                || (!over30 && female && count >= 7)
+                || (over30 && count >= 8)) {
+            return RiskBand.EARLY_ONSET;
         }
-        boolean inDanger =
-                (!over30 && male && count >= 3)
-                        || (!over30 && female && count >= 4)
-                        || (over30 && count >= 6 && count <= 7);
-        if (inDanger) {
-            band = highest(band, RiskBand.IN_DANGER);
+        if ((!over30 && male && count >= 3)
+                || (!over30 && female && count >= 4)
+                || (over30 && count >= 6)) {
+            return RiskBand.IN_DANGER;
         }
-        boolean earlyOnset =
-                (!over30 && male && count >= 5)
-                        || (!over30 && female && count >= 7)
-                        || (over30 && count >= 8);
-        if (earlyOnset) {
-            band = highest(band, RiskBand.EARLY_ONSET);
+        if (over30 && count >= 2) {
+            return RiskBand.BORDERLINE;
         }
-
-        // count <= 1 ne matche jamais rien au-dessus, donc ça reste à NONE.
-        return band;
-    }
-
-    private RiskBand highest(RiskBand a, RiskBand b) {
-        return a.ordinal() >= b.ordinal() ? a : b;
+        return RiskBand.NONE;
     }
 }

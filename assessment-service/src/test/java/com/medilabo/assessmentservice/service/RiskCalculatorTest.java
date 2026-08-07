@@ -38,7 +38,7 @@ class RiskCalculatorTest {
         return Instant.parse(String.format("2024-01-10T%02d:00:00Z", hour));
     }
 
-    // ---- AC2 : les quatre fixtures canoniques (oracle SM-2) ----
+    // ---- les quatre fixtures canoniques fournies par le client ----
 
     private static Stream<Arguments> canonicalFixtures() {
         PatientView p1 = new PatientView(1, "Test", "TestNone", LocalDate.of(1966, 12, 31), "F");
@@ -94,7 +94,7 @@ class RiskCalculatorTest {
 
     @ParameterizedTest(name = "patId {0} → count {2}, band {3}")
     @MethodSource("canonicalFixtures")
-    @DisplayName("AC2 — the four canonical fixtures resolve to the expected band and count")
+    @DisplayName("the four canonical fixtures resolve to the expected band and count")
     void canonicalFixtures_resolveExpectedBandAndCount(
             PatientView patient, List<NoteView> notes, int expectedCount,
             RiskBand expectedBand, List<String> expectedTriggers) {
@@ -106,10 +106,10 @@ class RiskCalculatorTest {
         assertThat(result.triggersDetected()).containsExactlyElementsOf(expectedTriggers);
     }
 
-    // ---- AC1: forme du vocabulaire ----
+    // ---- forme du vocabulaire ----
 
     @Test
-    @DisplayName("AC1 — vocabulary holds 11 terms in PRD order, lowercased, only Fumeur has 2 patterns")
+    @DisplayName("vocabulary holds 11 terms in fixed order, lowercased, only Fumeur has 2 patterns")
     void vocabulary_hasElevenTermsInOrder() {
         assertThat(TriggerVocabulary.TERMS).hasSize(11);
         assertThat(TriggerVocabulary.TERMS.stream().map(TriggerTerm::canonicalName))
@@ -130,10 +130,10 @@ class RiskCalculatorTest {
                 .isEqualTo("Fumeur");
     }
 
-    // ---- AC3: matching des variantes ----
+    // ---- matching des variantes ----
 
     @Test
-    @DisplayName("AC3 — substring rule matches inflections (anormales, cholestérol LDL, Vertige)")
+    @DisplayName("substring rule matches inflections (anormales, cholestérol LDL, Vertige)")
     void substringRule_matchesInflections() {
         PatientView p = new PatientView(9, "T", "T", LocalDate.of(1980, 1, 1), "F");
         List<NoteView> notes = List.of(
@@ -146,10 +146,10 @@ class RiskCalculatorTest {
                 .containsExactly("Anormal", "Cholestérol", "Vertiges");
     }
 
-    // ---- AC3: matching insensible aux accents ----
+    // ---- matching insensible aux accents ----
 
     @Test
-    @DisplayName("AC3 — unaccented note text matches accented vocabulary terms")
+    @DisplayName("unaccented note text matches accented vocabulary terms")
     void accentFolding_matchesUnaccentedVariants() {
         PatientView p = new PatientView(9, "T", "T", LocalDate.of(1980, 1, 1), "F");
         List<NoteView> notes = List.of(
@@ -163,7 +163,7 @@ class RiskCalculatorTest {
     }
 
     @Test
-    @DisplayName("AC3 — accented and unaccented spellings of the same term count once")
+    @DisplayName("accented and unaccented spellings of the same term count once")
     void accentFolding_accentedAndUnaccented_countOnce() {
         PatientView p = new PatientView(9, "T", "T", LocalDate.of(1980, 1, 1), "F");
         List<NoteView> notes = List.of(
@@ -178,7 +178,7 @@ class RiskCalculatorTest {
     }
 
     @Test
-    @DisplayName("AC3 — folding preserves offsets: NFD-decomposed text keeps textual first-match order")
+    @DisplayName("folding preserves offsets: NFD-decomposed text keeps textual first-match order")
     void accentFolding_preservesFirstMatchOrder_onDecomposedText() {
         PatientView p = new PatientView(9, "T", "T", LocalDate.of(1980, 1, 1), "F");
         // même texte, mais encodé en NFD (e + accent combinant), comme un copier-coller pourrait le produire
@@ -191,10 +191,10 @@ class RiskCalculatorTest {
         assertThat(result.triggersDetected()).containsExactly("Réaction", "Cholestérol");
     }
 
-    // ---- AC4: idempotence du comptage & plancher None ----
+    // ---- idempotence du comptage & plancher None ----
 
     @Test
-    @DisplayName("AC4 — a term repeated across notes counts once")
+    @DisplayName("a term repeated across notes counts once")
     void repeatedTerm_countsOnce() {
         PatientView p = new PatientView(9, "T", "T", LocalDate.of(1980, 1, 1), "F");
         List<NoteView> notes = List.of(
@@ -210,7 +210,7 @@ class RiskCalculatorTest {
     }
 
     @Test
-    @DisplayName("AC4 — count of 0 or 1 is None regardless of age/gender")
+    @DisplayName("count of 0 or 1 is None regardless of age/gender")
     void lowCount_isNone() {
         PatientView youngMale = new PatientView(9, "T", "T", LocalDate.of(2010, 1, 1), "M");
         assertThat(calculator.compute(youngMale, List.of(), REFERENCE_DATE).riskBand())
@@ -221,10 +221,10 @@ class RiskCalculatorTest {
                 .isEqualTo(RiskBand.NONE);
     }
 
-    // ---- AC5: la bande la plus haute gagne ----
+    // ---- la bande la plus haute gagne ----
 
     @Test
-    @DisplayName("AC5 — an over-30 patient with 8 triggers is Early Onset, not In Danger")
+    @DisplayName("an over-30 patient with 8 triggers is Early Onset, not In Danger")
     void overlap_highestBandWins() {
         PatientView older = new PatientView(9, "T", "T", LocalDate.of(1970, 1, 1), "M");
         List<NoteView> notes = List.of(note(9, "T",
@@ -236,10 +236,10 @@ class RiskCalculatorTest {
         assertThat(result.riskBand()).isEqualTo(RiskBand.EARLY_ONSET);
     }
 
-    // ---- AC6: triggersDetected suit l'ordre chronologique, peu importe l'ordre de la liste ----
+    // ---- triggersDetected suit l'ordre chronologique, peu importe l'ordre de la liste ----
 
     @Test
-    @DisplayName("AC6 — triggersDetected follows chronological first-match order regardless of list order")
+    @DisplayName("triggersDetected follows chronological first-match order regardless of list order")
     void triggersDetected_isChronologicalRegardlessOfListOrder() {
         PatientView p = new PatientView(9, "T", "T", LocalDate.of(1980, 1, 1), "F");
         NoteView newer = note(9, "T", "anticorps élevés", at(11));
@@ -273,10 +273,10 @@ class RiskCalculatorTest {
         return REFERENCE_DATE.minusYears(age).minusDays(1);
     }
 
-    // ---- F3: la borne age==30 inclusive (PRD §9) est verrouillée ----
+    // ---- la borne age==30 inclusive est verrouillée ----
 
     @Test
-    @DisplayName("F3 — age exactly 30 takes the age<=30 arms (inclusive), M/count=5 → Early Onset")
+    @DisplayName("age exactly 30 takes the age<=30 arms (inclusive), M/count=5 → Early Onset")
     void ageExactly30_isInclusive_male() {
         RiskResult r = calculator.compute(patient(dobForAge(30), "M"), List.of(noteWithTriggers(5)), REFERENCE_DATE);
         assertThat(r.triggerCount()).isEqualTo(5);
@@ -286,31 +286,31 @@ class RiskCalculatorTest {
     }
 
     @Test
-    @DisplayName("F3 — age exactly 30 takes the age<=30 arms (inclusive), F/count=4 → In Danger")
+    @DisplayName("age exactly 30 takes the age<=30 arms (inclusive), F/count=4 → In Danger")
     void ageExactly30_isInclusive_female() {
         RiskResult r = calculator.compute(patient(dobForAge(30), "F"), List.of(noteWithTriggers(4)), REFERENCE_DATE);
         assertThat(r.triggerCount()).isEqualTo(4);
         assertThat(r.riskBand()).isEqualTo(RiskBand.IN_DANGER);
     }
 
-    // ---- F4: genre null avec un count élevé donne None (contrat : ni branche M ni F) ----
+    // ---- genre null avec un count élevé donne None (contrat : ni branche M ni F) ----
 
     @Test
-    @DisplayName("F4 — gender null, age<=30, count=10 → None (neither M nor F arm applies)")
+    @DisplayName("gender null, age<=30, count=10 → None (neither M nor F arm applies)")
     void genderNull_youngHighCount_isNone() {
-        // Contrat FR-9 : tout ce qui n'est ni M ni F ne prend aucune des deux branches, et les
+        // Contrat : tout ce qui n'est ni M ni F ne prend aucune des deux branches, et les
         // branches age>30 ne s'appliquent pas non plus si age<=30, donc on tombe à None. On le
         // documente ici pour que ce soit un choix assumé, pas un trou qu'on aurait oublié. La
-        // validité du genre est vérifiée en amont (4.2).
+        // validité du genre est vérifiée en amont côté DTO/contrôleur.
         RiskResult r = calculator.compute(patient(dobForAge(25), null), List.of(noteWithTriggers(10)), REFERENCE_DATE);
         assertThat(r.triggerCount()).isEqualTo(10);
         assertThat(r.riskBand()).isEqualTo(RiskBand.NONE);
     }
 
-    // ---- F5: bornes de la table age>30, isolées ----
+    // ---- bornes de la table age>30, isolées ----
 
     @Test
-    @DisplayName("F5 — age>30 boundaries: 5→Borderline, 6→In Danger, 7→In Danger, 8→Early Onset")
+    @DisplayName("age>30 boundaries: 5→Borderline, 6→In Danger, 7→In Danger, 8→Early Onset")
     void over30_tableBoundaries() {
         PatientView p = patient(dobForAge(45), "M"); // le genre n'entre pas en jeu sur les branches age>30
         assertThat(calculator.compute(p, List.of(noteWithTriggers(5)), REFERENCE_DATE).riskBand())
@@ -323,10 +323,10 @@ class RiskCalculatorTest {
                 .as("count=8, >=8").isEqualTo(RiskBand.EARLY_ONSET);
     }
 
-    // ---- F6: seuils M/F pour age<=30 ----
+    // ---- seuils M/F pour age<=30 ----
 
     @Test
-    @DisplayName("F6 — age<=30 M thresholds: 3→In Danger, 4→In Danger, 5→Early Onset")
+    @DisplayName("age<=30 M thresholds: 3→In Danger, 4→In Danger, 5→Early Onset")
     void young_maleThresholds() {
         PatientView m = patient(dobForAge(25), "M");
         assertThat(calculator.compute(m, List.of(noteWithTriggers(3)), REFERENCE_DATE).riskBand())
@@ -338,7 +338,7 @@ class RiskCalculatorTest {
     }
 
     @Test
-    @DisplayName("F6 — age<=30 F thresholds: 4→In Danger, 6→In Danger, 7→Early Onset")
+    @DisplayName("age<=30 F thresholds: 4→In Danger, 6→In Danger, 7→Early Onset")
     void young_femaleThresholds() {
         PatientView f = patient(dobForAge(25), "F");
         assertThat(calculator.compute(f, List.of(noteWithTriggers(4)), REFERENCE_DATE).riskBand())
@@ -350,7 +350,7 @@ class RiskCalculatorTest {
     }
 
     @Test
-    @DisplayName("F6 — F count=3 is not yet In Danger (F floor is 4, unlike M)")
+    @DisplayName("F count=3 is not yet In Danger (F floor is 4, unlike M)")
     void young_female_belowFloor() {
         PatientView f = patient(dobForAge(25), "F");
         // count=3 : aucune branche age<=30 ne matche (M demande >=3 mais on est en F ; F demande
@@ -360,10 +360,10 @@ class RiskCalculatorTest {
                 .isEqualTo(RiskBand.NONE);
     }
 
-    // ---- F7: plafond du count (11) et triggersDetected vide ----
+    // ---- plafond du count (11) et triggersDetected vide ----
 
     @Test
-    @DisplayName("F7 — all eleven terms present → count=11 (ceiling)")
+    @DisplayName("all eleven terms present → count=11 (ceiling)")
     void allElevenTriggers_countIs11() {
         RiskResult r = calculator.compute(patient(dobForAge(45), "M"), List.of(noteWithTriggers(11)), REFERENCE_DATE);
         assertThat(r.triggerCount()).isEqualTo(11);
@@ -372,7 +372,7 @@ class RiskCalculatorTest {
     }
 
     @Test
-    @DisplayName("F7 — notes with no trigger terms → empty triggersDetected, count=0, None")
+    @DisplayName("notes with no trigger terms → empty triggersDetected, count=0, None")
     void notesWithoutTriggers_emptyDetected() {
         List<NoteView> notes = List.of(note(9, "T", "le patient va bien, rien à signaler", at(9)));
         RiskResult r = calculator.compute(patient(dobForAge(45), "M"), notes, REFERENCE_DATE);
@@ -381,10 +381,10 @@ class RiskCalculatorTest {
         assertThat(r.riskBand()).isEqualTo(RiskBand.NONE);
     }
 
-    // ---- F8: pureté — la liste de l'appelant n'est pas modifiée ----
+    // ---- pureté — la liste de l'appelant n'est pas modifiée ----
 
     @Test
-    @DisplayName("F8 — compute does not mutate the caller's notes list (purity)")
+    @DisplayName("compute does not mutate the caller's notes list (purity)")
     void compute_doesNotMutateInput() {
         NoteView newer = note(9, "T", "anticorps", at(11));
         NoteView older = note(9, "T", "poids", at(9));
@@ -397,10 +397,10 @@ class RiskCalculatorTest {
         assertThat(input).containsExactlyElementsOf(snapshot);
     }
 
-    // ---- F9: entrées dégradées tolérées (createdAt null, texte de note null) ----
+    // ---- entrées dégradées tolérées (createdAt null, texte de note null) ----
 
     @Test
-    @DisplayName("F9 — a note with null createdAt is sorted last, others keep chronological order")
+    @DisplayName("a note with null createdAt is sorted last, others keep chronological order")
     void nullCreatedAt_sortedLast() {
         NoteView noTimestamp = note(9, "T", "anticorps", null);
         NoteView early = note(9, "T", "poids", at(9));
@@ -414,7 +414,7 @@ class RiskCalculatorTest {
     }
 
     @Test
-    @DisplayName("F9 — notes sharing a createdAt are scanned oldest-id-first, not in upstream order")
+    @DisplayName("notes sharing a createdAt are scanned oldest-id-first, not in upstream order")
     void sameCreatedAt_tiebreaksOnIdAscending() {
         // notes-service renvoie du DESC sur (createdAt, id) : à createdAt égal, la plus récente
         // arrive en premier. Un tri stable sur le seul createdAt garderait cet ordre newest-first
@@ -428,7 +428,7 @@ class RiskCalculatorTest {
     }
 
     @Test
-    @DisplayName("F9 — a null id at equal createdAt does not break ordering")
+    @DisplayName("a null id at equal createdAt does not break ordering")
     void sameCreatedAt_nullId_isTolerated() {
         NoteView withId = new NoteView("65a000000000000000000001", 9, "T", "poids", at(9));
         NoteView noId = new NoteView(null, 9, "T", "anticorps", at(9));
@@ -439,7 +439,7 @@ class RiskCalculatorTest {
     }
 
     @Test
-    @DisplayName("F9 — a note with null text is skipped without error")
+    @DisplayName("a note with null text is skipped without error")
     void nullNoteText_isSkipped() {
         List<NoteView> notes = List.of(
                 note(9, "T", null, at(9)),
@@ -452,8 +452,8 @@ class RiskCalculatorTest {
     // ---- Les quatre libellés de risque sont figés, l'enveloppe HTTP les expose tels quels ----
 
     @Test
-    @DisplayName("F12 — RiskBand display names match the exact FR-8 wire strings")
-    void riskBand_displayNames_matchFr8Wire() {
+    @DisplayName("RiskBand display names match the exact wire strings")
+    void riskBand_displayNames_matchWireStrings() {
         assertThat(RiskBand.NONE.getDisplayName()).isEqualTo("None");
         assertThat(RiskBand.BORDERLINE.getDisplayName()).isEqualTo("Borderline");
         assertThat(RiskBand.IN_DANGER.getDisplayName()).isEqualTo("In Danger");

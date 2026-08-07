@@ -80,8 +80,9 @@ public class PatientUiService {
      * sont écrasés depuis la démographie chargée, jamais pris du formulaire.
      *
      * @throws IllegalStateException si la Gateway renvoie un patient sans nom — notes-service
-     *         exige un nom non vide sur chaque note (dénormalisation D-DATA-3). Autant échouer
-     *         ici avec une cause claire plutôt que laisser remonter un 400 venu d'un autre service.
+     *         exige un nom non vide sur chaque note (dénormalisation délibérée du nom du
+     *         patient sur chaque note). Autant échouer ici avec une cause claire plutôt que
+     *         laisser remonter un 400 venu d'un autre service.
      */
     public NoteView addNote(Long id, NoteForm noteForm) {
         PatientView patient = patientGatewayClient.getPatient(id);
