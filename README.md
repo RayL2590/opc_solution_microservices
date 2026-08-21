@@ -190,4 +190,13 @@ Ce qui reste vrai dans tous les cas de figure, c'est l'authentification : un ser
 
 ### Limites assumées de la v1
 
-Pas d'inscription, pas d'annuaire d'utilisateurs, pas de gestion fine des droits : un unique compte clinicien partagé par l'équipe, déclaré en mémoire (`InMemoryUserDetailsManager`), ce qui reste cohérent avec le périmètre v1 (outil interne pour une équipe restreinte). Les rôles `ROLE_USER` / `ROLE_SERVICE` sont portés par les comptes mais aucune règle d'autorisation ne les distingue encore, les règles sont aujourd'hui en `anyRequest().authenticated()`. Ce socle rend le durcissement possible sans re-modéliser les identités, par exemple pour réserver les écritures au clinicien et n'ouvrir que la lecture aux comptes de service.
+Pas d'inscription, pas d'annuaire d'utilisateurs : un unique compte clinicien partagé par l'équipe, déclaré en mémoire (`InMemoryUserDetailsManager`), ce qui reste cohérent avec le périmètre v1 (outil interne pour une équipe restreinte).
+
+En revanche les rôles ne sont plus décoratifs : depuis la décorrélation des comptes de service, les règles d'autorisation appliquent le **moindre privilège** service par service, au lieu d'un `anyRequest().authenticated()` uniforme.
+
+- `patient-service` et `notes-service` ouvrent la **lecture** à `ROLE_USER`, `ROLE_SERVICE_FRONT` et `ROLE_SERVICE_ASSESSMENT`, mais réservent l'**écriture** au clinicien et à `svc-front`. `svc-assessment` ne fait que lire pour calculer un risque, il n'a aucune raison d'écrire.
+- `assessment-service` réserve `GET /assessments/**` à `ROLE_USER` et `ROLE_SERVICE_FRONT` : `svc-assessment` est l'identité *sortante* de ce service, elle n'a rien à faire en entrée.
+
+Concrètement, un compte machine compromis ne permet pas de muter la base : il reçoit un **403** (identité valide, droit manquant) et non un 401. Ce comportement est vérifiable en une commande via la section `authz` de `Documentation/smoke-tests.ps1` (voir `smoke-tests-guide.md`).
+
+Ce qui reste hors périmètre v1 : une gestion fine des droits par utilisateur humain (tous les cliniciens partagent le même compte et donc les mêmes droits).

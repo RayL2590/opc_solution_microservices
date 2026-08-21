@@ -14,6 +14,8 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -153,5 +155,31 @@ class GlobalExceptionHandlerTest {
         ILoggingEvent event = singleEvent();
         assertEquals(Level.ERROR, event.getLevel());
         assertSame(ex, loggedThrowable(event));
+    }
+
+    /**
+     * Content-Type text/plain sur une API JSON : 415, jamais 500. Sans handler dédié,
+     * un appelant qui se trompe d'en-tête recevait une erreur serveur alors que la
+     * faute est de son côté.
+     */
+    @Test
+    void mediaTypeNotSupported_returns415() {
+        HttpMediaTypeNotSupportedException ex =
+                new HttpMediaTypeNotSupportedException("text/plain non supporté");
+        ProblemDetail detail = handler.handleMediaTypeNotSupported(ex);
+
+        assertEquals(415, detail.getStatus());
+        assertEquals(Level.WARN, singleEvent().getLevel());
+    }
+
+    /** Verbe non exposé sur /notes : 405, jamais 500. */
+    @Test
+    void methodNotSupported_returns405() {
+        HttpRequestMethodNotSupportedException ex =
+                new HttpRequestMethodNotSupportedException("DELETE");
+        ProblemDetail detail = handler.handleMethodNotSupported(ex);
+
+        assertEquals(405, detail.getStatus());
+        assertEquals(Level.WARN, singleEvent().getLevel());
     }
 }

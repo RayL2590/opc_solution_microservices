@@ -92,7 +92,7 @@ si vous pouvez joindre `patient-service` directement sur un port hôte, c'est un
 
 ## Partie B — Parcours fonctionnel via l'interface web (front-service)
 
-Toute cette partie se fait dans le navigateur, sur `http://localhost:8080` — **la Gateway elle-même**, pas le port interne du front. La 4ᵉ route de la Gateway (`Path=/,/ui/**`, voir `gateway-service/src/main/resources/application-docker.yml`) route déjà tout le trafic UI vers `front-service:8084` en interne. Aucun port supplémentaire à publier : la Gateway reste le seul point d'entrée publié sur l'hôte — l'UI est *un des chemins* derrière la Gateway, pas une exception à côté.
+Toute cette partie se fait dans le navigateur, sur `http://localhost:8080` — **la Gateway elle-même**, pas le port interne du front. La 4ᵉ route de la Gateway (`Path=/,/ui/**,/css/**,/js/**,/favicon.ico`, voir `gateway-service/src/main/resources/application-docker.yml`) route déjà tout le trafic UI vers `front-service:8084` en interne — les trois derniers prédicats couvrent les ressources statiques, sans lesquelles la page arriverait sans CSS. Aucun port supplémentaire à publier : la Gateway reste le seul point d'entrée publié sur l'hôte — l'UI est *un des chemins* derrière la Gateway, pas une exception à côté.
 
 ### B.1 — Authentification
 
@@ -146,10 +146,10 @@ simultanément** (Sprint 3 les a tous les trois sur la même page) :
       note".
 - [ ] Soumettre → redirection vers la fiche détail, la nouvelle note apparaît dans l'historique.
 - [ ] **Vérifier que la bande de risque a changé** (2 déclencheurs distincts maintenant :
-      `Poids` + `Vertiges` — pour TestNone, née 1966, âgée de 59 ans en 2026, `>30` et
-      `count>=2 && count<=5` → devrait passer à **Borderline**). C'est la preuve concrète que
-      l'absence de cache (recalcul systématique) fonctionne réellement, pas seulement en test
-      unitaire.
+      `Poids` + `Vertiges` — pour TestNone, née le 31/12/1966 donc âgée de 59 ans, `>30` et
+      `count>=2` sans atteindre le seuil In Danger de 6 → devrait passer à **Borderline**).
+      C'est la preuve concrète que l'absence de cache (recalcul systématique) fonctionne
+      réellement, pas seulement en test unitaire.
 - [ ] Retenter avec un champ note vide → 400, la page se re-rend avec un message d'erreur, sans
       perdre l'affichage patient/notes/risque déjà chargés.
 
@@ -159,6 +159,12 @@ simultanément** (Sprint 3 les a tous les trois sur la même page) :
 
 Utile pour isoler un problème (front vs back) et pour vérifier des cas que l'UI ne couvre pas
 facilement (404, formats d'erreur).
+
+> **Raccourci :** tout ce que couvre cette partie — et une soixantaine de cas hostiles en plus
+> (injections, payloads malformés, escalade de privilège) — est automatisé dans
+> `smoke-tests.ps1` / `smoke-tests.sh`. Une commande, une ligne verte ou rouge par test :
+> voir **`smoke-tests-guide.md`**. Les commandes `curl` ci-dessous restent utiles pour
+> inspecter une réponse en détail ou creuser un cas précis à la main.
 
 > Remplacer `8080` par le port de la Gateway. Les credentials sont envoyés via `-u`.
 
@@ -221,7 +227,7 @@ curl -i -u medilabo:medilabo123 http://localhost:8080/assessments/9999
   ```json
   {
     "patId": 4,
-    "patient": { "firstName": "Test", "lastName": "TestEarlyOnset", "age": 23 },
+    "patient": { "firstName": "Test", "lastName": "TestEarlyOnset", "age": 24 },
     "riskBand": "Early Onset",
     "triggerCount": 7,
     "triggersDetected": ["Anticorps", "Réaction", "Hémoglobine A1C", "Taille", "Poids", "Cholestérol", "Vertiges"]
@@ -318,6 +324,6 @@ cd gateway-service && ./mvnw test
 - [ ] Aucun secret (mot de passe, hash BCrypt) visible dans les logs consultés pendant les tests.
 
 Si tous les points sont cochés, le projet est fonctionnellement validé de bout en bout pour les
-Sprints 1 à 3. Il restera, hors périmètre de ce guide : la rédaction des sous-sections
-du README qui justifient les choix d'architecture (NoSQL, 3NF, découpage microservices, Green
-Code) — un livrable documentaire, pas un comportement à tester.
+Sprints 1 à 3. Les justifications d'architecture (NoSQL, 3NF, découpage microservices, Green
+Code) sont hors périmètre de ce guide — ce sont des livrables documentaires, pas des
+comportements à tester ; elles vivent dans les sections dédiées du `README.md`.

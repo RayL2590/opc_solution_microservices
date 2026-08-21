@@ -9,6 +9,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ProblemDetail;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -69,13 +71,17 @@ class GlobalExceptionHandlerTest {
         assertEquals(502, detail.getStatus());
     }
 
+    /**
+     * WARN et non ERROR : la panne vient de l'upstream, pas de ce service — même règle que
+     * pour UpstreamNotFoundException (voir docs/logging-policy.md).
+     */
     @Test
-    void badGateway_logsAtErrorWithFullException() {
+    void badGateway_logsAtWarnWithFullException() {
         BadGatewayException ex = new BadGatewayException("Erreur upstream patient-service pour id=42");
         handler.handleBadGateway(ex);
 
         ILoggingEvent event = singleEvent();
-        assertEquals(Level.ERROR, event.getLevel());
+        assertEquals(Level.WARN, event.getLevel());
         assertSame(ex, loggedThrowable(event));
     }
 
@@ -87,14 +93,15 @@ class GlobalExceptionHandlerTest {
         assertEquals(504, detail.getStatus());
     }
 
+    /** WARN pour la même raison que badGateway : c'est l'upstream qui est en panne. */
     @Test
-    void gatewayTimeout_logsAtErrorWithFullException() {
+    void gatewayTimeout_logsAtWarnWithFullException() {
         GatewayTimeoutException ex = new GatewayTimeoutException(
                 "patient-service inaccessible pour id=42", new RuntimeException("connection refused"));
         handler.handleGatewayTimeout(ex);
 
         ILoggingEvent event = singleEvent();
-        assertEquals(Level.ERROR, event.getLevel());
+        assertEquals(Level.WARN, event.getLevel());
         assertSame(ex, loggedThrowable(event));
     }
 
@@ -113,6 +120,34 @@ class GlobalExceptionHandlerTest {
         ILoggingEvent event = singleEvent();
         assertEquals(Level.WARN, event.getLevel());
         assertSame(ex, loggedThrowable(event));
+    }
+
+    /**
+     * /assessments/abc : la faute est à l'appelant, donc 400 et pas 500. Ce cas tombait
+     * dans le catch-all avant d'avoir son propre handler — un 500 laissait croire à une
+     * panne du service alors que la requête était simplement malformée.
+     */
+    @Test
+    void typeMismatchOnPatId_returns400() {
+        MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException(
+                "abc", Integer.class, "patId", null, new NumberFormatException("abc"));
+        ProblemDetail detail = handler.handleTypeMismatch(ex);
+
+        assertEquals(400, detail.getStatus());
+        ILoggingEvent event = singleEvent();
+        assertEquals(Level.WARN, event.getLevel());
+    }
+
+    /** Verbe non exposé : 405, pas 500. */
+    @Test
+    void methodNotSupported_returns405() {
+        HttpRequestMethodNotSupportedException ex =
+                new HttpRequestMethodNotSupportedException("DELETE");
+        ProblemDetail detail = handler.handleMethodNotSupported(ex);
+
+        assertEquals(405, detail.getStatus());
+        ILoggingEvent event = singleEvent();
+        assertEquals(Level.WARN, event.getLevel());
     }
 
     @Test
