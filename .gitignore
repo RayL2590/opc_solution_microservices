@@ -43,3 +43,4 @@ docs/
 # Scratch/build output — working files, never part of the deliverable
 tmp/
 output/
+target/
