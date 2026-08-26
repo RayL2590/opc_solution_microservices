@@ -161,10 +161,21 @@ class PatientControllerTest {
 
     @Test
     void createPatient_invalidGender_returns400WithGenderKey() throws Exception {
-        // Genre hors {M,F,U} → rejeté par @Pattern.
+        // Genre hors {M,F} → rejeté par @Pattern.
         mockMvc.perform(post("/patients").with(httpBasic("medilabo", "medilabo123"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"firstName\":\"Jean\",\"lastName\":\"Dupont\",\"dateOfBirth\":\"1990-01-01\",\"gender\":\"X\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.gender").exists());
+    }
+
+    @Test
+    void createPatient_genderU_returns400WithGenderKey() throws Exception {
+        // U (inconnu) a été retiré du domaine : verrouille le rejet, sinon un retour
+        // à ^[MFU]$ repasserait au vert sans que rien ne le signale.
+        mockMvc.perform(post("/patients").with(httpBasic("medilabo", "medilabo123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"Jean\",\"lastName\":\"Dupont\",\"dateOfBirth\":\"1990-01-01\",\"gender\":\"U\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.gender").exists());
     }
@@ -187,16 +198,6 @@ class PatientControllerTest {
                         .content("{\"firstName\":\"Jean\",\"lastName\":\"Dupont\",\"dateOfBirth\":\"1800-01-01\",\"gender\":\"M\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.dateOfBirth").exists());
-    }
-
-    @Test
-    void createPatient_genderU_isAccepted() throws Exception {
-        // U (inconnu) est une valeur valide.
-        given(patientService.createPatient(any(PatientDTO.class))).willReturn(samplePatient());
-        mockMvc.perform(post("/patients").with(httpBasic("medilabo", "medilabo123"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"firstName\":\"Jean\",\"lastName\":\"Dupont\",\"dateOfBirth\":\"1990-01-01\",\"gender\":\"U\"}"))
-                .andExpect(status().isCreated());
     }
 
     @Test
@@ -223,6 +224,22 @@ class PatientControllerTest {
     void updatePatient_blankRequiredField_returns400WithErrorsMapKey() throws Exception {
         String body = """
                 {"firstName":"Jean","lastName":"Dupont","dateOfBirth":"1990-01-01","gender":""}
+                """;
+
+        mockMvc.perform(put("/patients/1").with(httpBasic("medilabo", "medilabo123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.errors.gender").exists());
+    }
+
+    @Test
+    void updatePatient_genderU_returns400WithGenderKey() throws Exception {
+        // Le PUT applique le même @Pattern que le POST : une valeur hors {M,F} est rejetée
+        // là aussi, y compris sur un patient déjà stocké avec un genre devenu invalide.
+        String body = """
+                {"firstName":"Jean","lastName":"Dupont","dateOfBirth":"1990-01-01","gender":"U"}
                 """;
 
         mockMvc.perform(put("/patients/1").with(httpBasic("medilabo", "medilabo123"))

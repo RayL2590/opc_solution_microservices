@@ -24,7 +24,7 @@ public class PatientDTO {
     private LocalDate dateOfBirth;
 
     @NotBlank(message = "Le genre est obligatoire")
-    @Pattern(regexp = "^[MFU]$", message = "Le genre doit être M, F ou U")
+    @Pattern(regexp = "^[MF]$", message = "Le genre doit être M ou F")
     private String gender;
 
     @Size(max = 255, message = "L'adresse ne doit pas dépasser 255 caractères")

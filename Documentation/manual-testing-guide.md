@@ -26,9 +26,7 @@ clone propre doit démarrer tout le système".
 
 ### A.1 — Démarrage propre
 
-Lancez en arrière-plan plutôt qu'attaché (`-d` = detached) — sinon le terminal reste englué
-dans le flux continu de logs (MongoDB écrit un checkpoint WiredTiger toutes les minutes, entre
-autres, et noie tout) :
+Lancez en arrière-plan plutôt qu'attaché (`-d` = detached) — sinon le terminal reste englué dans le flux continu de logs (MongoDB écrit un checkpoint WiredTiger toutes les minutes, entre autres, et noie tout) :
 
 ```bash
 docker compose up --build -d
@@ -60,10 +58,8 @@ docker compose logs patient-service, notes-service, assessment-service, front-se
 
 **Attendu :**
 - [ ] Une ligne `Started XxxApplication in N seconds` apparaît pour chacun des 5 services.
-- [ ] Aucune ligne `ERROR` ou `Exception` liée au démarrage (une `WARN` isolée, comme celles
-      Hibernate vues plus haut, est normale et sans impact).
-- [ ] Pour Mongo spécifiquement, vérifiez juste le seed une fois (pas besoin de suivre le flux
-      en continu) :
+- [ ] Aucune ligne `ERROR` ou `Exception` liée au démarrage (une `WARN` isolée, comme celles Hibernate vues plus haut, est normale et sans impact).
+- [ ] Pour Mongo spécifiquement, vérifiez juste le seed une fois (pas besoin de suivre le flux en continu) :
   ```bash
   docker compose logs mongo | grep -i "notesdb\|error"
   ```
@@ -102,8 +98,7 @@ Toute cette partie se fait dans le navigateur, sur `http://localhost:8080` — *
 
 ### B.2 — Liste des patients
 
-- [ ] La page `/ui/patients` affiche les 4 patients de seed : **TestNone**, **TestBorderline**,
-      **TestInDanger**, **TestEarlyOnset** (ids 1 à 4, dans cet ordre — garanti par `data.sql`).
+- [ ] La page `/ui/patients` affiche les 4 patients de seed : **TestNone**, **TestBorderline**, **TestInDanger**, **TestEarlyOnset** (ids 1 à 4, dans cet ordre — garanti par `data.sql`).
 - [ ] Un lien "Ajouter un patient" est visible et cliquable.
 
 ### B.3 — Création d'un patient
@@ -112,7 +107,7 @@ Toute cette partie se fait dans le navigateur, sur `http://localhost:8080` — *
 - [ ] Soumettre → redirection vers `/ui/patients` (pattern Post/Redirect/Get), le nouveau patient apparaît dans la liste.
 - [ ] Retenter avec un champ obligatoire vide (ex : nom vide) → la page reste sur le formulaire, **statut HTTP 400** (vérifiable via les devtools réseau du navigateur), message d'erreur en français affiché sous le champ fautif.
 - [ ] Tester une date de naissance dans le futur → doit être rejetée (validation métier
-      Sprint 1 : genre M/F/U et date de naissance dans les 160 dernières années).
+      Sprint 1 : genre M/F et date de naissance dans les 160 dernières années).
 
 ### B.4 — Modification d'un patient
 
@@ -122,8 +117,7 @@ Toute cette partie se fait dans le navigateur, sur `http://localhost:8080` — *
 
 ### B.5 — Fiche détail patient : démographie + notes + risque
 
-Ouvrir `/ui/patients/1` (TestNone) et vérifier que **les trois blocs suivants s'affichent
-simultanément** (Sprint 3 les a tous les trois sur la même page) :
+Ouvrir `/ui/patients/1` (TestNone) et vérifier que **les trois blocs suivants s'affichent simultanément** (Sprint 3 les a tous les trois sur la même page) :
 
 - [ ] **Démographie** : nom, prénom, date de naissance, genre, adresse/téléphone si renseignés.
 - [ ] **Historique des notes** : la note de seed s'affiche avec son texte et son horodatage.
@@ -142,29 +136,22 @@ simultanément** (Sprint 3 les a tous les trois sur la même page) :
 
 ### B.6 — Ajout d'une note et recalcul du risque
 
-- [ ] Sur la fiche de **TestNone** (id 1, actuellement `None`, 1 déclencheur), ajouter une note contenant le mot "Vertige" (déclencheur supplémentaire) via le formulaire "Ajouter une
-      note".
+- [ ] Sur la fiche de **TestNone** (id 1, actuellement `None`, 1 déclencheur), ajouter une note contenant le mot "Vertige" (déclencheur supplémentaire) via le formulaire "Ajouter une note".
 - [ ] Soumettre → redirection vers la fiche détail, la nouvelle note apparaît dans l'historique.
 - [ ] **Vérifier que la bande de risque a changé** (2 déclencheurs distincts maintenant :
-      `Poids` + `Vertiges` — pour TestNone, née le 31/12/1966 donc âgée de 59 ans, `>30` et
-      `count>=2` sans atteindre le seuil In Danger de 6 → devrait passer à **Borderline**).
-      C'est la preuve concrète que l'absence de cache (recalcul systématique) fonctionne
-      réellement, pas seulement en test unitaire.
-- [ ] Retenter avec un champ note vide → 400, la page se re-rend avec un message d'erreur, sans
-      perdre l'affichage patient/notes/risque déjà chargés.
+      `Poids` + `Vertiges` — pour TestNone, née le 31/12/1966 donc âgée de 59 ans, `>30` et `count>=2` sans atteindre le seuil In Danger de 6 → devrait passer à **Borderline**).
+      C'est la preuve concrète que l'absence de cache (recalcul systématique) fonctionne réellement, pas seulement en test unitaire.
+- [ ] Retenter avec un champ note vide → 400, la page se re-rend avec un message d'erreur, sans perdre l'affichage patient/notes/risque déjà chargés.
 
 ---
 
 ## Partie C — Test direct des API (sans passer par l'UI)
 
-Utile pour isoler un problème (front vs back) et pour vérifier des cas que l'UI ne couvre pas
-facilement (404, formats d'erreur).
+Utile pour isoler un problème (front vs back) et pour vérifier des cas que l'UI ne couvre pas facilement (404, formats d'erreur).
 
-> **Raccourci :** tout ce que couvre cette partie — et une soixantaine de cas hostiles en plus
-> (injections, payloads malformés, escalade de privilège) — est automatisé dans
+> **Raccourci :** tout ce que couvre cette partie — et une soixantaine de cas hostiles en plus (injections, payloads malformés, escalade de privilège) — est automatisé dans
 > `smoke-tests.ps1` / `smoke-tests.sh`. Une commande, une ligne verte ou rouge par test :
-> voir **`smoke-tests-guide.md`**. Les commandes `curl` ci-dessous restent utiles pour
-> inspecter une réponse en détail ou creuser un cas précis à la main.
+> voir **`smoke-tests-guide.md`**. Les commandes `curl` ci-dessous restent utiles pour inspecter une réponse en détail ou creuser un cas précis à la main.
 
 > Remplacer `8080` par le port de la Gateway. Les credentials sont envoyés via `-u`.
 
@@ -205,8 +192,7 @@ curl -i -u medilabo:medilabo123 "http://localhost:8080/notes?patId=abc"
 
 - [ ] `GET /notes?patId=4` renvoie 4 notes pour TestEarlyOnset.
 - [ ] `GET /notes?patId=abc` renvoie **400**, pas 500 (validation du paramètre côté contrôleur).
-- [ ] `GET /notes?patId=9999` (patient sans notes ou inexistant) renvoie **200 + `[]`**, pas 404
-      (contrat volontaire : liste vide n'est pas une erreur).
+- [ ] `GET /notes?patId=9999` (patient sans notes ou inexistant) renvoie **200 + `[]`**, pas 404 (contrat volontaire : liste vide n'est pas une erreur).
 
 ### C.3 — Assessment-service (via Gateway) — le cœur du Sprint 3
 

@@ -134,7 +134,22 @@ class PatientUiControllerTest {
                         .param("firstName", "Alice")
                         .param("lastName", "Martin")
                         .param("dateOfBirth", "1990-03-20")
-                        .param("gender", "X"))        // hors {M,F,U}
+                        .param("gender", "X"))        // hors {M,F}
+                .andExpect(status().isBadRequest())
+                .andExpect(view().name("patients/new"))
+                .andExpect(model().attributeHasFieldErrors("patientForm", "gender"));
+    }
+
+    @Test
+    void createPatient_genderU_returns400WithErrors() throws Exception {
+        // U (inconnu) a été retiré du domaine : verrouille le rejet côté formulaire, sinon
+        // un retour à ^[MFU]$ repasserait au vert sans que rien ne le signale.
+        mockMvc.perform(post("/ui/patients")
+                        .with(httpBasic("medilabo", "medilabo123"))
+                        .param("firstName", "Alice")
+                        .param("lastName", "Martin")
+                        .param("dateOfBirth", "1990-03-20")
+                        .param("gender", "U"))
                 .andExpect(status().isBadRequest())
                 .andExpect(view().name("patients/new"))
                 .andExpect(model().attributeHasFieldErrors("patientForm", "gender"));
@@ -199,6 +214,21 @@ class PatientUiControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(view().name("patients/edit"))
                 .andExpect(model().attributeHasFieldErrors("patientForm", "firstName"));
+    }
+
+    @Test
+    void updatePatient_genderU_returns400WithErrors() throws Exception {
+        // Le formulaire d'édition applique le même @Pattern que la création : rééditer un
+        // patient historiquement stocké en U impose de choisir M ou F, jamais de le laisser tel quel.
+        mockMvc.perform(post("/ui/patients/1/edit")
+                        .with(httpBasic("medilabo", "medilabo123"))
+                        .param("firstName", "Test")
+                        .param("lastName", "TestNone")
+                        .param("dateOfBirth", "1966-12-31")
+                        .param("gender", "U"))
+                .andExpect(status().isBadRequest())
+                .andExpect(view().name("patients/edit"))
+                .andExpect(model().attributeHasFieldErrors("patientForm", "gender"));
     }
 
     @Test
