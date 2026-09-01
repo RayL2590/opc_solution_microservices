@@ -26,13 +26,8 @@ public class SecurityConfig {
 
     /**
      * Trois comptes : le clinicien (ROLE_USER) et un compte machine par service appelant.
-     * On sépare les comptes pour que le mot de passe du clinicien ne circule pas entre services,
-     * et pour pouvoir révoquer un appelant sans toucher aux autres.
-     * Les hashes sont stockés tels quels, jamais ré-encodés.
-     *
-     * <p>Chaque compte machine a ROLE_SERVICE (le marqueur commun) plus son propre rôle,
-     * c'est ce qui permet de distinguer qui a le droit de lire et qui a le droit d'écrire
-     * dans les règles d'autorisation plus bas.
+     * On sépare les comptes pour que le mot de passe du clinicien ne circule pas entre services, et pour pouvoir révoquer un appelant sans toucher aux autres. Les hashes sont stockés tels quels, jamais ré-encodés.
+     * Chaque compte machine a ROLE_SERVICE (le marqueur commun) plus son propre rôle, c'est ce qui permet de distinguer qui a le droit de lire et qui a le droit d'écrire dans les règles d'autorisation plus bas.
      */
     @Bean
     public UserDetailsService userDetailsService(
@@ -63,8 +58,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // API REST, pas de formulaire HTML
             .sessionManagement(session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // svc-assessment ne fait que lire les notes d'un patient pour calculer un risque,
-            // donc pas besoin de plus. L'ajout de note vient du clinicien via svc-front.
+            // svc-assessment ne fait que lire les notes d'un patient pour calculer un risque, donc pas besoin de plus. L'ajout de note vient du clinicien via svc-front.
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/notes/**")
                     .hasAnyRole("USER", "SERVICE_FRONT", "SERVICE_ASSESSMENT")

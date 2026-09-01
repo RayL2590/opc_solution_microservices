@@ -71,7 +71,7 @@ class SecurityConfigTest {
         UserDetails svcFront = uds.loadUserByUsername(SVC_FRONT_USER);
         assertThat(svcFront.getPassword()).isEqualTo(SVC_FRONT_BCRYPT_HASH);
         assertThat(svcFront.getPassword()).isNotEqualTo(SVC_FRONT_RAW_PASSWORD);
-        // c'est ce rôle qui autorise svc-front à poster une note — svc-assessment ne l'a pas
+        // c'est ce rôle qui autorise svc-front à poster une note. svc-assessment ne l'a pas
         assertThat(svcFront.getAuthorities()).extracting(Object::toString)
                 .containsExactlyInAnyOrder("ROLE_SERVICE", "ROLE_SERVICE_FRONT");
 

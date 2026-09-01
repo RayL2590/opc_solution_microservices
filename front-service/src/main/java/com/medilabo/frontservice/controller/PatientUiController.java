@@ -1,9 +1,16 @@
 package com.medilabo.frontservice.controller;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Map;
+
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.NotReadablePropertyException;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,11 +24,13 @@ import com.medilabo.frontservice.dto.PatientView;
 import com.medilabo.frontservice.dto.PhoneCountry;
 import com.medilabo.frontservice.service.PatientUiService;
 import com.medilabo.frontservice.util.PhoneNormalizer;
+import com.medilabo.frontservice.util.UpstreamValidationErrors;
 
 /**
  * Contrôleur UI patients (liste, formulaire d'ajout/édition, fiche détail + notes, Post-Redirect-Get).
  */
 @Controller
+@Slf4j
 @RequiredArgsConstructor
 public class PatientUiController {
 
@@ -55,12 +64,18 @@ public class PatientUiController {
             return "patients/new";
         }
 
-        patientUiService.createPatient(patientForm);
+        try {
+            patientUiService.createPatient(patientForm);
+        } catch (RestClientResponseException upstreamError) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            model.addAttribute("phoneCountries", PhoneCountry.values());
+            applyUpstreamErrors(upstreamError, bindingResult);
+            return "patients/new";
+        }
         return "redirect:/ui/patients";
     }
 
-    // Édition d'un patient existant. URL en /{id}/edit pour ne pas se marcher dessus avec
-    // la fiche détail /ui/patients/{id}.
+    // Édition d'un patient existant. URL en /{id}/edit pour ne pas se marcher dessus avec la fiche détail /ui/patients/{id}.
     @GetMapping("/ui/patients/{id}/edit")
     public String showEditPatientForm(@PathVariable Long id, Model model) {
         PatientView patient = patientUiService.getPatient(id);
@@ -87,7 +102,15 @@ public class PatientUiController {
             return "patients/edit";
         }
 
-        patientUiService.updatePatient(id, patientForm);
+        try {
+            patientUiService.updatePatient(id, patientForm);
+        } catch (RestClientResponseException upstreamError) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            model.addAttribute("patientId", id);
+            model.addAttribute("phoneCountries", PhoneCountry.values());
+            applyUpstreamErrors(upstreamError, bindingResult);
+            return "patients/edit";
+        }
         return "redirect:/ui/patients";
     }
 
@@ -126,9 +149,41 @@ public class PatientUiController {
 
     /**
      * Normalise le téléphone saisi vers E.164 et réécrit {@code patientForm.phone} en place.
-     * En cas d'échec, rejette le champ dans {@code bindingResult} — comme ça l'erreur remonte
-     * avec les autres erreurs de validation. Champ optionnel : une saisie vide passe.
+     * En cas d'échec, rejette le champ dans {@code bindingResult} — comme ça l'erreur remonte avec les autres erreurs de validation. Champ optionnel : une saisie vide passe.
      */
+    /**
+     * Reporte sur le formulaire les erreurs d'un 4xx venu d'un service amont, au lieu de laisser l'exception remonter en page d'erreur.
+     *
+     * <p>Sans ça, une règle appliquée en amont mais pas ici (indicatif téléphonique accepté par le front et refusé par patient-service, par exemple) sortait en 500 Whitelabel : l'utilisateur perdait sa saisie et le message utile n'existait que dans les logs du conteneur.</p>
+     *
+     * <p>Les erreurs par champ sont remappées sur les champs du formulaire quand le nom correspond ; le reste devient une erreur globale. Un 5xx amont n'est pas rattrapé : ce n'est pas une faute de saisie, il doit rester visible comme une panne.</p>
+     */
+    private void applyUpstreamErrors(RestClientResponseException upstreamError, BindingResult bindingResult) {
+        if (!upstreamError.getStatusCode().is4xxClientError()) {
+            throw upstreamError;
+        }
+        log.warn("Upstream rejected the patient payload with status {}", upstreamError.getStatusCode());
+
+        Map<String, String> fieldErrors = UpstreamValidationErrors.fieldErrorsOf(upstreamError);
+        fieldErrors.forEach((field, message) -> {
+            if (bindingResult.getFieldError(field) != null) {
+                return; // deja signale localement, ne pas doubler le message sous le champ
+            }
+            try {
+                bindingResult.rejectValue(field, "upstream.invalid", message);
+            } catch (NotReadablePropertyException unknownField) {
+                // Champ inconnu du formulaire (renomme en amont, ou propre au DTO du service) : rien a quoi l'accrocher, on le remonte en erreur globale plutot que de le perdre.
+                bindingResult.reject("upstream.invalid", message);
+            }
+        });
+
+        if (fieldErrors.isEmpty()) {
+            String detail = UpstreamValidationErrors.detailOf(upstreamError);
+            bindingResult.reject("upstream.invalid",
+                    detail != null ? detail : "L'enregistrement a été refusé par le service patient");
+        }
+    }
+
     private void normalizePhone(PatientForm patientForm, BindingResult bindingResult) {
         PhoneNormalizer.Result result =
                 PhoneNormalizer.normalize(patientForm.getPhone(), patientForm.getPhoneCountry());
@@ -152,16 +207,32 @@ public class PatientUiController {
     }
 
     /**
-     * Retrouve le pays d'un numéro E.164 stocké, pour pré-sélectionner l'indicatif en édition.
-     * Défaut FR si absent ou non reconnu — le numéro s'affiche quand même tel quel.
+     * Retrouve le pays d'un numéro stocké, pour pré-sélectionner l'indicatif en édition.
+     *
+     * <p>Deux cas, dans cet ordre :</p>
+     * <ol>
+     *   <li>numéro déjà en E.164 ({@code +33...}) : on compare aux indicatifs connus, le plus long d'abord — sans ça {@code +1} capturerait un futur indicatif {@code +1x} ;</li>
+     *   <li>numéro national hérité, sans {@code +} (les jeux de données de démo sont au format nord-américain {@code 200-333-4444}) : 10 chiffres ne commençant pas par 0 → US.
+     *       C'est ce qui évite qu'une simple modification d'adresse échoue sur un téléphone jamais touché, faute d'avoir été deviné en FR.</li>
+     * </ol>
+     *
+     * <p>Défaut FR si absent ou non reconnu — le numéro s'affiche quand même tel quel.</p>
      */
-    private PhoneCountry detectCountry(String e164Phone) {
-        if (e164Phone != null && e164Phone.startsWith("+")) {
-            for (PhoneCountry candidate : PhoneCountry.values()) {
-                if (e164Phone.startsWith(candidate.dialingCode())) {
-                    return candidate;
-                }
-            }
+    private PhoneCountry detectCountry(String phone) {
+        if (phone == null || phone.isBlank()) {
+            return PhoneCountry.FR;
+        }
+
+        if (phone.startsWith("+")) {
+            return Arrays.stream(PhoneCountry.values())
+                    .filter(candidate -> phone.startsWith(candidate.dialingCode()))
+                    .max(Comparator.comparingInt(candidate -> candidate.dialingCode().length()))
+                    .orElse(PhoneCountry.FR);
+        }
+
+        String digits = phone.replaceAll("\\D", "");
+        if (digits.length() == PhoneCountry.US.nationalDigits() && !digits.startsWith("0")) {
+            return PhoneCountry.US;
         }
         return PhoneCountry.FR;
     }

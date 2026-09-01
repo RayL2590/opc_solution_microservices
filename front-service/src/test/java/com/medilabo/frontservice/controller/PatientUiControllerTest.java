@@ -1,5 +1,7 @@
 package com.medilabo.frontservice.controller;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -13,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -22,7 +25,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.client.RestClientResponseException;
 
 import com.medilabo.frontservice.config.SecurityConfig;
 import com.medilabo.frontservice.dto.AssessmentView;
@@ -30,11 +35,11 @@ import com.medilabo.frontservice.dto.NoteForm;
 import com.medilabo.frontservice.dto.NoteView;
 import com.medilabo.frontservice.dto.PatientForm;
 import com.medilabo.frontservice.dto.PatientView;
+import com.medilabo.frontservice.dto.PhoneCountry;
 import com.medilabo.frontservice.service.PatientUiService;
 
 /**
- * Tranche @WebMvcTest pour PatientUiController — SecurityConfig réelle (HTTP Basic exercé),
- * PatientUiService mocké. CSRF désactivé dans SecurityConfig, les POST n'ont pas besoin de csrf().
+ * Tranche @WebMvcTest pour PatientUiController — SecurityConfig réelle (HTTP Basic exercé), PatientUiService mocké. CSRF désactivé dans SecurityConfig, les POST n'ont pas besoin de csrf().
  */
 @WebMvcTest(PatientUiController.class)
 @Import(SecurityConfig.class)
@@ -142,8 +147,7 @@ class PatientUiControllerTest {
 
     @Test
     void createPatient_genderU_returns400WithErrors() throws Exception {
-        // U (inconnu) a été retiré du domaine : verrouille le rejet côté formulaire, sinon
-        // un retour à ^[MFU]$ repasserait au vert sans que rien ne le signale.
+        // U (inconnu) a été retiré du domaine : verrouille le rejet côté formulaire, sinon un retour à ^[MFU]$ repasserait au vert sans que rien ne le signale.
         mockMvc.perform(post("/ui/patients")
                         .with(httpBasic("medilabo", "medilabo123"))
                         .param("firstName", "Alice")
@@ -182,6 +186,19 @@ class PatientUiControllerTest {
     }
 
     @Test
+    void showEditForm_legacyNationalPhone_preselectsUsDialingCode() throws Exception {
+        // Numéro hérité au format national du sujet OpenClassrooms, sans indicatif : il doit être reconnu comme US, sinon le formulaire propose FR et le numéro devient invalide.
+        PatientView existing = new PatientView(1L, "Test", "TestBorderline",
+                LocalDate.of(1945, 6, 24), "M", "2 High St", "200-333-4444");
+        given(patientUiService.getPatient(1L)).willReturn(existing);
+
+        mockMvc.perform(get("/ui/patients/1/edit").with(httpBasic("medilabo", "medilabo123")))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("patientForm",
+                        hasProperty("phoneCountry", equalTo(PhoneCountry.US))));
+    }
+
+    @Test
     void showEditForm_unauthenticated_returns401() throws Exception {
         mockMvc.perform(get("/ui/patients/1/edit"))
                 .andExpect(status().isUnauthorized());
@@ -204,6 +221,107 @@ class PatientUiControllerTest {
     }
 
     @Test
+    void updatePatient_addressOnlyChange_keepsUntouchedLegacyPhoneValid() throws Exception {
+        // Régression : modifier la seule adresse d'un patient du jeu de données par défaut échouait sur une erreur de validation du téléphone, pourtant jamais saisi, le formulaire renvoyait le numéro US hérité avec un indicatif FR deviné par défaut.
+        PatientView updated = new PatientView(1L, "Test", "TestBorderline",
+                LocalDate.of(1945, 6, 24), "M", "2 High Street", "+12003334444");
+        given(patientUiService.updatePatient(eq(1L), any(PatientForm.class))).willReturn(updated);
+
+        mockMvc.perform(post("/ui/patients/1/edit")
+                        .with(httpBasic("medilabo", "medilabo123"))
+                        .param("firstName", "Test")
+                        .param("lastName", "TestBorderline")
+                        .param("dateOfBirth", "1945-06-24")
+                        .param("gender", "M")
+                        .param("address", "2 High Street")   // seul champ réellement modifié
+                        .param("phoneCountry", "US")
+                        .param("phone", "200-333-4444"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/ui/patients"));
+    }
+
+    @Test
+    void updatePatient_upstreamRejectsField_reRendersFormWithFieldError() throws Exception {
+        // Regression du 500 Whitelabel : quand patient-service refuse un champ que le front avait laisse passer (indicatif telephonique non synchronise, par exemple), l'utilisateur doit retrouver son formulaire et le message, pas une page d'erreur.
+        given(patientUiService.updatePatient(eq(1L), any(PatientForm.class)))
+                .willThrow(upstreamBadRequest(
+                        "{\"detail\":\"La validation du patient a échoué\",\"status\":400,"
+                                + "\"errors\":{\"phone\":\"Le téléphone doit être au format international\"}}"));
+
+        mockMvc.perform(post("/ui/patients/1/edit")
+                        .with(httpBasic("medilabo", "medilabo123"))
+                        .param("firstName", "Test")
+                        .param("lastName", "TestBorderline")
+                        .param("dateOfBirth", "1945-06-24")
+                        .param("gender", "M")
+                        .param("phoneCountry", "US")
+                        .param("phone", "+12003334444"))
+                .andExpect(status().isBadRequest())
+                .andExpect(view().name("patients/edit"))
+                .andExpect(model().attributeHasFieldErrors("patientForm", "phone"));
+    }
+
+    @Test
+    void updatePatient_upstreamRejectsWithoutFieldErrors_reRendersFormWithGlobalError() throws Exception {
+        // Refus amont sans map "errors" exploitable : le detail du ProblemDetail devient une erreur globale, affichee en tete de formulaire.
+        given(patientUiService.updatePatient(eq(1L), any(PatientForm.class)))
+                .willThrow(upstreamBadRequest("{\"detail\":\"La validation du patient a échoué\",\"status\":400}"));
+
+        mockMvc.perform(post("/ui/patients/1/edit")
+                        .with(httpBasic("medilabo", "medilabo123"))
+                        .param("firstName", "Test")
+                        .param("lastName", "TestBorderline")
+                        .param("dateOfBirth", "1945-06-24")
+                        .param("gender", "M"))
+                .andExpect(status().isBadRequest())
+                .andExpect(view().name("patients/edit"))
+                .andExpect(model().attributeHasErrors("patientForm"));
+    }
+
+    @Test
+    void createPatient_upstreamRejectsField_reRendersFormWithFieldError() throws Exception {
+        given(patientUiService.createPatient(any(PatientForm.class)))
+                .willThrow(upstreamBadRequest(
+                        "{\"status\":400,\"errors\":{\"phone\":\"Le téléphone doit être au format international\"}}"));
+
+        mockMvc.perform(post("/ui/patients")
+                        .with(httpBasic("medilabo", "medilabo123"))
+                        .param("firstName", "Test")
+                        .param("lastName", "Nouveau")
+                        .param("dateOfBirth", "1990-01-01")
+                        .param("gender", "F")
+                        .param("phoneCountry", "US")
+                        .param("phone", "+12003334444"))
+                .andExpect(status().isBadRequest())
+                .andExpect(view().name("patients/new"))
+                .andExpect(model().attributeHasFieldErrors("patientForm", "phone"));
+    }
+
+    @Test
+    void updatePatient_upstreamServerError_isNotSwallowed() throws Exception {
+        // Une panne amont (5xx) n'est pas une faute de saisie : elle doit rester visible, surtout pas etre repeinte en erreur de formulaire.
+        given(patientUiService.updatePatient(eq(1L), any(PatientForm.class)))
+                .willThrow(new RestClientResponseException(
+                        "500 Internal Server Error", 500, "Internal Server Error",
+                        new HttpHeaders(), null, StandardCharsets.UTF_8));
+
+        assertThrows(Exception.class, () ->
+                mockMvc.perform(post("/ui/patients/1/edit")
+                        .with(httpBasic("medilabo", "medilabo123"))
+                        .param("firstName", "Test")
+                        .param("lastName", "TestBorderline")
+                        .param("dateOfBirth", "1945-06-24")
+                        .param("gender", "M")));
+    }
+
+    /** Reproduit un 400 de patient-service tel que le RestClient le remonte au front. */
+    private static RestClientResponseException upstreamBadRequest(String body) {
+        return new RestClientResponseException(
+                "400 Bad Request", 400, "Bad Request", new HttpHeaders(),
+                body.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+    }
+
+    @Test
     void updatePatient_invalidForm_returns400WithErrors() throws Exception {
         mockMvc.perform(post("/ui/patients/1/edit")
                         .with(httpBasic("medilabo", "medilabo123"))
@@ -218,8 +336,7 @@ class PatientUiControllerTest {
 
     @Test
     void updatePatient_genderU_returns400WithErrors() throws Exception {
-        // Le formulaire d'édition applique le même @Pattern que la création : rééditer un
-        // patient historiquement stocké en U impose de choisir M ou F, jamais de le laisser tel quel.
+        // Le formulaire d'édition applique le même @Pattern que la création : rééditer un patient historiquement stocké en U impose de choisir M ou F, jamais de le laisser tel quel.
         mockMvc.perform(post("/ui/patients/1/edit")
                         .with(httpBasic("medilabo", "medilabo123"))
                         .param("firstName", "Test")

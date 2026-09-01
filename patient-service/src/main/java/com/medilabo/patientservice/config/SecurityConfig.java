@@ -25,13 +25,9 @@ public class SecurityConfig {
     }
 
     /**
-     * Trois identités distinctes : le clinicien (ROLE_USER) et un compte machine par service
-     * appelant. Séparer les comptes évite de faire circuler le mot de passe du clinicien entre
-     * les services, et permet de révoquer un appelant sans toucher aux autres.
-     * Les hashes sont stockés tels quels — jamais de ré-encodage.
-     *
-     * <p>Chaque compte machine porte ROLE_SERVICE (le marqueur commun) plus un rôle qui lui est
-     * propre, sinon impossible de distinguer qui a le droit de lire et qui a le droit d'écrire.
+     * Trois identités distinctes : le clinicien (ROLE_USER) et un compte machine par service appelant. Séparer les comptes évite de faire circuler le mot de passe du clinicien entre les services, et permet de révoquer un appelant sans toucher aux autres.
+     * Les hashes sont stockés tels quels, jamais de ré-encodage.
+     * <p>Chaque compte machine porte ROLE_SERVICE (le marqueur commun) plus un rôle qui lui est propre, sinon impossible de distinguer qui a le droit de lire et qui a le droit d'écrire.
      */
     @Bean
     public UserDetailsService userDetailsService(
@@ -62,9 +58,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // API REST, pas de formulaire HTML
             .sessionManagement(session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // Moindre privilège : svc-assessment ne fait que lire un patient pour calculer un
-            // risque, il n'écrit jamais. Les écritures restent au clinicien et à svc-front,
-            // qui porte ses actions depuis l'UI.
+            // Moindre privilège : svc-assessment ne fait que lire un patient pour calculer un risque, il n'écrit jamais. Les écritures restent au clinicien et à svc-front, qui porte ses actions depuis l'UI.
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/patients/**")
                     .hasAnyRole("USER", "SERVICE_FRONT", "SERVICE_ASSESSMENT")

@@ -30,10 +30,10 @@ public class PatientDTO {
     @Size(max = 255, message = "L'adresse ne doit pas dépasser 255 caractères")
     private String address;
 
-    // Optionnel. Le front normalise en E.164 (+33..., +32..., +41..., +44..., +39...) avant
-    // d'appeler ce service ; on garde ici un garde-fou de format pour les appels API directs.
+    // Le front normalise en E.164 (+33..., +32..., +41..., +44..., +39..., +1...) avant d'appeler ce service ; on garde ici un garde-fou de format pour les appels API directs.
+    // Les indicatifs sont dupliqués depuis PhoneCountry (front-service) : toute entrée ajoutée là-bas doit l'être ici, sinon le front produit un E.164 que ce service rejette en 400.
     // Le "?" du regex tolère la valeur vide (champ optionnel, pas de @NotBlank).
-    @Pattern(regexp = "^(\\+(33|32|41|44|39)[0-9]{8,11})?$",
+    @Pattern(regexp = "^(\\+(33|32|41|44|39|1)[0-9]{8,11})?$",
             message = "Le téléphone doit être au format international (ex. +33601020304)")
     private String phone;
 }

@@ -20,6 +20,7 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -143,10 +144,7 @@ class GlobalExceptionHandlerTest {
     }
 
     /**
-     * Corps illisible — typiquement une date envoyée en "31/12/1990" au lieu de l'ISO
-     * "1990-12-31". Jackson échoue avant la validation Jakarta, donc ça ne passe pas par
-     * MethodArgumentNotValidException. Sans handler dédié, ça sortait en 500 alors que
-     * la faute est côté appelant.
+     * Corps illisible : typiquement une date envoyée en "31/12/1990" au lieu de "1990-12-31". Jackson échoue avant la validation Jakarta, donc ça ne passe pas par MethodArgumentNotValidException. Sans handler dédié, ça sortait en 500 alors que la faute est côté appelant.
      */
     @Test
     void unreadableBody_returns400() {
@@ -190,4 +188,16 @@ class GlobalExceptionHandlerTest {
         assertEquals(415, detail.getStatus());
         assertEquals(Level.WARN, singleEvent().getLevel());
     }
+
+    /** @RequestParam obligatoire absent (ex. lastName sur /patients/search) : 400, jamais 500. */
+    @Test
+    void missingParameter_returns400() {
+        MissingServletRequestParameterException ex =
+                new MissingServletRequestParameterException("lastName", "String");
+        ProblemDetail detail = handler.handleMissingParam(ex);
+
+        assertEquals(400, detail.getStatus());
+        assertEquals(Level.WARN, singleEvent().getLevel());
+    }
+
 }

@@ -9,6 +9,7 @@ import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -49,10 +50,18 @@ public class GlobalExceptionHandler {
                 "Paramètre invalide : " + ex.getName());
     }
 
+    /** @RequestParam obligatoire absent (ex. lastName sur /patients/search) : 400, jamais 500. */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ProblemDetail handleMissingParam(MissingServletRequestParameterException ex) {
+        log.warn("Missing required parameter: {}", ex.getParameterName(), ex);
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "Paramètre requis manquant : " + ex.getParameterName());
+    }
+
+
     /**
-     * Corps illisible : JSON malformé, ou date au mauvais format ("31/12/1990" au lieu de
-     * l'ISO "1990-12-31"). C'est l'appelant qui est fautif, donc 400 — sans ce handler
-     * l'exception tombait dans le catch-all et sortait en 500.
+     * Corps illisible : JSON malformé, ou date au mauvais format ("31/12/1990" au lieu de l'ISO "1990-12-31"). C'est l'appelant qui est fautif, donc 400 — sans ce handler  l'exception tombait dans le catch-all et sortait en 500.
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ProblemDetail handleUnreadableBody(HttpMessageNotReadableException ex) {
@@ -79,8 +88,7 @@ public class GlobalExceptionHandler {
 
     /**
      * {@code Accept} demandant un format qu'on ne produit pas (ex. application/xml) : 406.
-     * Pendant de {@link HttpMediaTypeNotSupportedException} côté réponse — même principe,
-     * c'est l'appelant qui demande l'impossible, pas le serveur qui échoue.
+     * Pendant de {@link HttpMediaTypeNotSupportedException} côté réponse — même principe, c'est l'appelant qui demande l'impossible, pas le serveur qui échoue.
      */
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
     public ProblemDetail handleMediaTypeNotAcceptable(HttpMediaTypeNotAcceptableException ex) {

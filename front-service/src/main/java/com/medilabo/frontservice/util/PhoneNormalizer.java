@@ -17,8 +17,7 @@ import com.medilabo.frontservice.dto.PhoneCountry;
  *   <li>{@code +33 0601020304}      → {@code +33601020304} (0 national après l'indicatif, toléré)</li>
  * </ul>
  *
- * <p>Périmètre volontairement réduit (démo) : pas de libphonenumber, pas de validation
- * exhaustive des plans de numérotation par opérateur.</p>
+ * <p>Périmètre volontairement réduit (démo) : pas de libphonenumber, pas de validation exhaustive des plans de numérotation par opérateur.</p>
  */
 public final class PhoneNormalizer {
 
@@ -42,8 +41,7 @@ public final class PhoneNormalizer {
     }
 
     /**
-     * Normalise {@code rawPhone} vers E.164, en s'appuyant sur {@code country} pour lever
-     * l'ambiguïté des numéros nationaux (préfixe 0).
+     * Normalise {@code rawPhone} vers E.164, en s'appuyant sur {@code country} pour lever l'ambiguïté des numéros nationaux (préfixe 0).
      *
      * @param rawPhone saisie brute ({@code null}/vide accepté, le téléphone est optionnel)
      * @param country  pays choisi dans le formulaire ; requis dès que {@code rawPhone} n'est pas vide

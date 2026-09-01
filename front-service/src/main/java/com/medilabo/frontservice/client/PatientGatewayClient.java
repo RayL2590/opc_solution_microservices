@@ -14,7 +14,7 @@ import com.medilabo.frontservice.dto.PatientView;
 
 /**
  * Client Gateway pour les patients. Authentification sortante gérée par ServiceAccountAuthInitializer.
- * PII : seuls les comptes et ids sont loggés — jamais les noms, adresses, téléphones.
+ * Personally Identifiable Information (PII) : seuls les comptes et ids sont loggés — jamais les noms, adresses, téléphones.
  */
 @Component
 @Slf4j

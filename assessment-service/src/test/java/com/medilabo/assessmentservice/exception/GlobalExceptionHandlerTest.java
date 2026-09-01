@@ -72,8 +72,7 @@ class GlobalExceptionHandlerTest {
     }
 
     /**
-     * WARN et non ERROR : la panne vient de l'upstream, pas de ce service — même règle que
-     * pour UpstreamNotFoundException (voir docs/logging-policy.md).
+     * WARN et non ERROR : la panne vient de l'upstream, pas de ce service — même règle que pour UpstreamNotFoundException (voir docs/logging-policy.md).
      */
     @Test
     void badGateway_logsAtWarnWithFullException() {
@@ -123,9 +122,7 @@ class GlobalExceptionHandlerTest {
     }
 
     /**
-     * /assessments/abc : la faute est à l'appelant, donc 400 et pas 500. Ce cas tombait
-     * dans le catch-all avant d'avoir son propre handler — un 500 laissait croire à une
-     * panne du service alors que la requête était simplement malformée.
+     * /assessments/abc : la faute est à l'appelant, donc 400 et pas 500. Ce cas tombait dans le catch-all avant d'avoir son propre handler — un 500 laissait croire à une panne du service alors que la requête était simplement malformée.
      */
     @Test
     void typeMismatchOnPatId_returns400() {

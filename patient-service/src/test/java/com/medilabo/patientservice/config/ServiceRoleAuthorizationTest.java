@@ -25,10 +25,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Séparation des privilèges entre le clinicien (ROLE_USER) et les comptes machine (ROLE_SERVICE).
  *
- * <p>patient-service n'a qu'un seul appelant machine légitime en lecture : assessment-service,
- * qui fait juste du {@code GET /patients/{id}}. Aucun compte de service n'a besoin d'écrire ici :
- * les créations et modifications viennent du clinicien via front-service, qui relaie son propre
- * compte de service — c'est pour ça que svc-front garde le droit d'écrire.
+ * patient-service n'a qu'un seul appelant machine légitime en lecture : assessment-service,
+ * qui fait juste du {@code GET /patients/{id}}. Aucun compte de service n'a besoin d'écrire ici : les créations et modifications viennent du clinicien via front-service, qui relaie son propre compte de service — c'est pour ça que svc-front garde le droit d'écrire.
  */
 @WebMvcTest(PatientController.class)
 @Import({SecurityConfig.class, GlobalExceptionHandler.class})

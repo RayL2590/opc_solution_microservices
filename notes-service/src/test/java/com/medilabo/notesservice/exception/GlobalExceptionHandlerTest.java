@@ -158,9 +158,7 @@ class GlobalExceptionHandlerTest {
     }
 
     /**
-     * Content-Type text/plain sur une API JSON : 415, jamais 500. Sans handler dédié,
-     * un appelant qui se trompe d'en-tête recevait une erreur serveur alors que la
-     * faute est de son côté.
+     * Content-Type text/plain sur une API JSON : 415, jamais 500. Sans handler dédié, un appelant qui se trompe d'en-tête recevait une erreur serveur alors que la faute est de son côté.
      */
     @Test
     void mediaTypeNotSupported_returns415() {

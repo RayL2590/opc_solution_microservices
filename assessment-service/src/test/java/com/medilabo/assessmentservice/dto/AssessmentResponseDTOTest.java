@@ -12,8 +12,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Verrouille la forme JSON de l'enveloppe de réponse. Le champ {@code riskBand} est bien typé
- * {@link RiskBand} côté Java, mais il doit sérialiser vers la chaîne exacte attendue sur le fil.
+ * Verrouille la forme JSON de l'enveloppe de réponse. Le champ {@code riskBand} est bien typé {@link RiskBand} côté Java, mais il doit sérialiser vers la chaîne exacte attendue sur le fil.
  */
 class AssessmentResponseDTOTest {
 

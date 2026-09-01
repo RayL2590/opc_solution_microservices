@@ -1,10 +1,7 @@
 # Guide de test manuel — MédiLabo Solutions
 
-> Objectif : valider de bout en bout que les Sprints 1 à 3 (Epics 1, 2, 3, 4, 5, 6) fonctionnent
-> réellement, en conditions Docker (déploiement cible) et en local (dev).
-> Identifiants par défaut du projet : `medilabo` / `medilabo123` (vérifier que `MEDILABO_USER`
-> dans votre `.env` / `.env.docker` correspond bien à ce couple — le mot de passe en clair
-> n'est jamais stocké, seul son hash BCrypt l'est).
+> Objectif : valider de bout en bout que les Sprints 1 à 3 (Epics 1, 2, 3, 4, 5, 6) fonctionnent réellement, en conditions Docker (déploiement cible) et en local (dev).
+> Identifiants par défaut du projet : `medilabo` / `medilabo123` (vérifier que `MEDILABO_USER` dans votre `.env` / `.env.docker` correspond bien à ce couple — le mot de passe en clair n'est jamais stocké, seul son hash BCrypt l'est).
 
 ---
 
@@ -12,8 +9,7 @@
 
 - [ ] `.env` et `.env.docker` existent à la racine (copiés depuis `.env.example` /
       `.env.docker.example`, valeurs réelles renseignées — jamais commités).
-- [ ] Docker Desktop lancé (pour la Partie A) **ou** MySQL sur `3306` + MongoDB sur `27017`
-      disponibles en local (pour la Partie B).
+- [ ] Docker Desktop lancé (pour la Partie A) **ou** MySQL sur `3306` + MongoDB sur `27017` disponibles en local (pour la Partie B).
 - [ ] Un terminal et un navigateur.
 - [ ] Un client HTTP pour les tests API : `curl` (fourni), ou Postman/Insomnia si vous préférez une interface graphique.
 
@@ -21,8 +17,7 @@
 
 ## Partie A — Test via Docker Compose (scénario de référence)
 
-C'est le scénario qui doit fonctionner pour valider que "`docker compose up` depuis un
-clone propre doit démarrer tout le système".
+C'est le scénario qui doit fonctionner pour valider que "`docker compose up` depuis un clone propre doit démarrer tout le système".
 
 ### A.1 — Démarrage propre
 
@@ -64,10 +59,7 @@ docker compose logs patient-service, notes-service, assessment-service, front-se
   docker compose logs mongo | grep -i "notesdb\|error"
   ```
 
-Si un service échoue au démarrage, isolez ses logs seul (`docker compose logs <service>`) avant
-de continuer. Pour arrêter proprement à la fin de vos tests : `docker compose down` (ajoutez
-`-v` seulement si vous voulez aussi repartir d'une base vierge — ça supprime les volumes
-`mysql-data`/`mongo-data`).
+Si un service échoue au démarrage, isolez ses logs seul (`docker compose logs <service>`) avant de continuer. Pour arrêter proprement à la fin de vos tests : `docker compose down` (ajoutez `-v` seulement si vous voulez aussi repartir d'une base vierge — ça supprime les volumes `mysql-data`/`mongo-data`).
 
 ### A.2 — Ports exposés
 
@@ -106,20 +98,29 @@ Toute cette partie se fait dans le navigateur, sur `http://localhost:8080` — *
 - [ ] Cliquer sur "Ajouter un patient", remplir le formulaire avec des valeurs valides (nom, prénom, date de naissance passée, genre `M` ou `F`).
 - [ ] Soumettre → redirection vers `/ui/patients` (pattern Post/Redirect/Get), le nouveau patient apparaît dans la liste.
 - [ ] Retenter avec un champ obligatoire vide (ex : nom vide) → la page reste sur le formulaire, **statut HTTP 400** (vérifiable via les devtools réseau du navigateur), message d'erreur en français affiché sous le champ fautif.
-- [ ] Tester une date de naissance dans le futur → doit être rejetée (validation métier
-      Sprint 1 : genre M/F et date de naissance dans les 160 dernières années).
+- [ ] Tester une date de naissance dans le futur → doit être rejetée (validation métier Sprint 1 : genre M/F et date de naissance dans les 160 dernières années).
 
 ### B.4 — Modification d'un patient
 
-- [ ] Depuis la fiche détail d'un patient (`/ui/patients/{id}`), cliquer "Modifier les
-      informations".
-- [ ] Changer un champ (ex : téléphone), soumettre → redirection vers la liste, la modification est bien reflétée si vous rouvrez la fiche détail.
+- [ ] Depuis la fiche détail d'un patient (`/ui/patients/{id}`), cliquer "Modifier les informations".
+- [ ] Changer un champ (ex : adresse), soumettre → redirection vers la liste, la modification est bien reflétée si vous rouvrez la fiche détail.
+
+**Le téléphone : cas de non-régression à ne pas sauter.** Les téléphones de seed sont stockés en E.164 avec l'indicatif nord-américain du sujet (`+12003334444`). Un bug corrigé faisait échouer toute modification d'un patient de seed *sur le champ téléphone*, même en n'y touchant pas — le formulaire renvoyait le numéro avec un indicatif deviné à tort, que `patient-service` refusait.
+
+- [ ] Ouvrir `/ui/patients/2/edit` → le sélecteur d'indicatif affiche **États-Unis / Canada (+1)**, et le champ **`+12003334444`**. Si l'indicatif affiche « France », c'est la régression.
+- [ ] Modifier **uniquement l'adresse**, soumettre sans toucher au téléphone → redirection vers la liste, **aucune erreur sous le champ téléphone**.
+- [ ] Saisir un numéro au format national avec l'indicatif US sélectionné (`200-333-9999`) → accepté, et stocké normalisé en `+12003339999` (vérifiable par `curl -s -u medilabo:medilabo123 http://localhost:8080/patients/2`).
+- [ ] Saisir un numéro incohérent avec l'indicatif choisi (ex. `200-333-4444` avec « France » sélectionné) → refusé, message sous le champ, la page reste sur le formulaire **sans perdre les autres champs saisis**.
+
+**Erreur venue d'un service amont.** Si `patient-service` refuse une valeur que le formulaire avait laissée passer, l'utilisateur doit récupérer **son formulaire avec le message**, jamais une page d'erreur Whitelabel :
+
+- [ ] Coller une adresse de plus de 255 caractères, soumettre → **400**, formulaire re-rendu, message « L'adresse ne doit pas dépasser 255 caractères » affiché sous le champ Adresse. Une page « Whitelabel Error Page » ici est une régression.
 
 ### B.5 — Fiche détail patient : démographie + notes + risque
 
 Ouvrir `/ui/patients/1` (TestNone) et vérifier que **les trois blocs suivants s'affichent simultanément** (Sprint 3 les a tous les trois sur la même page) :
 
-- [ ] **Démographie** : nom, prénom, date de naissance, genre, adresse/téléphone si renseignés.
+- [ ] **Démographie** : nom, prénom, date de naissance, genre, adresse/téléphone si renseignés. Les téléphones de seed s'affichent en E.164 (`+12002223333`) — c'est la forme canonique stockée, pas un défaut d'affichage.
 - [ ] **Historique des notes** : la note de seed s'affiche avec son texte et son horodatage.
 - [ ] **Risque de diabète** : une bande de risque textuelle est affichée à côté de "Risque de diabète :".
 
@@ -149,8 +150,7 @@ Ouvrir `/ui/patients/1` (TestNone) et vérifier que **les trois blocs suivants s
 
 Utile pour isoler un problème (front vs back) et pour vérifier des cas que l'UI ne couvre pas facilement (404, formats d'erreur).
 
-> **Raccourci :** tout ce que couvre cette partie — et une soixantaine de cas hostiles en plus (injections, payloads malformés, escalade de privilège) — est automatisé dans
-> `smoke-tests.ps1` / `smoke-tests.sh`. Une commande, une ligne verte ou rouge par test :
+> **Raccourci :** tout ce que couvre cette partie — et une soixantaine de cas hostiles en plus (injections, payloads malformés, escalade de privilège) — est automatisé dans `smoke-tests.ps1` / `smoke-tests.sh`. Une commande, une ligne verte ou rouge par test :
 > voir **`smoke-tests-guide.md`**. Les commandes `curl` ci-dessous restent utiles pour inspecter une réponse en détail ou creuser un cas précis à la main.
 
 > Remplacer `8080` par le port de la Gateway. Les credentials sont envoyés via `-u`.
@@ -159,52 +159,55 @@ Utile pour isoler un problème (front vs back) et pour vérifier des cas que l'U
 
 ```bash
 # Liste des patients
-curl -u medilabo:medilabo123 http://localhost:8080/patients
+curl -s -u medilabo:medilabo123 http://localhost:8080/patients | jq
 
 # Patient existant
-curl -u medilabo:medilabo123 http://localhost:8080/patients/1
+curl -s -u medilabo:medilabo123 http://localhost:8080/patients/1 | jq
 
-# Patient inexistant → 404 + ProblemDetail RFC 7807
-curl -i -u medilabo:medilabo123 http://localhost:8080/patients/9999
+# Patient inexistant → 404 + ProblemDetail RFC 7807 (avec en-têtes HTTP)
+curl -i -s -u medilabo:medilabo123 http://localhost:8080/patients/9999
 
 # Sans credentials → 401
 curl -i http://localhost:8080/patients/1
+
 ```
 
-- [ ] `GET /patients` renvoie un tableau JSON de 4+ patients.
-- [ ] `GET /patients/1` renvoie le patient TestNone.
-- [ ] `GET /patients/9999` renvoie **404** avec un corps JSON `application/problem+json`
-      contenant `"status": 404` et un `detail` mentionnant l'id.
-- [ ] Sans `-u`, la requête renvoie **401**.
+* [ ] `GET /patients` renvoie un tableau JSON de 4+ patients.
+* [ ] `GET /patients/1` renvoie le patient TestNone.
+* [ ] `GET /patients/9999` renvoie **404** avec un corps JSON `application/problem+json`
+contenant `"status": 404` et un `detail` mentionnant l'id.
+* [ ] Sans `-u`, la requête renvoie **401**.
 
 ### C.2 — Notes-service (via Gateway)
 
 ```bash
 # Notes d'un patient
-curl -u medilabo:medilabo123 "http://localhost:8080/notes?patId=4"
+curl -s -u medilabo:medilabo123 "http://localhost:8080/notes?patId=4" | jq
 
 # Note par id (récupérer un id depuis la commande précédente)
-curl -u medilabo:medilabo123 http://localhost:8080/notes/<id>
+curl -s -u medilabo:medilabo123 http://localhost:8080/notes/<id> | jq
 
 # patId non-numérique → 400 (pas 500)
-curl -i -u medilabo:medilabo123 "http://localhost:8080/notes?patId=abc"
+curl -i -s -u medilabo:medilabo123 "http://localhost:8080/notes?patId=abc"
+
 ```
 
-- [ ] `GET /notes?patId=4` renvoie 4 notes pour TestEarlyOnset.
-- [ ] `GET /notes?patId=abc` renvoie **400**, pas 500 (validation du paramètre côté contrôleur).
-- [ ] `GET /notes?patId=9999` (patient sans notes ou inexistant) renvoie **200 + `[]`**, pas 404 (contrat volontaire : liste vide n'est pas une erreur).
+* [ ] `GET /notes?patId=4` renvoie 4 notes pour TestEarlyOnset.
+* [ ] `GET /notes?patId=abc` renvoie **400**, pas 500 (validation du paramètre côté contrôleur).
+* [ ] `GET /notes?patId=9999` (patient sans notes ou inexistant) renvoie **200 + `[]**`, pas 404 (contrat volontaire : liste vide n'est pas une erreur).
 
 ### C.3 — Assessment-service (via Gateway) — le cœur du Sprint 3
 
 ```bash
 # Les 4 fixtures canoniques
-curl -u medilabo:medilabo123 http://localhost:8080/assessments/1
-curl -u medilabo:medilabo123 http://localhost:8080/assessments/2
-curl -u medilabo:medilabo123 http://localhost:8080/assessments/3
-curl -u medilabo:medilabo123 http://localhost:8080/assessments/4
+curl -s -u medilabo:medilabo123 http://localhost:8080/assessments/1 | jq
+curl -s -u medilabo:medilabo123 http://localhost:8080/assessments/2 | jq
+curl -s -u medilabo:medilabo123 http://localhost:8080/assessments/3 | jq
+curl -s -u medilabo:medilabo123 http://localhost:8080/assessments/4 | jq
 
 # Patient inexistant → 404 (cascade depuis patient-service)
-curl -i -u medilabo:medilabo123 http://localhost:8080/assessments/9999
+curl -i -s -u medilabo:medilabo123 http://localhost:8080/assessments/9999
+
 ```
 
 - [ ] Les 4 réponses correspondent exactement au tableau de la section B.5 : `riskBand`,
@@ -219,19 +222,13 @@ curl -i -u medilabo:medilabo123 http://localhost:8080/assessments/9999
     "triggersDetected": ["Anticorps", "Réaction", "Hémoglobine A1C", "Taille", "Poids", "Cholestérol", "Vertiges"]
   }
   ```
-  (l'`age` variera selon la date du jour où vous testez — c'est normal, il est recalculé à
-  chaque appel).
-- [ ] `GET /assessments/9999` renvoie **404** (le patient n'existe pas côté patient-service, et
-      l'erreur cascade correctement).
-- [ ] Rejouer `GET /assessments/1` deux fois de suite avec un léger délai entre les deux (ou
-      après avoir ajouté une note entre les deux appels) → le résultat change si une note a été
-      ajoutée. Confirme l'absence de cache.
+  (l'`age` variera selon la date du jour où vous testez — c'est normal, il est recalculé à chaque appel).
+- [ ] `GET /assessments/9999` renvoie **404** (le patient n'existe pas côté patient-service, et l'erreur cascade correctement).
+- [ ] Rejouer `GET /assessments/1` deux fois de suite avec un léger délai entre les deux (ou après avoir ajouté une note entre les deux appels) → le résultat change si une note a été ajoutée. Confirme l'absence de cache.
 
 ### C.4 — Défense en profondeur : accès direct à un service interne
 
-Ce test ne peut se faire qu'en environnement local ou en exposant temporairement un port
-interne (voir A.2) — il valide que chaque service se protège **indépendamment** de la Gateway,
-pas seulement via elle.
+Ce test ne peut se faire qu'en environnement local ou en exposant temporairement un port interne (voir A.2) — il valide que chaque service se protège **indépendamment** de la Gateway, pas seulement via elle.
 
 ```bash
 # En supposant patient-service exposé temporairement sur 8081 :
@@ -239,16 +236,13 @@ curl -i http://localhost:8081/patients/1
 # Attendu : 401, PAS un accès libre — même en contournant la Gateway.
 ```
 
-- [ ] Sans credentials, l'accès direct à un service back-end (en bypassant la Gateway) renvoie
-      **401**, pas un accès libre. C'est la preuve de la défense en profondeur (chaque service
-      applique aussi sa propre sécurité HTTP Basic, pas seulement la Gateway).
+- [ ] Sans credentials, l'accès direct à un service back-end (en bypassant la Gateway) renvoie **401**, pas un accès libre. C'est la preuve de la défense en profondeur (chaque service applique aussi sa propre sécurité HTTP Basic, pas seulement la Gateway).
 
 ---
 
 ## Partie D — Test en local sans Docker (dev workflow)
 
-À faire si vous voulez valider que chaque service tourne aussi de façon autonome (utile pour le
-développement, pas juste pour la démo Docker).
+À faire si vous voulez valider que chaque service tourne aussi de façon autonome (utile pour le développement, pas juste pour la démo Docker).
 
 ### D.1 — Bases de données locales
 
@@ -281,8 +275,7 @@ cd gateway-service && ./mvnw spring-boot:run     # port 8080
 
 ## Partie E — Suites de tests automatisées (complément, pas un substitut)
 
-Ce guide teste le comportement **observé**, pas la couverture de code. Faites tourner aussi les
-tests automatisés pour vérifier qu'ils passent tous avant de considérer le projet terminé :
+Ce guide teste le comportement **observé**, pas la couverture de code. Faites tourner aussi les tests automatisés pour vérifier qu'ils passent tous avant de considérer le projet terminé :
 
 ```bash
 cd patient-service && ./mvnw test      # Testcontainers démarre un MySQL éphémère (mysql:8.0)
@@ -292,24 +285,34 @@ cd front-service && ./mvnw test
 cd gateway-service && ./mvnw test
 ```
 
-- [ ] Docker Desktop est lancé — `patient-service` et `notes-service` en dépendent désormais
-      pour leurs tests d'intégration (Testcontainers gère MySQL/MongoDB automatiquement, plus
-      besoin d'une instance locale pré-démarrée sur `3306`/`27017`, y compris en Partie D).
+- [ ] Docker Desktop est lancé — `patient-service` et `notes-service` en dépendent désormais pour leurs tests d'intégration (Testcontainers gère MySQL/MongoDB automatiquement, plus besoin d'une instance locale pré-démarrée sur `3306`/`27017`, y compris en Partie D).
 - [ ] Les 5 suites passent sans échec (`BUILD SUCCESS`).
+
+**Le module `integration-tests`** vérifie ce qu'aucune suite isolée ne peut voir : les cinq services démarrés en vrais processus, requêtes HTTP réelles, aucune frontière mockée. C'est lui qui garde les contrats inter-services (validation d'un service à l'autre, routes Gateway) — les suites ci-dessus mockent toutes leurs voisins.
+
+```bash
+# Prérequis : publier les -exec.jar des 5 services dans le repo Maven local
+cd gateway-service && ./mvnw install -DskipTests
+cd ../patient-service && ./mvnw install -DskipTests
+cd ../notes-service && ./mvnw install -DskipTests
+cd ../assessment-service && ./mvnw install -DskipTests
+cd ../front-service && ./mvnw install -DskipTests
+
+cd ../integration-tests && ./mvnw test
+```
+
+- [ ] `integration-tests` passe sans échec (compter ~1 minute : les 5 services démarrent réellement).
+- [ ] Un échec ici signale une **incompatibilité entre services**, pas un bug interne — typiquement deux services qui ne valident plus la même chose. Le message d'assertion indique lequel.
 
 ---
 
 ## Checklist de clôture
 
 - [ ] Partie A (Docker) : démarrage propre, aucun service en boucle de redémarrage.
-- [ ] Partie B (UI) : CRUD patient, notes, et affichage du risque cohérent avec le tableau
-      oracle.
-- [ ] Partie C (API) : les 4 fixtures canoniques d'assessment-service renvoient exactement les
-      bandes attendues ; défense en profondeur vérifiée.
-- [ ] Partie E (tests automatisés) : 5 suites vertes.
+- [ ] Partie B (UI) : CRUD patient, notes, et affichage du risque cohérent avec le tableau oracle.
+- [ ] Partie B.4 : édition d'un patient de seed sans toucher au téléphone — aucune erreur, aucune page Whitelabel.
+- [ ] Partie C (API) : les 4 fixtures canoniques d'assessment-service renvoient exactement les bandes attendues ; défense en profondeur vérifiée.
+- [ ] Partie E (tests automatisés) : 5 suites vertes + `integration-tests` vert.
 - [ ] Aucun secret (mot de passe, hash BCrypt) visible dans les logs consultés pendant les tests.
 
-Si tous les points sont cochés, le projet est fonctionnellement validé de bout en bout pour les
-Sprints 1 à 3. Les justifications d'architecture (NoSQL, 3NF, découpage microservices, Green
-Code) sont hors périmètre de ce guide — ce sont des livrables documentaires, pas des
-comportements à tester ; elles vivent dans les sections dédiées du `README.md`.
+Si tous les points sont cochés, le projet est fonctionnellement validé de bout en bout pour les Sprints 1 à 3. Les justifications d'architecture (NoSQL, 3NF, découpage microservices, Green Code) sont hors périmètre de ce guide, ce sont des livrables documentaires, pas des comportements à tester ; elles vivent dans les sections dédiées du `README.md`.

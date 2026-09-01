@@ -14,8 +14,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
- * Le credential du clinicien ne doit jamais fuiter dans un appel sortant : c'est toujours
- * le compte machine qui est posé, même si le contexte de requête en contient un autre.
+ * Le credential du clinicien ne doit jamais fuiter dans un appel sortant : c'est toujours le compte machine qui est posé, même si le contexte de requête en contient un autre.
  */
 class ServiceAccountAuthInitializerTest {
 

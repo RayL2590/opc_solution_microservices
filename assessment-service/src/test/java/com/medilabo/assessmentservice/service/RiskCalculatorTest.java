@@ -18,10 +18,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests unitaires purs pour {@link RiskCalculator}, pas de contexte Spring. Les quatre cas de
- * test du client servent d'oracle et tournent sur le vrai texte des notes semées
- * ({@code docker/mongo-init.js}) ; les âges sont figés via {@link #REFERENCE_DATE} pour que la
- * suite reste stable dans le temps.
+ * Tests unitaires purs pour {@link RiskCalculator}, pas de contexte Spring. Les quatre cas de test du client servent d'oracle et tournent sur le vrai texte des notes semées ({@code docker/mongo-init.js}) ; les âges sont figés via {@link #REFERENCE_DATE} pour que la suite reste stable dans le temps.
  */
 class RiskCalculatorTest {
 
@@ -245,8 +242,7 @@ class RiskCalculatorTest {
         NoteView newer = note(9, "T", "anticorps élevés", at(11));
         NoteView older = note(9, "T", "poids et taille", at(9));
 
-        // on passe newest-first, comme le ferait une lecture DESC ; la détection doit quand même
-        // repartir du plus ancien, et dans la note ancienne l'ordre suit le texte ("poids" avant "taille")
+        // on passe newest-first, comme le ferait une lecture DESC ; la détection doit quand même repartir du plus ancien, et dans la note ancienne l'ordre suit le texte ("poids" avant "taille")
         RiskResult result = calculator.compute(p, List.of(newer, older), REFERENCE_DATE);
 
         assertThat(result.triggersDetected()).containsExactly("Poids", "Taille", "Anticorps");
@@ -280,8 +276,7 @@ class RiskCalculatorTest {
     void ageExactly30_isInclusive_male() {
         RiskResult r = calculator.compute(patient(dobForAge(30), "M"), List.of(noteWithTriggers(5)), REFERENCE_DATE);
         assertThat(r.triggerCount()).isEqualTo(5);
-        // age==30 & M & count>=5 → Early Onset via la branche age<=30. Si un refactor glisse
-        // vers `>=30` un jour, on retombe sur les branches age>30 (count=5 → Borderline) et ce test casse.
+        // age==30 & M & count>=5 → Early Onset via la branche age<=30. Si un refactor glisse vers `>=30` un jour, on retombe sur les branches age>30 (count=5 → Borderline) et ce test casse.
         assertThat(r.riskBand()).isEqualTo(RiskBand.EARLY_ONSET);
     }
 
@@ -298,10 +293,7 @@ class RiskCalculatorTest {
     @Test
     @DisplayName("gender null, age<=30, count=10 → None (neither M nor F arm applies)")
     void genderNull_youngHighCount_isNone() {
-        // Contrat : tout ce qui n'est ni M ni F ne prend aucune des deux branches, et les
-        // branches age>30 ne s'appliquent pas non plus si age<=30, donc on tombe à None. On le
-        // documente ici pour que ce soit un choix assumé, pas un trou qu'on aurait oublié. La
-        // validité du genre est vérifiée en amont côté DTO/contrôleur.
+        // Contrat : tout ce qui n'est ni M ni F ne prend aucune des deux branches, et les branches age>30 ne s'appliquent pas non plus si age<=30, donc on tombe à None. On le documente ici pour que ce soit un choix assumé, pas un trou qu'on aurait oublié. La validité du genre est vérifiée en amont côté DTO/contrôleur.
         RiskResult r = calculator.compute(patient(dobForAge(25), null), List.of(noteWithTriggers(10)), REFERENCE_DATE);
         assertThat(r.triggerCount()).isEqualTo(10);
         assertThat(r.riskBand()).isEqualTo(RiskBand.NONE);
@@ -353,9 +345,7 @@ class RiskCalculatorTest {
     @DisplayName("F count=3 is not yet In Danger (F floor is 4, unlike M)")
     void young_female_belowFloor() {
         PatientView f = patient(dobForAge(25), "F");
-        // count=3 : aucune branche age<=30 ne matche (M demande >=3 mais on est en F ; F demande
-        // >=4), et pas de branche age>30 non plus. Si on inversait les seuils M/F par erreur, ça
-        // basculerait à tort en In Danger.
+        // count=3 : aucune branche age<=30 ne matche (M demande >=3 mais on est en F ; F demande >=4), et pas de branche age>30 non plus. Si on inversait les seuils M/F par erreur, ça basculerait à tort en In Danger.
         assertThat(calculator.compute(f, List.of(noteWithTriggers(3)), REFERENCE_DATE).riskBand())
                 .isEqualTo(RiskBand.NONE);
     }
@@ -416,9 +406,7 @@ class RiskCalculatorTest {
     @Test
     @DisplayName("notes sharing a createdAt are scanned oldest-id-first, not in upstream order")
     void sameCreatedAt_tiebreaksOnIdAscending() {
-        // notes-service renvoie du DESC sur (createdAt, id) : à createdAt égal, la plus récente
-        // arrive en premier. Un tri stable sur le seul createdAt garderait cet ordre newest-first
-        // et inverserait l'ordre chronologique attendu.
+        // notes-service renvoie du DESC sur (createdAt, id) : à createdAt égal, la plus récente arrive en premier. Un tri stable sur le seul createdAt garderait cet ordre newest-first et inverserait l'ordre chronologique attendu.
         NoteView newer = new NoteView("65a000000000000000000002", 9, "T", "anticorps", at(9));
         NoteView older = new NoteView("65a000000000000000000001", 9, "T", "poids", at(9));
 

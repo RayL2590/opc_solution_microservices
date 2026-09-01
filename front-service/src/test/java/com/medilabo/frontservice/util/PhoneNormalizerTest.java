@@ -80,6 +80,23 @@ class PhoneNormalizerTest {
                 .isEqualTo("+393123456789");
     }
 
+    @DisplayName("Formats US équivalents convergent vers le même E.164")
+    @ParameterizedTest(name = "\"{0}\" -> +12003334444")
+    @ValueSource(strings = {
+            "2003334444",
+            "200-333-4444",     // format du jeu de données OpenClassrooms
+            "200 333 4444",
+            "(200) 333-4444",
+            "+12003334444",
+            "0012003334444"
+    })
+    void normalizes_all_us_formats_to_single_e164(String raw) {
+        PhoneNormalizer.Result result = PhoneNormalizer.normalize(raw, PhoneCountry.US);
+
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.e164()).isEqualTo("+12003334444");
+    }
+
     @Test
     @DisplayName("Téléphone renseigné sans pays : rejeté avec message explicite")
     void phone_without_country_is_rejected() {

@@ -39,9 +39,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * patId non convertible en Integer (ex. /assessments/abc) : la faute est à l'appelant,
-     * donc 400. Sans ce handler l'exception tombait dans le catch-all et sortait en 500 —
-     * incohérent avec patient-service et notes-service, qui rendent bien 400 sur ce cas.
+     * patId non convertible en Integer (ex. /assessments/abc) : la faute est à l'appelant, donc 400. Sans ce handler l'exception tombait dans le catch-all et sortait en 500 incohérent avec patient-service et notes-service, qui rendent bien 400 sur ce cas.
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ProblemDetail handleTypeMismatch(MethodArgumentTypeMismatchException ex) {

@@ -28,8 +28,7 @@ class NoteRepositoryTest extends AbstractMongoContainerTest {
 
     @Test
     void findByPatId_returnsTwoNotes_orderedByCreatedAtDesc() {
-        // Pas besoin d'attendre entre les deux save() : le tri secondaire sur id (ObjectId,
-        // monotone par insertion) départage un createdAt identique même à la milliseconde près.
+        // Pas besoin d'attendre entre les deux save() : le tri secondaire sur id (ObjectId, monotone par insertion) départage un createdAt identique même à la milliseconde près.
         Note older = Note.builder().patId(2).patient("TestBorderline")
                 .note("première note").build();
         noteRepository.save(older);

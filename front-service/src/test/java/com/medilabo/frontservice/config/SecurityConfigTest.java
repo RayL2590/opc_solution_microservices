@@ -19,7 +19,7 @@ class SecurityConfigTest {
     private static final String DEMO_BCRYPT_HASH =
             "$2a$10$GzMGhp/NWTujVhv4VyYh9eM.aia95IXMsse7Yl6jUC3DC42/VIinq";
 
-    /** Comptes machine — jamais semés ici : front-service n'a aucun appelant machine entrant. */
+    /** Comptes machine jamais semés ici : front-service n'a aucun appelant machine entrant. */
     private static final String SVC_FRONT_USER = "svc-front";
     private static final String SVC_ASSESSMENT_USER = "svc-assessment";
 
@@ -57,9 +57,7 @@ class SecurityConfigTest {
     }
 
     /**
-     * front-service n'a aucun appelant machine entrant : semer un compte de service ici
-     * reviendrait à accepter un mot de passe inter-services comme login UI, et donc à
-     * exposer les données patients à quiconque détient ce credential.
+     * front-service n'a aucun appelant machine entrant : semer un compte de service ici reviendrait à accepter un mot de passe inter-services comme login UI, et donc à exposer les données patients à quiconque détient ce credential.
      */
     @Test
     void serviceAccountsAreNotAcceptedAsUiLogins() {

@@ -9,9 +9,7 @@ import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
 /**
- * Date de naissance plausible : non nulle, pas dans le futur (aujourd'hui autorisé),
- * et pas plus de {@link #maxAgeYears()} ans. Dupliqué côté front (pas de module partagé) —
- * miroir de patient-service pour un retour utilisateur immédiat.
+ * Date de naissance plausible : non nulle, pas dans le futur (aujourd'hui autorisé), et pas plus de {@link #maxAgeYears()} ans. Dupliqué côté front (pas de module partagé) miroir de patient-service pour un retour utilisateur immédiat.
  */
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)

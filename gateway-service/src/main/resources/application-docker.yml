@@ -21,5 +21,7 @@ spring:
               predicates:
                 - Path=/,/ui/**,/css/**,/js/**,/favicon.ico
               filters:
-                - AddRequestHeader=X-Forwarded-Host, localhost:8080
-                - AddRequestHeader=X-Forwarded-Proto, http
+                # Host/proto PUBLICS vus par le navigateur, pas ceux du conteneur.
+                # Defaults = comportement docker local inchange ; surcharges en prod par docker-compose.prod.yml (domaine reel + https).
+                - AddRequestHeader=X-Forwarded-Host, ${MEDILABO_PUBLIC_HOST:localhost:8080}
+                - AddRequestHeader=X-Forwarded-Proto, ${MEDILABO_PUBLIC_PROTO:http}

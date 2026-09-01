@@ -17,9 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-// NoteService réel branché sur un vrai NoteRepository (Mongo Testcontainers), pour tester la
-// logique du service - mapping NoteDTO, ordre, NoteNotFoundException - contre des données
-// vraiment persistées. NoteControllerTest de son côté mocke le service, donc ne couvre pas ça.
+// NoteService réel branché sur un vrai NoteRepository (Mongo Testcontainers), pour tester la logique du service - mapping NoteDTO, ordre, NoteNotFoundException - contre des données vraiment persistées. NoteControllerTest de son côté mocke le service, donc ne couvre pas ça.
 @DataMongoTest
 @Import({MongoConfig.class, NoteService.class})
 class NoteServiceIntegrationTest extends AbstractMongoContainerTest {

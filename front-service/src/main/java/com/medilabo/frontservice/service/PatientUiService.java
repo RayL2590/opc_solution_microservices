@@ -16,13 +16,11 @@ import com.medilabo.frontservice.dto.PatientForm;
 import com.medilabo.frontservice.dto.PatientView;
 
 /**
- * Orchestre les appels Gateway pour les écrans patients : démographie, notes et évaluation
- * de risque. Le contrôleur ne garde que le binding HTTP et le choix de vue.
+ * Orchestre les appels Gateway pour les écrans patients : démographie, notes et évaluation de risque. Le contrôleur ne garde que le binding HTTP et le choix de vue.
  *
- * <p>Pas de cache : chaque appel refait les requêtes upstream, donc une note ajoutée
- * apparaît dès le rendu suivant.</p>
+ * <p>Pas de cache : chaque appel refait les requêtes upstream, donc une note ajoutée apparaît dès le rendu suivant.</p>
  *
- * <p>PII : seuls les ids et compteurs sont loggés.</p>
+ * <p>Personally Identifiable Information : seuls les ids et compteurs sont loggés.</p>
  */
 @Service
 @Slf4j
@@ -56,8 +54,7 @@ public class PatientUiService {
     }
 
     /**
-     * @throws IllegalStateException si la Gateway renvoie un patient nul ou sans id — le
-     *         contrôleur ne peut alors pas construire sa redirection.
+     * @throws IllegalStateException si la Gateway renvoie un patient nul ou sans id : le contrôleur ne peut alors pas construire sa redirection.
      */
     public PatientView createPatient(PatientForm form) {
         PatientView created = patientGatewayClient.createPatient(form);
@@ -76,13 +73,9 @@ public class PatientUiService {
     }
 
     /**
-     * Ajoute une note au patient {@code id}. Les champs serveur ({@code patId}, {@code patient})
-     * sont écrasés depuis la démographie chargée, jamais pris du formulaire.
+     * Ajoute une note au patient {@code id}. Les champs serveur ({@code patId}, {@code patient}) sont écrasés depuis la démographie chargée, jamais pris du formulaire.
      *
-     * @throws IllegalStateException si la Gateway renvoie un patient sans nom — notes-service
-     *         exige un nom non vide sur chaque note (dénormalisation délibérée du nom du
-     *         patient sur chaque note). Autant échouer ici avec une cause claire plutôt que
-     *         laisser remonter un 400 venu d'un autre service.
+     * @throws IllegalStateException si la Gateway renvoie un patient sans nom — notes-service exige un nom non vide sur chaque note (dénormalisation délibérée du nom du patient sur chaque note). Autant échouer ici avec une cause claire plutôt que laisser remonter un 400 venu d'un autre service.
      */
     public NoteView addNote(Long id, NoteForm noteForm) {
         PatientView patient = patientGatewayClient.getPatient(id);

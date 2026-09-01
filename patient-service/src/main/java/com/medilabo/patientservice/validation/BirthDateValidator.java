@@ -6,9 +6,7 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 /**
- * Valide une date de naissance : pas dans le futur (aujourd'hui autorisé) et pas plus de
- * {@code maxAgeYears} ans. Le null est géré par {@code @NotNull} ailleurs, donc ici une valeur
- * nulle est considérée valide — pas la peine de dupliquer le message.
+ * Valide une date de naissance : pas dans le futur (aujourd'hui autorisé) et pas plus de {@code maxAgeYears} ans. Le null est géré par {@code @NotNull} ailleurs, donc ici une valeur nulle est considérée valide — pas la peine de dupliquer le message.
  */
 public class BirthDateValidator implements ConstraintValidator<BirthDate, LocalDate> {
 

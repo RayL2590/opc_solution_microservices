@@ -6,9 +6,7 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 /**
- * Valide une date de naissance : pas dans le futur (aujourd'hui autorisé) et pas plus de
- * {@code maxAgeYears} ans. Le caractère obligatoire (non null) est porté par {@code @NotNull}.
- * Miroir de patient-service (pas de module partagé).
+ * Valide une date de naissance : pas dans le futur (aujourd'hui autorisé) et pas plus de {@code maxAgeYears} ans. Le caractère obligatoire (non null) est porté par {@code @NotNull}. Miroir de patient-service (pas de module partagé).
  */
 public class BirthDateValidator implements ConstraintValidator<BirthDate, LocalDate> {
 

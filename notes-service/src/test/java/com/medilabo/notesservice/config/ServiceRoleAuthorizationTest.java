@@ -28,8 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Vérifie la séparation des privilèges entre le clinicien (ROLE_USER) et les comptes machine.
  *
- * <p>assessment-service lit les notes d'un patient pour calculer un risque, rien de plus,
- * donc pas de raison qu'il puisse en créer. Ça, c'est le clinicien, via svc-front.
+ * <p>assessment-service lit les notes d'un patient pour calculer un risque, rien de plus, donc pas de raison qu'il puisse en créer. Ça, c'est le clinicien, via svc-front.
  */
 @WebMvcTest(value = NoteController.class,
         excludeAutoConfiguration = {

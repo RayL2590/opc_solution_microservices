@@ -29,9 +29,7 @@ import com.medilabo.frontservice.dto.PatientForm;
 import com.medilabo.frontservice.dto.PatientView;
 
 /**
- * Tests d'orchestration pour {@link PatientUiService} : les trois clients Gateway sont mockés,
- * on vérifie les appels délégués, l'assemblage de {@link PatientUiService.PatientDetail} et
- * les champs serveur posés sur {@link NoteForm} avant envoi.
+ * Tests d'orchestration pour {@link PatientUiService} : les trois clients Gateway sont mockés, on vérifie les appels délégués, l'assemblage de {@link PatientUiService.PatientDetail} et les champs serveur posés sur {@link NoteForm} avant envoi.
  */
 @ExtendWith(MockitoExtension.class)
 class PatientUiServiceTest {

@@ -26,9 +26,7 @@ public class NoteController {
 
     private final NoteService noteService;
 
-    // Ces logs tracent juste la requête entrante (id seulement, jamais le texte de la note,
-    // c'est du PII). En debug parce que c'est le chemin nominal — les échecs sont déjà loggés
-    // en warn/error côté GlobalExceptionHandler.
+    // Ces logs tracent juste la requête entrante (id seulement, jamais le texte de la note, c'est du PII). En debug parce que c'est le chemin nominal : les échecs sont déjà loggés en warn/error côté GlobalExceptionHandler.
     @PostMapping
     public ResponseEntity<NoteDTO> addNote(@Valid @RequestBody NoteRequest req) {
         log.debug("POST /notes patId={}", req.getPatId());

@@ -24,11 +24,8 @@ public class SecurityConfig {
     }
 
     /**
-     * Trois identités : le clinicien (ROLE_USER) et un compte machine par service appelant
-     * (ROLE_SERVICE). On les sépare pour que le mot de passe du clinicien ne circule pas
-     * entre services, et pour pouvoir révoquer un seul appelant sans toucher aux autres.
-     * Le Gateway ne fait qu'accepter ces identités, il relaie juste le header entrant,
-     * jamais n'en génère un lui-même.
+     * Trois identités : le clinicien (ROLE_USER) et un compte machine par service appelant (ROLE_SERVICE). On les sépare pour que le mot de passe du clinicien ne circule pas entre services, et pour pouvoir révoquer un seul appelant sans toucher aux autres.
+     * Le Gateway ne fait qu'accepter ces identités, il relaie juste le header entrant, jamais n'en génère un lui-même.
      */
     @Bean
     MapReactiveUserDetailsService userDetailsService(

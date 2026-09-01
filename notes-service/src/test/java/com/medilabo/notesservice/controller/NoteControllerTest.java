@@ -35,8 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 // On importe la vraie SecurityConfig pour exercer la chaîne HTTP Basic, mais Mongo reste exclu :
-// @WebMvcTest doit rester sans DB. MongoConfig (@EnableMongoAuditing) a besoin de mongoMappingContext,
-// qui n'existe pas dans ce slice.
+// @WebMvcTest doit rester sans DB. MongoConfig (@EnableMongoAuditing) a besoin de mongoMappingContext, qui n'existe pas dans ce slice.
 @WebMvcTest(value = NoteController.class,
         excludeAutoConfiguration = {
                 MongoAutoConfiguration.class,
@@ -126,8 +125,7 @@ class NoteControllerTest {
 
     @Test
     void addNote_blankPatient_returns400WithFieldError() throws Exception {
-        // patient vide → @NotBlank : le nom est dénormalisé sur chaque note, une
-        // note sans lui est illisible dans la timeline.
+        // patient vide → @NotBlank : le nom est dénormalisé sur chaque note, une note sans lui est illisible dans la timeline.
         mockMvc.perform(post("/notes").with(httpBasic("medilabo", "medilabo123"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"patId\":1,\"patient\":\"  \",\"note\":\"Observation clinique.\"}"))

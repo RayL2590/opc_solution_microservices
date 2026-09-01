@@ -74,8 +74,7 @@ public class GlobalExceptionHandler {
 
     /**
      * Content-Type non géré (ex. text/plain sur une API JSON) : 415, jamais 500.
-     * Sans ce handler l'exception tombait dans le catch-all — un appelant qui se trompe
-     * d'en-tête recevait une erreur serveur alors que la faute est de son côté.
+     * Sans ce handler l'exception tombait dans le catch-all : un appelant qui se trompe d'en-tête recevait une erreur serveur alors que la faute est de son côté.
      */
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ProblemDetail handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex) {

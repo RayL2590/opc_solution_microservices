@@ -5,11 +5,7 @@ import java.util.List;
 /**
  * Le set fermé des onze termes déclencheurs canoniques du dépistage de diabète.
  *
- * <p>L'ordre de déclaration compte : c'est lui qui tranche les ex-aequo d'une même note dans
- * {@code triggersDetected}. Les motifs sont écrits en minuscules avec leur orthographe
- * accentuée ; {@link RiskCalculator} normalise motifs et texte de note (minuscules + accents
- * retirés) au moment du match, donc l'orthographe canonique reste intacte ici. Pour changer le
- * vocabulaire il faut toucher au code, ce n'est pas de la config.</p>
+ * <p>L'ordre de déclaration compte : c'est lui qui tranche les ex-aequo d'une même note dans {@code triggersDetected}. Les motifs sont écrits en minuscules avec leur orthographe accentuée ; {@link RiskCalculator} normalise motifs et texte de note (minuscules + accents retirés) au moment du match, donc l'orthographe canonique reste intacte ici. Pour changer le vocabulaire il faut toucher au code, ce n'est pas de la config.</p>
  */
 public final class TriggerVocabulary {
 

@@ -41,18 +41,22 @@ class NotesServiceClientTest {
         client = new NotesServiceClient(gatewayClient);
     }
 
+    private static ParameterizedTypeReference<List<NoteView>> anyNoteListTypeRef() {
+        return any();
+    }
+
     private void stubBody(List<NoteView> returnValue) {
         doReturn(uriSpec).when(gatewayClient).get();
         doReturn(headersSpec).when(uriSpec).uri(anyString(), any(Object.class));
         doReturn(responseSpec).when(headersSpec).retrieve();
-        doReturn(returnValue).when(responseSpec).body(any(ParameterizedTypeReference.class));
+        doReturn(returnValue).when(responseSpec).body(anyNoteListTypeRef());
     }
 
     private void stubBodyThrows(Throwable t) {
         doReturn(uriSpec).when(gatewayClient).get();
         doReturn(headersSpec).when(uriSpec).uri(anyString(), any(Object.class));
         doReturn(responseSpec).when(headersSpec).retrieve();
-        doThrow(t).when(responseSpec).body(any(ParameterizedTypeReference.class));
+        doThrow(t).when(responseSpec).body(anyNoteListTypeRef());
     }
 
     @Test

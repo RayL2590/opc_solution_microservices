@@ -31,9 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests d'orchestration pour {@link AssessmentService} : clients upstream mockés, vrai
- * {@link RiskCalculator}. On vérifie le mapping vers l'enveloppe HTTP et on rejoue les quatre
- * cas de test du client, mais cette fois au-dessus du niveau algo pur.
+ * Tests d'orchestration pour {@link AssessmentService} : clients upstream mockés, vrai {@link RiskCalculator}. On vérifie le mapping vers l'enveloppe HTTP et on rejoue les quatre cas de test du client, mais cette fois au-dessus du niveau algo pur.
  */
 @ExtendWith(MockitoExtension.class)
 class AssessmentServiceTest {

@@ -29,8 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Tranche @WebMvcTest pour PatientController — SecurityConfig réelle (chaîne HTTP Basic exercée),
- * GlobalExceptionHandler importé (404 ProblemDetail), service mocké (DB-free).
+ * Tranche @WebMvcTest pour PatientController — SecurityConfig réelle (chaîne HTTP Basic exercée), GlobalExceptionHandler importé (404 ProblemDetail), service mocké (DB-free).
  */
 @WebMvcTest(PatientController.class)
 @Import({SecurityConfig.class, GlobalExceptionHandler.class})
@@ -100,10 +99,7 @@ class PatientControllerTest {
 
     @Test
     void listPatients_validUserWrongPassword_returns401() throws Exception {
-        // teste vraiment la vérif du mot de passe, pas juste l'absence de creds : un user connu
-        // avec un mauvais mot de passe doit être rejeté. Seul test qui prouve que le hash BCrypt
-        // seedé (medilabo.password-bcrypt) est réellement comparé. Un encoder NoOp ou un pont
-        // cassé vers le hash ferait passer ce test à tort.
+        // teste vraiment la vérif du mot de passe, pas juste l'absence de creds : un user connu avec un mauvais mot de passe doit être rejeté. Seul test qui prouve que le hash BCrypt seedé (medilabo.password-bcrypt) est réellement comparé. Un encoder NoOp ou un pont cassé vers le hash ferait passer ce test à tort.
         mockMvc.perform(get("/patients").with(httpBasic("medilabo", "definitely-the-wrong-password")))
                 .andExpect(status().isUnauthorized());
     }
@@ -171,13 +167,31 @@ class PatientControllerTest {
 
     @Test
     void createPatient_genderU_returns400WithGenderKey() throws Exception {
-        // U (inconnu) a été retiré du domaine : verrouille le rejet, sinon un retour
-        // à ^[MFU]$ repasserait au vert sans que rien ne le signale.
+        // U (inconnu) a été retiré du domaine : verrouille le rejet, sinon un retour à ^[MFU]$ repasserait au vert sans que rien ne le signale.
         mockMvc.perform(post("/patients").with(httpBasic("medilabo", "medilabo123"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"firstName\":\"Jean\",\"lastName\":\"Dupont\",\"dateOfBirth\":\"1990-01-01\",\"gender\":\"U\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.gender").exists());
+    }
+
+    @Test
+    void createPatient_usE164Phone_isAccepted() throws Exception {
+        // +1 (États-Unis/Canada) fait partie des indicatifs supportés par le front (PhoneCountry.US) et du jeu de données par défaut : ce service doit l'accepter, sinon toute édition d'un patient de démo repart en 400 alors que le front a normalisé correctement.
+        mockMvc.perform(post("/patients").with(httpBasic("medilabo", "medilabo123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"Test\",\"lastName\":\"TestBorderline\",\"dateOfBirth\":\"1945-06-24\",\"gender\":\"M\",\"phone\":\"+12003334444\"}"))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void createPatient_nonE164Phone_returns400WithPhoneKey() throws Exception {
+        // Format national brut (celui du sujet OpenClassrooms) : refusé côté API, le front est responsable de la normalisation en E.164 avant l'appel.
+        mockMvc.perform(post("/patients").with(httpBasic("medilabo", "medilabo123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"Test\",\"lastName\":\"TestBorderline\",\"dateOfBirth\":\"1945-06-24\",\"gender\":\"M\",\"phone\":\"200-333-4444\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.phone").exists());
     }
 
     @Test
@@ -236,8 +250,7 @@ class PatientControllerTest {
 
     @Test
     void updatePatient_genderU_returns400WithGenderKey() throws Exception {
-        // Le PUT applique le même @Pattern que le POST : une valeur hors {M,F} est rejetée
-        // là aussi, y compris sur un patient déjà stocké avec un genre devenu invalide.
+        // Le PUT applique le même @Pattern que le POST : une valeur hors {M,F} est rejetée là aussi, y compris sur un patient déjà stocké avec un genre devenu invalide.
         String body = """
                 {"firstName":"Jean","lastName":"Dupont","dateOfBirth":"1990-01-01","gender":"U"}
                 """;
@@ -265,8 +278,7 @@ class PatientControllerTest {
 
     @Test
     void getPatientById_malformedId_returns400ProblemDetail() throws Exception {
-        // {id} non numérique plante la conversion @PathVariable Long avant même le controller,
-        // l'exception doit quand même rester dans l'enveloppe RFC 7807
+        // {id} non numérique plante la conversion @PathVariable Long avant même le controller, l'exception doit quand même rester dans l'enveloppe RFC 7807
         mockMvc.perform(get("/patients/abc").with(httpBasic("medilabo", "medilabo123")))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))

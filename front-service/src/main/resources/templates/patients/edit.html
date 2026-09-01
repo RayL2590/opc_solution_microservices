@@ -11,6 +11,12 @@
     <article class="card mt-4">
         <form th:action="@{/ui/patients/{id}/edit(id=${patientId})}" method="post" th:object="${patientForm}">
 
+            <!-- Erreurs sans champ précis : refus venu d'un service amont dont le nom de champ ne correspond à rien ici. Sans ce bloc l'utilisateur voyait une page d'erreur au lieu de son formulaire. -->
+            <div class="error" role="alert" th:if="${#fields.hasGlobalErrors()}">
+                <p th:each="err : ${#fields.globalErrors()}" th:text="${err}"></p>
+            </div>
+
+
             <div th:attr="data-field=${#fields.hasErrors('lastName')} ? 'error' : ''">
                 <label for="lastName">Nom *</label>
                 <input type="text" id="lastName" th:field="*{lastName}" placeholder="Nom de famille"

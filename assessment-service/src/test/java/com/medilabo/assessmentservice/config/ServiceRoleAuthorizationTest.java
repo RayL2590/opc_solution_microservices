@@ -22,9 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Séparation des privilèges sur l'API d'évaluation.
  *
- * <p>Seul front-service consomme les évaluations, et en lecture seule. svc-assessment, c'est
- * l'identité SORTANTE de ce service : accepter ses propres credentials en entrée n'aurait aucun
- * usage légitime, ça ne ferait qu'élargir la surface d'attaque pour rien.
+ * <p>Seul front-service consomme les évaluations, et en lecture seule. svc-assessment, c'est l'identité SORTANTE de ce service : accepter ses propres credentials en entrée n'aurait aucun usage légitime, ça ne ferait qu'élargir la surface d'attaque pour rien.
  */
 @WebMvcTest(AssessmentController.class)
 @Import({SecurityConfig.class, GlobalExceptionHandler.class})

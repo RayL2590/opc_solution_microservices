@@ -28,7 +28,7 @@ public class Note {
     private String patient;
     private String note;
 
-    // Rempli par @EnableMongoAuditing à l'insert — ne pas y toucher à la main.
+    // Rempli par @EnableMongoAuditing à l'insert, ne pas y toucher à la main.
     @CreatedDate
     private Instant createdAt;
 }

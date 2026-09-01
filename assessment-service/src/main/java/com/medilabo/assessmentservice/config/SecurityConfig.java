@@ -25,14 +25,10 @@ public class SecurityConfig {
     }
 
     /**
-     * Trois identités distinctes : le clinicien (ROLE_USER) et un compte machine par service
-     * appelant. On sépare les comptes pour que le mot de passe du clinicien ne circule pas
-     * entre services, et pour pouvoir révoquer un appelant sans toucher aux autres.
+     * Trois identités distinctes : le clinicien (ROLE_USER) et un compte machine par service ppelant. On sépare les comptes pour que le mot de passe du clinicien ne circule pas entre services, et pour pouvoir révoquer un appelant sans toucher aux autres.
      * Les hashes sont stockés tels quels, pas de ré-encodage.
      *
-     * <p>Chaque compte machine porte ROLE_SERVICE (le marqueur commun) plus un rôle qui lui est
-     * propre — c'est le seul moyen de distinguer qui a le droit de lire et qui a le droit d'écrire
-     * dans les règles d'autorisation.
+     * <p>Chaque compte machine porte ROLE_SERVICE (le marqueur commun) plus un rôle qui lui est propre, c'est le seul moyen de distinguer qui a le droit de lire et qui a le droit d'écrire dans les règles d'autorisation.
      */
     @Bean
     public UserDetailsService userDetailsService(
@@ -43,7 +39,7 @@ public class SecurityConfig {
             @Value("${medilabo.svc-assessment-user}") String svcAssessmentUsername,
             @Value("${medilabo.svc-assessment-password-bcrypt}") String svcAssessmentBcryptHash) {
         UserDetails user = User.withUsername(username)
-                .password(bcryptHash) // déjà un hash BCrypt — stocké tel quel, pas de ré-encodage
+                .password(bcryptHash) // déjà un hash BCrypt, stocké tel quel, pas de ré-encodage
                 .roles("USER")
                 .build();
         UserDetails svcFront = User.withUsername(svcFrontUsername)
@@ -63,9 +59,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // API REST, pas de formulaire HTML ici
             .sessionManagement(session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // Seul front-service consomme les évaluations, et seulement en lecture.
-            // svc-assessment, c'est l'identité SORTANTE de ce service, elle n'a rien à faire ici.
             .authorizeHttpRequests(auth -> auth
+                // Lecture seule, ouverte au clinicien et à front-service (seul consommateur des évaluations).
+                // SERVICE_ASSESSMENT est volontairement absent : ce rôle authentifie les appels SORTANTS de ce service vers patient-service/notes-service, il ne doit pas donner accès à ses propres endpoints.
                 .requestMatchers(HttpMethod.GET, "/assessments/**").hasAnyRole("USER", "SERVICE_FRONT")
                 .anyRequest().authenticated()
             )

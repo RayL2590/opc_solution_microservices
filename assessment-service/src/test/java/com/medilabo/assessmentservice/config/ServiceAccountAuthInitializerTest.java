@@ -14,8 +14,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
- * Le header sortant doit porter le compte de service quoi qu'il arrive — y compris quand une
- * requête entrante authentifiée est présente dans le contexte.
+ * Le header sortant doit porter le compte de service quoi qu'il arrive : y compris quand une requête entrante authentifiée est présente dans le contexte.
  */
 class ServiceAccountAuthInitializerTest {
 
@@ -76,9 +75,7 @@ class ServiceAccountAuthInitializerTest {
 
     @Test
     void usesAnIdentityDistinctFromFrontServiceAccount() {
-        // Question de granularité de révocation : compromettre front-service ne donne pas
-        // accès à l'identité d'assessment-service. C'est tout l'intérêt d'avoir un compte
-        // par appelant plutôt qu'un compte de service unique partagé entre tous.
+        // Question de granularité de révocation : compromettre front-service ne donne pas accès à l'identité d'assessment-service. C'est tout l'intérêt d'avoir un compte par appelant plutôt qu'un compte de service unique partagé entre tous.
         MockClientHttpRequest outbound = new MockClientHttpRequest();
 
         initializer.initialize(outbound);

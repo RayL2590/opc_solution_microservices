@@ -8,8 +8,15 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mongodb.MongoDBContainer;
@@ -27,65 +34,27 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Vérifie que le découpage en microservices marche vraiment de bout en bout en HTTP réel,
- * pas juste service par service isolément (toutes les autres classes de test du projet sont
- * des tranches {@code @WebMvcTest} avec la couche métier mockée).
+ * Vérifie que le découpage en microservices marche vraiment de bout en bout en HTTP réel, pas juste service par service isolément (toutes les autres classes de test du projet sont des tranches {@code @WebMvcTest} avec la couche métier mockée).
  *
- * <p><b>Scénario</b> : un {@code GET /assessments/4} envoyé sur le port propre de la Gateway doit
- * renvoyer la tranche de risque "Early Onset" pour le patient 4 de référence ("TestEarlyOnset"),
- * ce qui suppose vraiment d'avoir fait transiter :
+ * <p><b>Scénario</b> : un {@code GET /assessments/4} envoyé sur le port propre de la Gateway doit renvoyer la tranche de risque "Early Onset" pour le patient 4 de référence ("TestEarlyOnset"), ce qui suppose vraiment d'avoir fait transiter :
  * <ol>
  *   <li>Gateway → assessment-service (route {@code /assessments/**})</li>
  *   <li>assessment-service → Gateway → patient-service (route {@code /patients/**})</li>
  *   <li>assessment-service → Gateway → notes-service (route {@code /notes/**})</li>
  * </ol>
- * Un deuxième scénario va un cran plus loin — {@code GET /ui/patients/4} sur le port propre du
- * front-service — pour prouver que la page rendue côté serveur affiche des données ayant
- * réellement traversé la même chaîne (front-service → Gateway → backends), et pas seulement que
- * les backends sont d'accord entre eux.
+ * Un deuxième scénario va un cran plus loin — {@code GET /ui/patients/4} sur le port propre du front-service — pour prouver que la page rendue côté serveur affiche des données ayant réellement traversé la même chaîne (front-service → Gateway → backends), et pas seulement que les backends sont d'accord entre eux.
  *
- * <p>Aucune frontière entre services n'est mockée. Chaque service tourne comme un vrai
- * **processus JVM enfant** (son propre {@code -exec.jar}, lancé via {@link ProcessBuilder}),
- * en écoute sur un port TCP réel réservé à l'avance — la même logique que
- * {@code docker-compose.yml}, simplement sans Docker pour les cinq services Spring eux-mêmes.
- * patient-service et notes-service pointent vers des {@code mysql:8.0}/{@code mongo:7.0} gérés
- * par Testcontainers — pas besoin de démarrer une base locale à la main, juste un daemon Docker
- * qui tourne. L'authentification utilise les vrais comptes de service par appelant, lus depuis
- * le {@code .env} du dépôt (chaque service en a de toute façon besoin pour tourner seul en
- * {@code mvn test}/local).
+ * <p>Aucune frontière entre services n'est mockée. Chaque service tourne comme un vrai **processus JVM enfant** (son propre {@code -exec.jar}, lancé via {@link ProcessBuilder}), en écoute sur un port TCP réel réservé à l'avance — la même logique que {@code docker-compose.yml}, simplement sans Docker pour les cinq services Spring eux-mêmes.
+ * patient-service et notes-service pointent vers des {@code mysql:8.0}/{@code mongo:7.0} gérés par Testcontainers — pas besoin de démarrer une base locale à la main, juste un daemon Docker qui tourne. L'authentification utilise les vrais comptes de service par appelant, lus depuis le {@code .env} du dépôt (chaque service en a de toute façon besoin pour tourner seul en {@code mvn test}/local).
  *
- * <p><b>Pourquoi des processus séparés plutôt que des contextes dans la même JVM.</b> Une
- * version antérieure de ce test essayait de démarrer les quatre contextes
- * {@code @SpringBootApplication} dans la JVM de ce module lui-même ({@code SpringApplicationBuilder}
- * + {@code server.port=0}). Deux collisions de classpath indépendantes et sans lien rendaient
- * cette approche impraticable :
+ * <p><b>Pourquoi des processus séparés plutôt que des contextes dans la même JVM.</b> Une version antérieure de ce test essayait de démarrer les quatre contextes {@code @SpringBootApplication} dans la JVM de ce module lui-même ({@code SpringApplicationBuilder} + {@code server.port=0}). Deux collisions de classpath indépendantes et sans lien rendaient cette approche impraticable :
  * <ol>
- *   <li>Spring Cloud Gateway embarque {@code GatewayClassPathWarningAutoConfiguration}, qui
- *       refuse de démarrer *tout* contexte voyant à la fois {@code spring-webmvc} et Gateway
- *       sur le classpath — un contrôle {@code @ConditionalOnClass} strict, sans rapport avec
- *       le type d'application web réellement configuré pour ce contexte-là.</li>
- *   <li>Les quatre jars de service embarquent chacun une ressource au même chemin de classpath
- *       ({@code /application.properties}, ou {@code /application.yml} pour la Gateway). Avec les
- *       quatre jars sur un seul classpath de test partagé, le classloader ne résout que la
- *       première correspondance et masque silencieusement les trois autres — les propriétés
- *       {@code medilabo.*} propres à assessment-service ne se chargent jamais, seul le fichier
- *       du voisin qui a gagné la course est pris.</li>
+ *   <li>Spring Cloud Gateway embarque {@code GatewayClassPathWarningAutoConfiguration}, qui refuse de démarrer *tout* contexte voyant à la fois {@code spring-webmvc} et Gateway sur le classpath — un contrôle {@code @ConditionalOnClass} strict, sans rapport avec le type d'application web réellement configuré pour ce contexte-là.</li>
+ *   <li>Les quatre jars de service embarquent chacun une ressource au même chemin de classpath ({@code /application.properties}, ou {@code /application.yml} pour la Gateway). Avec les quatre jars sur un seul classpath de test partagé, le classloader ne résout que la première correspondance et masque silencieusement les trois autres : les propriétés {@code medilabo.*} propres à assessment-service ne se chargent jamais, seul le fichier du voisin qui a gagné la course est pris.</li>
  * </ol>
- * Les deux problèmes viennent du fait de partager un seul classloader JVM entre des applications
- * Spring Boot construites indépendamment ; impossible à corriger avec juste
- * {@code spring.autoconfigure.exclude} ou des surcharges de propriétés. De vrais processus OS
- * (cette version) évitent les deux problèmes : chacun a son propre classpath, exactement comme
- * {@code docker-compose.yml} les fait déjà tourner.
+ * Les deux problèmes viennent du fait de partager un seul classloader JVM entre des applications Spring Boot construites indépendamment ; impossible à corriger avec juste {@code spring.autoconfigure.exclude} ou des surcharges de propriétés. De vrais processus OS (cette version) évitent les deux problèmes : chacun a son propre classpath, exactement comme {@code docker-compose.yml} les fait déjà tourner.
  *
- * <p>Ce test ne vit dans aucun des cinq modules de service : le projet n'a pas de POM agrégateur
- * racine (choix volontaire — chaque service se construit seul), donc il vit dans ce module
- * séparé {@code integration-tests}. Prérequis : faire un {@code mvn install} des cinq services
- * voisins d'abord (ça produit le {@code -exec.jar} que le {@code pom.xml} de chaque service
- * attache maintenant via un classifier Maven, justement pour que le jar simple et l'exécutable
- * coexistent dans le repo local) — lancer {@code mvn install -DskipTests} dans chacun de
- * {@code gateway-service}, {@code patient-service}, {@code notes-service},
- * {@code assessment-service} et {@code front-service}, puis {@code mvn test} dans
- * {@code integration-tests}.
+ * <p>Ce test ne vit dans aucun des cinq modules de service : le projet n'a pas de POM agrégateur racine (choix volontaire — chaque service se construit seul), donc il vit dans ce module séparé {@code integration-tests}. Prérequis : faire un {@code mvn install} des cinq services voisins d'abord (ça produit le {@code -exec.jar} que le {@code pom.xml} de chaque service attache maintenant via un classifier Maven, justement pour que le jar simple et l'exécutable coexistent dans le repo local) — lancer {@code mvn install -DskipTests} dans chacun de {@code gateway-service}, {@code patient-service}, {@code notes-service}, {@code assessment-service} et {@code front-service}, puis {@code mvn test} dans {@code integration-tests}.
  */
 @Testcontainers
 class CriticalPathIntegrationTest {
@@ -151,14 +120,7 @@ class CriticalPathIntegrationTest {
         ));
     }
 
-    /** Insère directement via le driver Mongo les quatre notes de référence du patient 4
-     * ("TestEarlyOnset") — le même texte et les mêmes horodatages {@code createdAt} que dans
-     * {@code docker/mongo-init.js}, qui est un script d'entrypoint Docker (pas appliqué
-     * automatiquement par Spring sur un Mongo Testcontainers nu, contrairement au
-     * {@code data.sql} de patient-service que Spring exécute lui-même via
-     * {@code spring.sql.init.mode=always}). Ces quatre notes sont exactement celles que
-     * {@code RiskCalculatorTest}/{@code AssessmentServiceTest} vérifient déjà comme produisant
-     * 7 déclencheurs / "Early Onset". */
+    /** Insère directement via le driver Mongo les quatre notes de référence du patient 4 ("TestEarlyOnset") — le même texte et les mêmes horodatages {@code createdAt} que dans {@code docker/mongo-init.js}, qui est un script d'entrypoint Docker (pas appliqué automatiquement par Spring sur un Mongo Testcontainers nu, contrairement au {@code data.sql} de patient-service que Spring exécute lui-même via {@code spring.sql.init.mode=always}). Ces quatre notes sont exactement celles que {@code RiskCalculatorTest}/{@code AssessmentServiceTest} vérifient déjà comme produisant 7 déclencheurs / "Early Onset". */
     private static void seedCanonicalNotes() {
         try (MongoClient client = MongoClients.create(mongo.getConnectionString())) {
             var notes = client.getDatabase("notesdb").getCollection("note");
@@ -189,10 +151,7 @@ class CriticalPathIntegrationTest {
         }
     }
 
-    /** Lance {@code <module>-0.0.1-SNAPSHOT-exec.jar} depuis le repo Maven local comme un vrai
-     * processus enfant (stdout/stderr redirigés vers {@code target/<module>-boot.log}, référencé
-     * dans tout message d'échec levé par cette méthode), puis sonde le port donné jusqu'à ce
-     * qu'il accepte une connexion TCP ou que {@link #BOOT_TIMEOUT} soit écoulé. */
+    /** Lance {@code <module>-0.0.1-SNAPSHOT-exec.jar} depuis le repo Maven local comme un vrai processus enfant (stdout/stderr redirigés vers {@code target/<module>-boot.log}, référencé dans tout message d'échec levé par cette méthode), puis sonde le port donné jusqu'à ce qu'il accepte une connexion TCP ou que {@link #BOOT_TIMEOUT} soit écoulé. */
     private static void startService(String artifactId, int port, Map<String, String> properties)
             throws IOException, InterruptedException {
         Path jar = Path.of(System.getProperty("user.home"), ".m2", "repository", "com", "medilabo",
@@ -208,20 +167,13 @@ class CriticalPathIntegrationTest {
         command.add(jar.toString());
         properties.forEach((key, value) -> command.add("--" + key + "=" + value));
 
-        // On écrit dans un fichier plutôt que d'hériter du stdout de cette JVM : écrire directement
-        // dans le flux console capturé par surefire depuis plusieurs processus enfants concurrents
-        // corrompt son canal (observé sous forme d'un avertissement surefire "Corrupted channel").
-        // Le log de chaque service reste consultable en cas d'échec via bootLogFile ci-dessous.
+        // On écrit dans un fichier plutôt que d'hériter du stdout de cette JVM : écrire directement dans le flux console capturé par surefire depuis plusieurs processus enfants concurrents corrompt son canal (observé sous forme d'un avertissement surefire "Corrupted channel"). Le log de chaque service reste consultable en cas d'échec via bootLogFile ci-dessous.
         Path bootLogFile = Path.of("target", artifactId + "-boot.log").toAbsolutePath();
         bootLogFile.getParent().toFile().mkdirs();
         ProcessBuilder builder = new ProcessBuilder(command)
                 .redirectErrorStream(true)
                 .redirectOutput(bootLogFile.toFile());
-        // Chaque service lit son propre .env à la racine du dépôt via
-        // `spring.config.import=optional:file:../.env[.properties]` — un chemin relatif résolu
-        // depuis le répertoire de travail du processus, donc il doit être lancé depuis le
-        // répertoire du module de ce service (comme un développeur qui lance `mvn spring-boot:run`
-        // depuis l'intérieur de chaque module aujourd'hui).
+        // Chaque service lit son propre .env à la racine du dépôt via `spring.config.import=optional:file:../.env[.properties]` : un chemin relatif résolu depuis le répertoire de travail du processus, donc il doit être lancé depuis le répertoire du module de ce service (comme un développeur qui lance `mvn spring-boot:run` depuis l'intérieur de chaque module aujourd'hui).
         builder.directory(Path.of("..", artifactId).toAbsolutePath().normalize().toFile());
         Process process = builder.start();
         STARTED_PROCESSES.add(process);
@@ -259,9 +211,7 @@ class CriticalPathIntegrationTest {
 
     @AfterAll
     static void stopAllServices() {
-        // L'ordre inverse (Gateway en premier) n'est pas requis pour que ce soit correct — chaque
-        // processus est indépendant — mais évite un instant où la Gateway tourne encore sans aucun
-        // backend vivant derrière.
+        // L'ordre inverse (Gateway en premier) n'est pas requis pour que ce soit correct : chaque processus est indépendant, mais évite un instant où la Gateway tourne encore sans aucun backend vivant derrière.
         for (int i = STARTED_PROCESSES.size() - 1; i >= 0; i--) {
             STARTED_PROCESSES.get(i).destroy();
         }
@@ -278,35 +228,32 @@ class CriticalPathIntegrationTest {
     }
 
     /**
-     * Exécuté deux fois (critère d'acceptation : déterministe à la répétition, pas d'état résiduel)
-     * — chaque exécution renvoie le même GET vers les processus partagés déjà démarrés ; aucun
-     * test ne modifie les données du patient 4.
+     * Exécuté deux fois (critère d'acceptation : déterministe à la répétition, pas d'état résiduel) : chaque exécution renvoie le même GET vers les processus partagés déjà démarrés ; aucun test ne modifie les données du patient 4.
      */
     @RepeatedTest(2)
     void criticalPath_gatewayToRiskAssessment_returnsExpectedRiskBand() {
         TestRestTemplate rest = new TestRestTemplate("medilabo", "medilabo123");
 
-        ResponseEntity<Map> response = rest.getForEntity(
+        ResponseEntity<Map<String, Object>> response = rest.exchange(
                 "http://localhost:" + gatewayPort + "/assessments/" + CANONICAL_PATIENT_ID,
-                Map.class);
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<Map<String, Object>>() {
+                });
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("patId")).isEqualTo(CANONICAL_PATIENT_ID);
-        assertThat(response.getBody().get("riskBand")).isEqualTo(EXPECTED_RISK_BAND);
-        assertThat(response.getBody().get("triggerCount")).isEqualTo(7);
+        Map<String, Object> body = response.getBody();
+        assertThat(body).isNotNull();
+        assertThat(body.get("patId")).isEqualTo(CANONICAL_PATIENT_ID);
+        assertThat(body.get("riskBand")).isEqualTo(EXPECTED_RISK_BAND);
+        assertThat(body.get("triggerCount")).isEqualTo(7);
 
-        Map<?, ?> patient = (Map<?, ?>) response.getBody().get("patient");
+        Map<?, ?> patient = (Map<?, ?>) body.get("patient");
         assertThat(patient.get("lastName")).isEqualTo("TestEarlyOnset");
     }
 
     /**
-     * Même chaîne, un cran plus loin : la requête entre par front-service (pas par la Gateway),
-     * donc la page rendue ne peut contenir le nom du patient et la tranche de risque que si
-     * front-service a vraiment appelé la Gateway, qui a elle-même appelé patient-service,
-     * notes-service et assessment-service — front-service n'a aucune donnée à lui. On vérifie le
-     * HTML rendu côté serveur car c'est le vrai contrat de front-service ; un backend mocké
-     * afficherait à la place le balisage de secours.
+     * Même chaîne, un cran plus loin : la requête entre par front-service (pas par la Gateway), donc la page rendue ne peut contenir le nom du patient et la tranche de risque que si front-service a vraiment appelé la Gateway, qui a elle-même appelé patient-service, notes-service et assessment-service. front-service n'a aucune donnée à lui. On vérifie le HTML rendu côté serveur car c'est le vrai contrat de front-service ; un backend mocké afficherait à la place le balisage de secours.
      */
     @Test
     void criticalPath_frontServiceDetailPage_rendersLiveUpstreamData() {
@@ -321,9 +268,99 @@ class CriticalPathIntegrationTest {
                 .contains("TestEarlyOnset")
                 .contains(EXPECTED_RISK_BAND)
                 .contains("Historique des notes")
-                // Une des notes insérées pour le patient 4 : prouve que le passage par notes-service
-                // arrive bien jusqu'à la page aussi.
+                // Une des notes insérées pour le patient 4 : prouve que le passage par notes-service arrive bien jusqu'à la page aussi.
                 .contains("difficile de monter");
+    }
+
+    /**
+     * Écriture de bout en bout par l'UI : un POST du formulaire d'édition doit traverser front-service → Gateway → patient-service et être réellement persisté.
+     *
+     * <p>Comble l'angle mort qui a laissé passer un 500 en production : les autres tests de cette classe ne font que des GET, et les tranches {@code @WebMvcTest} du front mockent {@code PatientUiService} — un mock accepte donc n'importe quel payload, y compris un que patient-service refuserait. Seul un vrai POST traversant les deux services vérifie que leurs règles de validation sont d'accord.</p>
+     *
+     * <p>Le patient est créé par le test puis modifié : le patient 4 de référence reste intact pour le scénario de risque, qui est répété.</p>
+     */
+    @Test
+    void criticalPath_frontServiceForm_persistsThroughGatewayToPatientService() {
+        TestRestTemplate rest = new TestRestTemplate("medilabo", "medilabo123");
+
+        MultiValueMap<String, String> creation = new LinkedMultiValueMap<>();
+        creation.add("firstName", "Integration");
+        creation.add("lastName", "FormWrite");
+        creation.add("dateOfBirth", "1980-05-15");
+        creation.add("gender", "F");
+        creation.add("address", "1 rue du Test");
+        creation.add("phoneCountry", "FR");
+        creation.add("phone", "0601020304");
+
+        ResponseEntity<String> created = rest.postForEntity(
+                "http://localhost:" + frontPort + "/ui/patients", new HttpEntity<>(creation, formHeaders()), String.class);
+
+        // Post-Redirect-Get, redirection suivie par TestRestTemplate : on recoit donc 200 sur la liste, pas le 302. Le point discriminant est le 400, que le controleur renvoie sur tout refus de validation — ici comme en amont.
+        assertThat(created.getStatusCode()).isNotEqualTo(HttpStatus.BAD_REQUEST);
+
+        ResponseEntity<List<Map<String, Object>>> all = rest.exchange(
+                "http://localhost:" + gatewayPort + "/patients",
+                HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {});
+        assertThat(all.getBody()).isNotNull();
+
+        Map<String, Object> persisted = all.getBody().stream()
+                .filter(p -> "FormWrite".equals(p.get("lastName")))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Le patient créé par le formulaire est introuvable via la Gateway"));
+
+        // Le front normalise la saisie nationale en E.164 avant l'appel : c'est la forme canonique qui doit etre persistee.
+        assertThat(persisted.get("phone")).isEqualTo("+33601020304");
+    }
+
+    /**
+     * Régression du 500 Whitelabel : modifier la seule adresse d'un patient du jeu de données par défaut, en renvoyant son téléphone inchangé.
+     *
+     * <p>Le téléphone des patients de seed est en {@code +1} (indicatif nord-américain du sujet). Si {@code PhoneCountry} côté front et le regex de {@code PatientDTO} côté patient-service se désynchronisent, le front produit un E.164 que le back rejette en 400 — rendu en page d'erreur. Ce test échoue alors ici, dans {@code mvn verify}, au lieu d'attendre un clic en production.</p>
+     */
+    @Test
+    void criticalPath_editingSeedPatientAddress_keepsUntouchedPhoneValid() {
+        TestRestTemplate rest = new TestRestTemplate("medilabo", "medilabo123");
+
+        ResponseEntity<Map<String, Object>> seedPatient = rest.exchange(
+                "http://localhost:" + gatewayPort + "/patients/2",
+                HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, Object>>() {});
+        assertThat(seedPatient.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        Map<String, Object> seed = seedPatient.getBody();
+        assertThat(seed).isNotNull();
+        String untouchedPhone = (String) seed.get("phone");
+        assertThat(untouchedPhone).as("le seed doit porter un téléphone à réémettre tel quel").isNotBlank();
+
+        MultiValueMap<String, String> addressOnlyChange = new LinkedMultiValueMap<>();
+        addressOnlyChange.add("firstName", (String) seed.get("firstName"));
+        addressOnlyChange.add("lastName", (String) seed.get("lastName"));
+        addressOnlyChange.add("dateOfBirth", (String) seed.get("dateOfBirth"));
+        addressOnlyChange.add("gender", (String) seed.get("gender"));
+        addressOnlyChange.add("address", "2 High Street");
+        addressOnlyChange.add("phoneCountry", "US");
+        addressOnlyChange.add("phone", untouchedPhone);
+
+        ResponseEntity<String> updated = rest.postForEntity(
+                "http://localhost:" + frontPort + "/ui/patients/2/edit",
+                new HttpEntity<>(addressOnlyChange, formHeaders()), String.class);
+
+        assertThat(updated.getStatusCode())
+                .as("un 400 ici signifie que front et patient-service ne valident plus le téléphone de la même façon")
+                .isNotEqualTo(HttpStatus.BAD_REQUEST);
+
+        ResponseEntity<Map<String, Object>> after = rest.exchange(
+                "http://localhost:" + gatewayPort + "/patients/2",
+                HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, Object>>() {});
+        assertThat(after.getBody()).isNotNull();
+        assertThat(after.getBody().get("address")).isEqualTo("2 High Street");
+        assertThat(after.getBody().get("phone")).isEqualTo(untouchedPhone);
+    }
+
+    /** Le formulaire du front est soumis en URL-encoded, comme le ferait un navigateur — pas en JSON. */
+    private static HttpHeaders formHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        return headers;
     }
 
     @Test

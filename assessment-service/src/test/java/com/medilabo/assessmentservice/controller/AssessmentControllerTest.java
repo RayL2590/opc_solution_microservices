@@ -25,10 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Slice {@code @WebMvcTest} pour {@link AssessmentController} : {@link AssessmentService} mocké,
- * vrai {@link SecurityConfig} importé et exercé via {@code httpBasic(...)}. On vérifie la forme
- * de l'enveloppe de réponse en 200, les codes 404/502/504/422 via {@link GlobalExceptionHandler}, et
- * les rejets en 401 (pas de credentials, mauvais mot de passe, utilisateur inconnu).
+ * Slice {@code @WebMvcTest} pour {@link AssessmentController} : {@link AssessmentService} mocké, vrai {@link SecurityConfig} importé et exercé via {@code httpBasic(...)}. On vérifie la forme de l'enveloppe de réponse en 200, les codes 404/502/504/422 via {@link GlobalExceptionHandler}, et les rejets en 401 (pas de credentials, mauvais mot de passe, utilisateur inconnu).
  */
 @WebMvcTest(AssessmentController.class)
 @Import({SecurityConfig.class, GlobalExceptionHandler.class})

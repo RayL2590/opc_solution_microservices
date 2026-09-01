@@ -2,9 +2,7 @@ package com.medilabo.frontservice.dto;
 
 /**
  * Pays supportés pour la saisie de téléphone (démo : périmètre volontairement réduit).
- * Chaque entrée porte son indicatif E.164 et le nombre de chiffres attendu APRÈS l'indicatif
- * (numéro national sans le 0 de préfixe), utilisé pour une validation de longueur simple.
- *
+ * Chaque entrée porte son indicatif E.164 et le nombre de chiffres attendu APRÈS l'indicatif (numéro national sans le 0 de préfixe), utilisé pour une validation de longueur simple.
  * <p>Pas de dépendance à libphonenumber : normalisation maison suffisante pour ce périmètre.</p>
  */
 public enum PhoneCountry {
@@ -13,7 +11,8 @@ public enum PhoneCountry {
     BE("+32", "Belgique", 9),
     CH("+41", "Suisse", 9),
     UK("+44", "Royaume-Uni", 10),
-    IT("+39", "Italie", 10);
+    IT("+39", "Italie", 10),
+    US("+1", "États-Unis / Canada", 10);
 
     private final String dialingCode;
     private final String label;

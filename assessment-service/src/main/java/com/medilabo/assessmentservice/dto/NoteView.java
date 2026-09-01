@@ -4,7 +4,7 @@ import java.time.Instant;
 
 /**
  * Copie locale d'une note clinique, propre à ce service (pas de module partagé entre services).
- * Remplie par le client upstream.
+ * Ce record ne se construit pas à partir d'une requête entrante côté assessment-service, ni via un formulaire ou une validation locale. Ses champs sont peuplés par NotesServiceClient à partir de la réponse JSON renvoyée par notes-service. C'est une copie locale et jetable des données distantes, pas un DTO alimenté par l'utilisateur.
  *
  * @param id        le {@code _id} MongoDB de la note.
  * @param patId     id du patient propriétaire.

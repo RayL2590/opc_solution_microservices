@@ -12,8 +12,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 /**
  * Objet de commande mutable (Thymeleaf th:field exige des setters — un record casserait le binding).
- * @DateTimeFormat(ISO.DATE) obligatoire : input[type=date] soumet yyyy-MM-dd,
- * sans ça Spring MVC ne peut pas convertir en LocalDate (400 silencieux).
+ * @DateTimeFormat(ISO.DATE) obligatoire : input[type=date] soumet yyyy-MM-dd, sans ça Spring MVC ne peut pas convertir en LocalDate (400 silencieux).
  */
 @Data
 public class PatientForm {
@@ -37,15 +36,12 @@ public class PatientForm {
     private String address;
 
     /**
-     * Pays de l'indicatif choisi dans le formulaire, sert à normaliser {@link #phone}
-     * vers E.164 (voir {@code PhoneNormalizer}). Défaut FR sur un formulaire vierge.
+     * Pays de l'indicatif choisi dans le formulaire, sert à normaliser {@link #phone} vers E.164 (voir {@code PhoneNormalizer}). Défaut FR sur un formulaire vierge.
      */
     private PhoneCountry phoneCountry = PhoneCountry.FR;
 
     /**
-     * Téléphone tel que saisi (format libre). Normalisé en E.164 par le contrôleur
-     * avant l'envoi vers patient-service. Pas de @Pattern ici : la normalisation
-     * tolère de toute façon espaces, points, +, 00, etc.
+     * Téléphone tel que saisi (format libre). Normalisé en E.164 par le contrôleur avant l'envoi vers patient-service. Pas de @Pattern ici : la normalisation tolère de toute façon espaces, points, +, 00, etc.
      */
     private String phone;
 }

@@ -13,12 +13,9 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Orchestre l'évaluation de risque d'un patient : récupère démographie et notes via les
- * clients upstream, lance {@link RiskCalculator}, et mappe le résultat dans l'enveloppe
- * {@link AssessmentResponseDTO}.
+ * Orchestre l'évaluation de risque d'un patient : récupère démographie et notes via les clients upstream, lance {@link RiskCalculator}, et mappe le résultat dans l'enveloppe {@link AssessmentResponseDTO}.
  *
- * <p>Chaque appel refait les deux requêtes upstream et recalcule tout, pas de cache entre les
- * requêtes. Du coup une note ajoutée est prise en compte dès la prochaine évaluation.</p>
+ * <p>Chaque appel refait les deux requêtes upstream et recalcule tout, pas de cache entre les requêtes. Du coup une note ajoutée est prise en compte dès la prochaine évaluation.</p>
  */
 @Service
 @RequiredArgsConstructor

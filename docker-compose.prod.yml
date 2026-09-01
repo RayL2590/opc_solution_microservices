@@ -1,0 +1,21 @@
+# Override de production (VPS, derriere Apache en reverse proxy).
+# Usage : docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Deux ecarts seulement avec le profil docker local :
+#   1. Le Gateway n'ecoute que sur la loopback. Apache est le SEUL chemin d'entree ;
+#      sans le "127.0.0.1:", Docker ouvre le port sur 0.0.0.0 et perce l'UFW/iptables
+#      de l'hote (les regles DOCKER passent AVANT les regles INPUT), ce qui exposerait
+#      le Gateway en HTTP nu sur Internet, TLS d'Apache contourne.
+#   2. Les X-Forwarded-* portent le host public HTTPS au lieu de localhost:8080,
+#      sinon le front construit ses redirections vers "http://localhost:8080/ui/...".
+services:
+  gateway-service:
+    # !override REMPLACE la liste heritee au lieu de s'y ajouter. Sans lui, Compose
+    # CONCATENE les listes de ports : le "8080:8080" (donc 0.0.0.0) du fichier de base
+    # survivrait a cote du binding loopback, et le Gateway resterait joignable en HTTP nu.
+    # (!reset, lui, supprimerait la cle entiere : plus aucun port publie.)
+    ports: !override
+      - "127.0.0.1:8080:8080"
+    environment:
+      MEDILABO_PUBLIC_HOST: microservices.ryan-loche.fr
+      MEDILABO_PUBLIC_PROTO: https

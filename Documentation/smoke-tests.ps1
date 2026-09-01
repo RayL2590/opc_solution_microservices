@@ -1,8 +1,7 @@
 # =============================================================================
 # MédiLabo Solutions — smoke tests API (PowerShell)
 #
-# Équivalent Windows natif de smoke-tests.sh, pour ne pas dépendre de Git Bash
-# le jour de la soutenance. Mêmes sections, mêmes assertions.
+# Équivalent Windows natif de smoke-tests.sh, pour ne pas dépendre de Git Bash le jour de la soutenance. Mêmes sections, mêmes assertions.
 #
 # Usage :
 #   .\Documentation\smoke-tests.ps1
@@ -14,8 +13,7 @@
 #
 # Documentation complète : Documentation/smoke-tests-guide.md
 # Pré-requis : `docker compose up -d` lancé.
-# Aucun secret n'est lu depuis un fichier : les credentials viennent de
-# variables d'environnement, avec les valeurs de démo par défaut.
+# Aucun secret n'est lu depuis un fichier : les credentials viennent de variables d'environnement, avec les valeurs de démo par défaut.
 # =============================================================================
 
 [CmdletBinding()]
@@ -39,8 +37,7 @@ $script:Failed = @()
 
 $ValidSections = @('health', 'security', 'authz', 'patients', 'notes', 'assessment', 'edge', 'mutation')
 
-# Un nom de section inconnu ne doit PAS sortir en "0 réussi, 0 échec, exit 0" : ça ressemble
-# à un succès alors que rien n'a tourné. On refuse tout de suite.
+# Un nom de section inconnu ne doit PAS sortir en "0 réussi, 0 échec, exit 0" : ça ressemble à un succès alors que rien n'a tourné. On refuse tout de suite.
 if ($Section -and $ValidSections -notcontains $Section) {
     Write-Host "Section inconnue : `"$Section`"" -ForegroundColor Red
     Write-Host "Sections valides : $($ValidSections -join ', ')" -ForegroundColor Yellow
@@ -62,11 +59,8 @@ function Invoke-Api {
         [string]$Auth = '', [string]$Body = '',
         [string]$ContentType = '', [hashtable]$Headers = @{}
     )
-    # Le corps va dans un fichier, pas sur stdout : un gros payload (100 Ko) fait sinon
-    # planter PowerShell sur "StandardOutputEncoding is only supported when standard
-    # output is redirected". Seul le code HTTP revient par stdout.
-    # --data-binary @fichier : passer 100 Ko en argument de ligne de commande dépasse
-    # la limite de Windows (~32 Ko).
+    # Le corps va dans un fichier, pas sur stdout : un gros payload (100 Ko) fait sinon planter PowerShell sur "StandardOutputEncoding is only supported when standard output is redirected". Seul le code HTTP revient par stdout. 
+    # --data-binary @fichier : passer 100 Ko en argument de ligne de commande dépasse la limite de Windows (~32 Ko).
     $tmpOut = [System.IO.Path]::GetTempFileName()
     $tmpIn = $null
 
@@ -172,7 +166,7 @@ if (Test-Section 'security' '1. Authentification — la porte est bien fermée')
 }
 
 # =============================================================================
-if (Test-Section 'authz' '2. Autorisation — le moindre privilège (Story 7.1)') {
+if (Test-Section 'authz' '2. Autorisation — le moindre privilège') {
     if ($SvcAssessmentAuth -match ':$') {
         Write-Host '  ~ MEDILABO_SVC_ASSESSMENT_PASSWORD non défini — section ignorée.' -ForegroundColor Yellow
         Note 'Pour jouer ces tests : $env:MEDILABO_SVC_ASSESSMENT_PASSWORD = "..."'
@@ -347,6 +341,29 @@ if (Test-Section 'mutation' '7. Écriture & recalcul — la preuve de l''absence
         $script:Skip += 4
     }
 
+    Note 'Régression : éditer un patient du SEED, pas un patient créé ici.'
+    # Le CRUD ci-dessus cree son propre patient avec un telephone francais : il n'a donc jamais exerce le seul chemin qui casse en vrai, editer un patient du seed dont le telephone est en +1. Ce cas rejoue une modification d'adresse seule, telephone relu et renvoye tel quel comme le fait le formulaire : l'angle mort qui a laisse passer un 500 en production. Seule l'adresse est touchee : ni la bande de risque ni les notes n'en dependent, le seed reste utilisable par la verification de recalcul qui suit.
+    $seed2 = Invoke-Api -Method 'GET' -Path '/patients/2' -Auth $UserAuth
+    $seed2Phone = [regex]::Match($seed2.Body, '"phone"\s*:\s*"([^"]*)"').Groups[1].Value
+
+    if (-not $seed2Phone) {
+        Write-Host ("  ~ {0,-56} seed introuvable ou sans téléphone" -f "édition d'un patient du seed (adresse seule)") -ForegroundColor Yellow
+        $script:Skip += 2
+    }
+    else {
+        Write-Host "      téléphone du seed relu : $seed2Phone" -ForegroundColor DarkGray
+        Check 'PUT patient du seed, adresse seule modifiée → 200' '200' 'PUT' '/patients/2' -Auth $UserAuth -ContentType $JSON `
+            -Body ('{"firstName":"Test","lastName":"TestBorderline","dateOfBirth":"1945-06-24","gender":"M","address":"2 High Street","phone":"' + $seed2Phone + '"}')
+        Contains '…et le téléphone du seed est resté valide' ('"phone"\s*:\s*"' + [regex]::Escape($seed2Phone) + '"') 'GET' '/patients/2' -Auth $UserAuth
+    }
+
+    Note 'Chaque indicatif de PhoneCountry (front) doit être accepté par patient-service.'
+    # Garde-fou anti-desynchronisation : la liste des indicatifs est dupliquee entre PhoneCountry (front-service) et le regex de PatientDTO (patient-service). Ajouter une entree d'un cote sans l'autre produit un E.164 que le back rejette en 400, rendu en 500 par le front qui n'intercepte pas l'erreur. Un numero par indicatif supporte suffit a detecter la desynchronisation des le prochain ajout.
+    foreach ($e164 in @('+33601020304', '+32470123456', '+41791234567', '+447911123456', '+393123456789', '+12003334444')) {
+        Check "téléphone $e164 accepté → 201" '201' 'POST' '/patients' -Auth $UserAuth -ContentType $JSON `
+            -Body ('{"firstName":"Smoke","lastName":"Indicatif","dateOfBirth":"1980-05-15","gender":"F","phone":"' + $e164 + '"}')
+    }
+
     Note 'FR-9 : ajouter une note doit changer la bande IMMÉDIATEMENT, sans cache.'
 
     $before = Invoke-Api -Method 'GET' -Path '/assessments/1' -Auth $UserAuth
@@ -355,8 +372,7 @@ if (Test-Section 'mutation' '7. Écriture & recalcul — la preuve de l''absence
     Write-Host "      avant : $bandBefore" -ForegroundColor DarkGray
 
     # L'état initial est vérifié AVANT d'écrire : sur un seed propre TestNone est à None.
-    # S'il est déjà Borderline (run précédent), ajouter une note ne pourrait plus rien faire
-    # basculer — on s'abstient donc d'écrire, pour ne pas polluer davantage un seed déjà sale.
+    # S'il est déjà Borderline (run précédent), ajouter une note ne pourrait plus rien faire basculer, on s'abstient donc d'écrire, pour ne pas polluer davantage un seed déjà sale.
     if ($bandBefore -ne 'None') {
         Write-Host ("  ~ {0,-56} non concluant : départ {1}, pas None" -f 'recalcul immédiat, sans cache', $bandBefore) -ForegroundColor Yellow
         Note 'Seed déjà modifié : docker compose down -v ; docker compose up -d, puis relancer.'

@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Client upstream pour les notes cliniques (Gateway → notes-service).
  * L'authentification sortante passe par ServiceAccountAuthInitializer (compte de service).
- * PII : seuls patientId et le nombre de notes finissent dans les logs, jamais le texte des notes.
+ * Personally Identifiable Information (PII) : seuls patientId et le nombre de notes finissent dans les logs, jamais le texte des notes.
  */
 @Component
 @Slf4j

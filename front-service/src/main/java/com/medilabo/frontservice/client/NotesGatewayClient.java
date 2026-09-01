@@ -14,7 +14,7 @@ import com.medilabo.frontservice.dto.NoteView;
 
 /**
  * Client Gateway pour les notes. Authentification sortante gérée par ServiceAccountAuthInitializer.
- * PII : seuls les comptes, ids et compteurs sont loggés — jamais le texte d'une note ni le nom du patient.
+ * Personally Identifiable Information (PII) : seuls les comptes, ids et compteurs sont loggés : jamais le texte d'une note ni le nom du patient.
  */
 @Component
 @Slf4j

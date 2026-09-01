@@ -12,8 +12,7 @@ public class NoteRequest {
     @NotNull(message = "L'identifiant du patient est obligatoire")
     private Integer patId;
 
-    // Nom dénormalisé sur chaque note pour éviter un second appel à patient-service —
-    // c'est ce qui s'affiche dans la timeline. Obligatoire, comme le texte de la note.
+    // Nom dénormalisé sur chaque note pour éviter un second appel à patient-service : c'est ce qui s'affiche dans la timeline. Obligatoire, comme le texte de la note.
     @NotBlank(message = "Le nom du patient est obligatoire")
     private String patient;
 

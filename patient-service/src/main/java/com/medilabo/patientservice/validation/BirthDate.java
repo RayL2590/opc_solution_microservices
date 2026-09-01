@@ -9,8 +9,7 @@ import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
 /**
- * Date de naissance plausible : non nulle, pas dans le futur (aujourd'hui autorisé),
- * et pas plus de {@link #maxAgeYears()} ans.
+ * Date de naissance plausible : non nulle, pas dans le futur (aujourd'hui autorisé), et pas plus de {@link #maxAgeYears()} ans.
  */
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)

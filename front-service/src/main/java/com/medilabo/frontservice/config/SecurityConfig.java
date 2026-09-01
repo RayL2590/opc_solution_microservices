@@ -17,8 +17,7 @@ import org.springframework.security.web.SecurityFilterChain;
 /**
  * Sécurité servlet de front-service — même contrat que patient-service (HTTP Basic, CSRF off, STATELESS).
  * HTTP Basic délibéré : stateless, le navigateur ré-envoie Authorization à chaque requête.
- * Ce credential authentifie le clinicien ici et s'arrête là ; les appels sortants vers le
- * Gateway passent par {@link ServiceAccountAuthInitializer}.
+ * Ce credential authentifie le clinicien ici et s'arrête là ; les appels sortants vers le Gateway passent par {@link ServiceAccountAuthInitializer}.
  */
 @Configuration
 @EnableWebSecurity
@@ -30,11 +29,7 @@ public class SecurityConfig {
     }
 
     /**
-     * Une seule identité ici : le clinicien (ROLE_USER). front-service n'a aucun appelant
-     * machine entrant, c'est le point d'entrée humain de la chaîne. Semer les comptes de
-     * service ici reviendrait à accepter un mot de passe machine comme login UI — n'importe
-     * qui avec un credential inter-services pourrait alors voir les données patients.
-     * Le hash est stocké tel quel, jamais de ré-encodage.
+     * Une seule identité ici : le clinicien (ROLE_USER). front-service n'a aucun appelant machine entrant, c'est le point d'entrée humain de la chaîne. Semer les comptes de service ici reviendrait à accepter un mot de passe machine comme login UI : n'importe qui avec un credential inter-services pourrait alors voir les données patients. Le hash est stocké tel quel, jamais de ré-encodage.
      */
     @Bean
     public UserDetailsService userDetailsService(
