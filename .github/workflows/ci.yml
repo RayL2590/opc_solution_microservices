@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # Un job par service, sans `needs:` entre eux : le projet n'a volontairement pas de POM agrégateur,
+  # chaque service se construit seul. Le graphe de la CI rend ce choix d'architecture visible.
+  build:
+    name: ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      # Un service qui casse ne doit pas annuler les quatre autres : on veut savoir lesquels passent encore.
+      fail-fast: false
+      matrix:
+        service:
+          - patient-service
+          - notes-service
+          - assessment-service
+          - front-service
+          - gateway-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build and test ${{ matrix.service }}
+        working-directory: ${{ matrix.service }}
+        # Seul placeholder sans valeur par défaut qui casse un `mvn verify` : front-service le lit au
+        # démarrage du contexte (RestClientConfig). Les quatre autres services passent sans aucun secret.
+        env:
+          MEDILABO_SVC_FRONT_PASSWORD: ${{ secrets.MEDILABO_SVC_FRONT_PASSWORD }}
+        run: mvn -B verify
+
+  # Séquentiel, et volontairement hors matrice : CriticalPathIntegrationTest lance les cinq services
+  # comme vrais processus fils depuis leur -exec.jar dans ~/.m2. Il lui faut donc un seul workspace
+  # contenant les cinq artefacts installés — l'inverse de cinq jobs isolés.
+  integration:
+    name: integration-tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Write .env for the child processes
+        # Chaque service enfant est lancé depuis son propre répertoire de module et lit la racine du dépôt
+        # via `spring.config.import=optional:file:../.env`. Les valeurs passent par des variables
+        # d'environnement et printf plutôt que par interpolation ${{ }} dans le script : une valeur
+        # contenant un guillemet ou un $ ne peut pas casser le shell ni être réinterprétée.
+        # Rien n'est affiché — GitHub masque les valeurs de secrets connues, pas un `cat` du fichier.
+        env:
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+          MEDILABO_SVC_FRONT_PASSWORD: ${{ secrets.MEDILABO_SVC_FRONT_PASSWORD }}
+          MEDILABO_SVC_ASSESSMENT_PASSWORD: ${{ secrets.MEDILABO_SVC_ASSESSMENT_PASSWORD }}
+        run: |
+          umask 077
+          {
+            printf 'SPRING_DATASOURCE_USERNAME=%s\n' "$SPRING_DATASOURCE_USERNAME"
+            printf 'SPRING_DATASOURCE_PASSWORD=%s\n' "$SPRING_DATASOURCE_PASSWORD"
+            printf 'MEDILABO_SVC_FRONT_PASSWORD=%s\n' "$MEDILABO_SVC_FRONT_PASSWORD"
+            printf 'MEDILABO_SVC_ASSESSMENT_PASSWORD=%s\n' "$MEDILABO_SVC_ASSESSMENT_PASSWORD"
+          } > .env
+
+      - name: Install the five services
+        # -DskipTests : la matrice les a déjà testés. Ici on ne veut que les -exec.jar dans ~/.m2,
+        # que CriticalPathIntegrationTest résout par coordonnées Maven et lance en processus fils.
+        run: |
+          for service in patient-service notes-service assessment-service front-service gateway-service; do
+            mvn -B -f "$service/pom.xml" install -DskipTests
+          done
+
+      - name: Run cross-service integration tests
+        working-directory: integration-tests
+        run: mvn -B test
+
+      - name: Upload service boot logs on failure
+        # Chaque service enfant écrit son démarrage dans target/<module>-boot.log ; sans ça un échec
+        # au démarrage en CI ne laisse aucune trace exploitable.
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: service-boot-logs
+          path: integration-tests/target/*-boot.log
+          if-no-files-found: ignore

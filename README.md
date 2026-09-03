@@ -1,3 +1,5 @@
+[![CI](https://github.com/RayL2590/opc_solution_microservices/actions/workflows/ci.yml/badge.svg)](https://github.com/RayL2590/opc_solution_microservices/actions/workflows/ci.yml)
+
 # MédiLabo Solutions
 
 Application de dépistage du risque de diabète de type 2, livrée sous forme de microservices Spring Boot orchestrés par Docker Compose. Un praticien consulte la fiche d'un patient (données démographiques et historique de notes) et obtient un niveau de risque calculé automatiquement à partir de règles cliniques : âge, genre, termes déclencheurs détectés dans les notes.
