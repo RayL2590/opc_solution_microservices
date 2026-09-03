@@ -13,6 +13,8 @@ jobs:
   build:
     name: ${{ matrix.service }}
     runs-on: ubuntu-latest
+    # Le défaut GitHub est de 6 heures. Les suites les plus lentes (Testcontainers) tournent en ~2 min.
+    timeout-minutes: 15
     strategy:
       # Un service qui casse ne doit pas annuler les quatre autres : on veut savoir lesquels passent encore.
       fail-fast: false
@@ -39,6 +41,9 @@ jobs:
         # démarrage du contexte (RestClientConfig). Les quatre autres services passent sans aucun secret.
         env:
           MEDILABO_SVC_FRONT_PASSWORD: ${{ secrets.MEDILABO_SVC_FRONT_PASSWORD }}
+        # `verify` plutôt que `test` : aucun service ne configure failsafe, donc il n'exécute pas de test
+        # supplémentaire. Il valide en revanche que le packaging passe — y compris la production du
+        # -exec.jar dont le job d'intégration dépend, qu'un simple `test` ne construirait jamais.
         run: mvn -B verify
 
   # Séquentiel, et volontairement hors matrice : CriticalPathIntegrationTest lance les cinq services
@@ -48,6 +53,9 @@ jobs:
     name: integration-tests
     needs: build
     runs-on: ubuntu-latest
+    # BOOT_TIMEOUT borne le démarrage à 90 s par service, mais pas les requêtes HTTP du test lui-même :
+    # un service qui ouvre son port puis se bloque laisserait le job courir jusqu'au défaut de 6 heures.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -64,18 +72,38 @@ jobs:
         # d'environnement et printf plutôt que par interpolation ${{ }} dans le script : une valeur
         # contenant un guillemet ou un $ ne peut pas casser le shell ni être réinterprétée.
         # Rien n'est affiché — GitHub masque les valeurs de secrets connues, pas un `cat` du fichier.
+        #
+        # Le clair ET le hash de chaque compte de service sont écrits ensemble, par paire. Un clair seul
+        # ne suffirait pas : l'appelant construit son header Basic depuis le clair, tandis que l'appelé
+        # authentifie contre le hash. Si le clair fourni ici n'est pas celui du hash utilisé en face, les
+        # services démarrent normalement puis se renvoient des 401 — un échec qui se manifeste par un diff
+        # de HTML de plusieurs Ko dans l'assertion finale, sans jamais nommer la cause. Fournir la paire
+        # rend la cohérence explicite au lieu de la faire dépendre des défauts en dur des properties.
+        #
+        # SPRING_DATASOURCE_* n'est volontairement PAS écrit : CriticalPathIntegrationTest passe
+        # `--spring.datasource.username/password` en arguments de ligne de commande depuis Testcontainers,
+        # et ceux-ci priment sur spring.config.import. Les écrire ici ferait croire à une surface de
+        # secrets plus large qu'elle ne l'est.
         env:
-          SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
-          SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
           MEDILABO_SVC_FRONT_PASSWORD: ${{ secrets.MEDILABO_SVC_FRONT_PASSWORD }}
+          MEDILABO_SVC_FRONT_PASSWORD_BCRYPT: ${{ secrets.MEDILABO_SVC_FRONT_PASSWORD_BCRYPT }}
           MEDILABO_SVC_ASSESSMENT_PASSWORD: ${{ secrets.MEDILABO_SVC_ASSESSMENT_PASSWORD }}
+          MEDILABO_SVC_ASSESSMENT_PASSWORD_BCRYPT: ${{ secrets.MEDILABO_SVC_ASSESSMENT_PASSWORD_BCRYPT }}
         run: |
           umask 077
+          for name in MEDILABO_SVC_FRONT_PASSWORD MEDILABO_SVC_FRONT_PASSWORD_BCRYPT \
+                      MEDILABO_SVC_ASSESSMENT_PASSWORD MEDILABO_SVC_ASSESSMENT_PASSWORD_BCRYPT; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Secret $name absent. Les quatre secrets de comptes de service doivent etre" \
+                   "definis, clair ET hash par paire, sinon les services se renvoient des 401 illisibles."
+              exit 1
+            fi
+          done
           {
-            printf 'SPRING_DATASOURCE_USERNAME=%s\n' "$SPRING_DATASOURCE_USERNAME"
-            printf 'SPRING_DATASOURCE_PASSWORD=%s\n' "$SPRING_DATASOURCE_PASSWORD"
             printf 'MEDILABO_SVC_FRONT_PASSWORD=%s\n' "$MEDILABO_SVC_FRONT_PASSWORD"
+            printf 'MEDILABO_SVC_FRONT_PASSWORD_BCRYPT=%s\n' "$MEDILABO_SVC_FRONT_PASSWORD_BCRYPT"
             printf 'MEDILABO_SVC_ASSESSMENT_PASSWORD=%s\n' "$MEDILABO_SVC_ASSESSMENT_PASSWORD"
+            printf 'MEDILABO_SVC_ASSESSMENT_PASSWORD_BCRYPT=%s\n' "$MEDILABO_SVC_ASSESSMENT_PASSWORD_BCRYPT"
           } > .env
 
       - name: Install the five services
